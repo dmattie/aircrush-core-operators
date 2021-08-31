@@ -5,13 +5,20 @@ From: ubuntu:18.04
     #Install required software
     apt-get update
     apt-get install -y wget
+    apt-get install -y unzip
 
     #Download Trackvis
     cd /usr/local/
-    wget -q https://www.nitrc.org/frs/download.php/12104/MRIcroGL_linux.zip
-    gunzip MRIcroGL_linux.zip
+    #wget -q https://www.nitrc.org/frs/download.php/12104/MRIcroGL_linux.zip
+    #unzip MRIcroGL_linux.zip
 
-    apt-get install python3.8
+    apt-get install -y python3.6
+    update-alternatives --install /usr/bin/python python /usr/bin/python3.6 1
+    update-alternatives  --set python /usr/bin/python3.6
+
+    git clone https://github.com/dmattie/aircrush-core-operators
+    mv aircrush-core-operators/operators operators
+    rm -r aircrush-core-operators
     
 %files 
     
