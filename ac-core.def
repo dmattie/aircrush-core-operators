@@ -1,0 +1,27 @@
+BootStrap: library
+From: ubuntu:18.04
+
+%post
+    #Install required software
+    apt-get update
+    apt-get install -y wget
+
+    #Download Trackvis
+    cd /usr/local/
+    wget -q https://www.nitrc.org/frs/download.php/12104/MRIcroGL_linux.zip
+    gunzip MRIcroGL_linux.zip
+
+    apt-get install python3.8
+    
+%files 
+    
+
+%environment
+    export LC_ALL=C
+    export PATH=/usr/local:$PATH
+
+%runscript
+    fortune | cowsay | lolcat
+
+%labels
+    Author dmattie
