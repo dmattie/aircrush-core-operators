@@ -16,19 +16,20 @@ From: ubuntu:18.04
     update-alternatives --install /usr/bin/python python /usr/bin/python3.6 1
     update-alternatives  --set python /usr/bin/python3.6
 
-    git clone https://github.com/dmattie/aircrush-core-operators
-    mv aircrush-core-operators/operators operators
-    rm -r aircrush-core-operators
+    #git clone https://github.com/dmattie/aircrush-core-operators
+    #mv aircrush-core-operators/operators operators
+    #rm -r aircrush-core-operators
     
-%files 
+%files
+    /tmp/scripts /usr/local/aircrush/scripts
     
 
 %environment
     export LC_ALL=C
-    export PATH=/usr/local:$PATH
+    export PATH=/usr/local:/usr/local/aircrush/scripts:$PATH
 
 %runscript
-    fortune | cowsay | lolcat
+    /bin/bash /usr/local/aircrush/scripts/envcheck.sh
 
 %labels
     Author dmattie

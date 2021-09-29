@@ -1,0 +1,48 @@
+#!/usr/bin/env python
+
+
+from aircrushcore.controller.configuration import AircrushConfig
+from aircrushcore.dag import Workload
+from aircrushcore.cms.models import *
+from os.path import exists,dirname
+import os
+import importlib
+
+crush_config='crush.ini'
+aircrush=AircrushConfig(crush_config)
+
+crush_host=Host(
+    endpoint=aircrush.config['REST']['endpoint'],
+    username=aircrush.config['REST']['username'],
+    password=aircrush.config['REST']['password']
+    )
+
+def ready():
+    #Sense readiness to do something
+    return True
+
+def getOperatorClassDefinition(task_uuid:str):
+    
+    #This function uses the task uuid to load the associated operator module 
+    #and return a class defintion
+
+    task = TaskCollection(cms_host=crush_host).get_one(task_uuid) #fetch task definition
+    operator=task.field_operator #identify the operator to execute
+    module=f"{task.field_operator}_operator" #build filename for dynamic load
+    operator_module=importlib.import_module(f"operators.{module}")  #dynamically import identified operator
+    op_class=getattr(operator_module,operator) #get class defintion    
+    return op_class
+
+def doSomething():
+    
+    w=Workload(aircrush) #The list of things to do
+    todo = w.get_next_task() #Whatever the big brain tells us to do next
+    if(todo):
+        print(todo)
+        print("-----------------------")
+        op_class = getOperatorClassDefinition(todo.field_task) #use the task UUID to determine which operator to use    
+        op = op_class(id=todo.uuid,cms_host=crush_host) #instantiate it based on task instance    
+        op.execute()  #Let's do this!
+
+if ready():
+    doSomething()
