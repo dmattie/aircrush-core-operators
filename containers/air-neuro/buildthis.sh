@@ -7,6 +7,6 @@ mkdir -p /tmp/air-neuro
 cp -r scripts /tmp/air-neuro
 
 cd /media/dmattie/GENERAL/singularity-containers
-sudo singularity build  output.sif ~/projects/ac-core/containers/air-neuro/air-neuro.def 
+sudo singularity build  air-neuro.sif ~/projects/ac-core/containers/air-neuro/air-neuro.def 
 
 

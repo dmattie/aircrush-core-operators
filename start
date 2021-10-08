@@ -7,6 +7,7 @@ from aircrushcore.cms.models import *
 from os.path import exists,dirname
 import os
 import importlib
+import getpass
 
 crush_config='crush.ini'
 aircrush=AircrushConfig(crush_config)
@@ -33,16 +34,50 @@ def getOperatorClassDefinition(task_uuid:str):
     op_class=getattr(operator_module,operator) #get class defintion    
     return op_class
 
+def getMyComputeNodeUUID():
+
+    cluster=aircrush.config['COMPUTE']['cluster']
+    account=aircrush.config['COMPUTE']['account']
+    working_dir=aircrush.config['COMPUTE']['working_directory'] #os.environ.get("SCRATCH")
+    username=getpass.getuser()
+
+    metadata={
+        "title":f"{cluster}/{username}",
+        "field_host":cluster,
+        "field_username":username,
+        "field_password":"",
+        "field_working_directory":working_dir,        
+        "cms_host":crush_host        
+    }
+
+    cn_col = ComputeNodeCollection(cms_host=crush_host)
+    matching_cn = cn_col.get(filter=f"&filter[field_username][value]={username}&filter[field_host][value]={cluster}")
+
+    for match in matching_cn:          
+        metadata['uuid']=match
+        break
+
+    n = ComputeNode(metadata=metadata)
+    nuid=n.upsert()
+    
+    return nuid
+
+
+
 def doSomething():
     
+    nuid = getMyComputeNodeUUID()
+    
+    
     w=Workload(aircrush) #The list of things to do
-    todo = w.get_next_task() #Whatever the big brain tells us to do next
-    if(todo):
-        print(todo)
-        print("-----------------------")
+    todo = w.get_next_task(node_uuid=nuid) #Do whatever the big brain tells us to do next
+    if(todo):  #Todo is a TaskInstance        
+        print("-----------------------")        
         op_class = getOperatorClassDefinition(todo.field_task) #use the task UUID to determine which operator to use    
         op = op_class(id=todo.uuid,cms_host=crush_host) #instantiate it based on task instance    
-        op.execute()  #Let's do this!
+        op.execute(aircrush)  #Let's do this!
+    else:
+        print("Nothing to do.")
 
 if ready():
     doSomething()

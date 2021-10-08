@@ -1,118 +1,51 @@
 #!/bin/bash
+SCRIPT=$( realpath $0 )
+SCRIPTPATH=$( dirname $SCRIPT )
+source "${SCRIPTPATH}/lib/helper.sh"
 
-if [ $# -eq 0 ]
-  then
-      echo "No arguments supplied."
-      echo "USAGE: registration.sh workingdirectory subject session"
-      echo "    eg: registration.sh . 12345 2"
-      echo "        this will register dwi to T1 and product ./sub-12345/ses-2/Tractography/reg2brain.data.nii"
-      exit
+if [ ! $# -eq 2 ];then
+    printf "ERROR:Two parameters expected\n"    
+    printf "\tUSAGE:\t\tregistration.sh SOURCE PIPELINE"
+    printf "\n\tEXAMPLE:\tregistration.sh ~/scratch/dataset/rawdata/sub-0001/ses-000A levman\n\n"
+    printf "\tResults will appear in ~/scratch/dataset/derivatives/levman/sub-0001/ses-000A/\n\n"    
+    exit
 fi
-workingdir=$1
-subject=$2
-session=$3
-UUID=$(cat /proc/sys/kernel/random/uuid)
-stagingdir=$AIRCRUSH_SCRATCH/$UUID
-curdir=$(pwd)
-start=`date +%s`
+SOURCE=$1
+PIPELINE=$2
 
-test_canproceed(){
-    #must have a reconstructed brainmask in Freesurfer/mri and a diffusion volume (.nii) in original/dwi
-    if [ -d $workingdir ];then
-        if [ -d $workingdir/sub-$subject ];then
-            if [ -d $workingdir/sub-$subject/ses-$session ];then
 
-                if [ -d $workingdir/sub-$subject/ses-$session/Freesurfer/mri ];then
-                    if [ ! -f  $workingdir/sub-$subject/ses-$session/Freesurfer/mri/brainmask.mgz ];then                                                            
-                        echo "ERROR: Reconstructed T1 not found in $workingdir/sub-$subject/ses-$session/Freesurfer.  Sought mri/brainmask.mgz"
-                        return 7
-                    fi                    
-                else
-                    echo "ERROR: Freesurfer/mri directory not found here: $workingdir/sub-$subject/ses-$session/Freesurfer/mri"
-                    return 6
-                fi
-
-                if [ -d $workingdir/sub-$subject/ses-$session/original/dwi ];then
-                    infile=$( ls $workingdir/sub-$subject/ses-$session/original/dwi/*.nii )
-                    if [ $? == 0 ];then
-                        if [[ $? == 0 &&  -f  $infile.nii ]];then                                                                
-                            echo "ERROR: Diffusion volume not found in $workingdir/sub-$subject/ses-$session/original/dwi.  Sought first *.nii"
-                            return 5
-                        fi   
-                    else
-                        echo "ERROR: There are no .nii files found in $workingdir/sub-$subject/ses-$session/original/dwi"
-                        return 8
-                    fi                 
-                else
-                    echo "ERROR: original/dwi directory not found in $workingdir/sub-$subject/ses-$session/original/dwi"
-                    return 4
-                fi                
-
-            else
-                echo "ERROR: Session (ses-$subject) not found: $workingdir/sub-$subject/ses-$session"
-                return 3
-            fi
-
-        else
-            echo "ERROR: Subject (sub-$subject) not found in working directory"
-            return 2
-        fi
-    else
-        echo "ERROR: Working directory ($workingdir) not found"
-        return 1
-    fi
-}
-test_complete() {
-
-    if [ -f $workingdir/sub-$subject/ses-$session/Tractography/reg2brain.data.nii.gz ];then
-        echo "INFO: Registered diffusion volume detected: ($workingdir/sub-$subject/ses-$session/Tractography/reg2brain.data.nii.gz)"
-        return 0
-    else
-        echo "WARN: Registered diffusion volume does not yet exist ($workingdir/sub-$subject/ses-$session/Tractography/reg2brain.data.nii.gz)"
-        return 1
-    fi
-}
-
-registration() {    
-    touch $stagingdir/sub-$subject/ses-$session/Tractography/reg2brain.data.nii.gz 
-
-    rsync -r $stagingdir/sub-$subject/ses-$session/ $workingdir/sub-$subject/ses-$session
-    if [ $? == 0 ];then
-        rm -r $stagingdir
-        echo "INFO: Return staging to working directory complete."
-    else
-        echo "ERROR: Failed to sync staging area ($stagingdir) back to working directory ($workingdir).  Registration is incomplete."
-        return 2
-    fi
-}
-
-if ! test_complete;then  
-
-    if test_canproceed;then
-        
-        __dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-        source ${__dir}/stage.sh $workingdir $subject $session $stagingdir
-        if [ $? == 0 ];then
-
-            registration
-            if [ $? != 0 ];then
-                echo "ERROR: Registration failed.  See error log for details."
-            else
-                
-
-                end=`date +%s`
-                runtime=$((end-start))
-                echo "INFO: Registration complete. Runtime: $runtime"
-                if ! test_complete;then
-                    exit 3
-                fi
-            fi
-        else
-            echo "ERROR: Unable to establish a copy of working directory to ensure atomicity"
-            exit 2
-        fi    
-    else
-        echo "ERROR: Unable to perform registration of diffusion volume to T1. Exiting"  
-        exit 1  
-    fi
+if [[ ! -d $SOURCE ]];then
+    echo "ERROR: Specified source directory does not exist: (${SOURCE})"
+    exit
 fi
+
+subject=$( get_subject $SOURCE )
+session=$( get_session $SOURCE )    
+derivatives=$( get_derivatives $SOURCE )
+
+
+#Lets look for T1
+if [[ ! -d $SOURCE/anat ]];then
+    printf "ERROR: anat directory not found in source\n"
+    exit
+fi
+t1=$( ls $SOURCE/anat/*.nii |head -1)
+if [[  ! -f $t1 ]];then
+    printf "ERROR: No structural T1 image found\n"
+    exit
+fi
+
+#Lets see if dwi exists
+if [[ ! -d $SOURCE/dwi ]];then
+    printf "ERROR: No diffusion directory (dwi) found\n"
+    exit
+fi
+dwi=$( ls $SOURCE/dwi/*.nii |head -1 )
+if [[ ! -f $dwi ]];then    
+    printf "ERROR: Diffusion volume not found in dwi directory\n"
+    exit
+fi
+mkdir -p $derivatives/$PIPELINE/$subject/$session
+cp $t1 $derivatives/$PIPELINE/$subject/$session
+cp $dwi $derivatives/$PIPELINE/$subject/$session
+touch $derivatives/$PIPELINE/$subject/$session/reg2brain.data.nii.gz

@@ -19,17 +19,85 @@ From: ubuntu:18.04
     #git clone https://github.com/dmattie/aircrush-core-operators
     #mv aircrush-core-operators/operators operators
     #rm -r aircrush-core-operators
+
+    chmod ugo+x /usr/local/aircrush/scripts/*
     
 %files
-    /tmp/scripts /usr/local/aircrush/scripts
+    /tmp/air-neuro/scripts /usr/local/aircrush/scripts
     
 
 %environment
     export LC_ALL=C
     export PATH=/usr/local:/usr/local/aircrush/scripts:$PATH
 
-%runscript
-    /bin/bash /usr/local/aircrush/scripts/envcheck.sh
+%runscript    
+    echo "Arguments received: first: $1    all:$*"
+    /bin/bash $*
+
 
 %labels
     Author dmattie
+
+
+###############
+# bids
+###############
+%apphelp bids
+    Reformat given directory into BIDS compliant directory (best effort)
+    Usage:
+        singularity run --app bids air-neuro.sif source target
+
+    Example:
+        singularity run --app bids air-neuro.sif ~/scratch/dataset/source/123456 ~/scratch/dataset/rawdata
+%apprun bids
+    /usr/local/aircrush/scripts/bids.sh $*
+
+###############
+# recon
+###############
+%apphelp recon
+    Image reconstruction of T1 structural image using Freesurfer's recon-all 
+    command.
+    Usage:
+        singularity run --app recon [air-neuro.sif] [path-to-subject/session]
+    Example: 
+        singularity run --app recon air-neuro.sif rawdata/sub-12345/ses-001
+%apprun recon
+    /usr/local/aircrush/scripts/recon.sh $*
+
+###############
+# registration
+###############
+%apphelp registration
+    Registration of T1 structural image to Diffusion Weighted Image.    
+    Usage:
+        singularity run --app registration econ [air-neuro.sif] [path-to-subject/session]
+    Example: 
+        singularity run --app registration air-neuro.sif rawdata/sub-12345/ses-001
+%apprun registration
+    /usr/local/aircrush/scripts/registration.sh $*
+    
+###############
+# parcellate
+###############
+%apphelp parcellate
+    Parcellation of reconstructed T1 structural image individual ROI volumes    
+    Usage:
+        singularity run --app parcellate [air-neuro.sif] [path-to-subject/session] [plugin]
+    Example: 
+        singularity run --app parcellate air-neuro.sif rawdata/sub-12345/ses-001 levman
+%apprun parcellate
+    /usr/local/aircrush/scripts/parcellate.sh $*
+
+###############
+# crush
+###############
+%apphelp crush
+    CRUSH of fibre tracts across each individual ROI volume    
+    Usage:
+        singularity run --app crush [air-neuro.sif] [path-to-subject/session]
+    Example: 
+        singularity run --app crush air-neuro.sif derivatives/levman/sub-12345/ses-001 levman
+%apprun crush
+    /usr/local/aircrush/scripts/crush.sh $*
+    
