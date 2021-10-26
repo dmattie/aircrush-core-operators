@@ -7,71 +7,114 @@ SCRIPT=$( realpath $0 )
 SCRIPTPATH=$( dirname $SCRIPT )
 source "${SCRIPTPATH}/lib/helper.sh"
 
-if [ $# -eq 0 ];then
-    printf "ERROR:At least one parameter expected\n"    
-    printf "\tUSAGE:\t\trecon.sh SOURCE PIPELINE"
-    printf "\n\tEXAMPLE:\trecon.sh ~/scratch/dataset/rawdata/sub-0001/ses-000A levman\n\n"
-    printf "\tResults will appear in ~/scratch/dataset/derivatives/levman/sub-0001/ses-000A/\n" 
-    printf "\tIf PIPELINE not specified, output made in place\n"   
-    exit 1 
-fi
-SOURCE=$1
-PIPELINE=$2
+#set -e #Exit when a command fails
+#set -x #echo each command before it runs
 
-if [[ ! -d $SOURCE ]];then
-    echo "ERROR: Specified source directory doesn't exist: ($SOURCE)"
+SCRIPT=$( realpath $0 )
+SCRIPTPATH=$( dirname $SCRIPT )
+source "${SCRIPTPATH}/lib/helper.sh"
+############################################################
+# Help                                                     #
+############################################################
+Help()
+{
+   # Display Help
+   echo "Reconstruct structural T1 image using Freesurfer recon_all"
+   echo
+   echo "Usage: recon [OPTIONS...]"
+   echo "options:"
+   echo "--help                                 Print this Help."
+   echo "--datasetdir  DIR                      Path to dataset directory (just above ../[source|rawdata|derivatives]/..)"
+   echo "--subject SUBJECT                      Specify subject ID to clone.  If session not"
+   echo "                                       specified, then clone the entire subject"
+   echo "--session SESSION                      Specify session ID to clone"   
+   echo
+}
+
+############################################################
+# Process the input options. Add options as needed.        #
+############################################################
+# Get the options
+
+TEMP=`getopt -o h: --long help,datasetdir:,subject:,session:, \
+             -n 'recon' -- "$@"`
+
+if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
+
+# Note the quotes around `$TEMP': they are essential!
+eval set -- "$TEMP"
+
+DATASETDIR=""
+SUBJECT=""
+SESSION=""
+
+while true; do
+  case "$1" in
+    -h | --help ) Help;exit 1;;
+    --datasetdir ) DATASETDIR="$2";shift 2;;     
+    --subject ) SUBJECT="$2";shift 2;;
+    --session ) SESSION="$2";shift 2;;
+    -- ) shift; break ;;
+    * ) break ;;
+  esac
+done
+
+
+if [[ $DATASETDIR == "" ]];then
+    >&2 echo "ERROR: --datasetdir not specified"
     exit 1
 fi
+if [[ ! -d $DATASETDIR ]];then
+    >&2 echo "ERROR: dataset directory specified not found ($datasetdir)"
+    exit 1
+fi
+if [[ $SUBJECT == "" ]];then
+    >&2 echo "ERROR: subject not specified"
+    exit 1
+fi
+if [[ $SESSION == "" ]];then
+    SOURCE=$DATASETDIR/rawdata/sub-$SUBJECT
+    TARGET=$DATASETDIR/derivatives/freesurfer/sub-$SUBJECT
+else
+    SOURCE=$DATASETDIR/rawdata/sub-$SUBJECT/ses-$SESSION
+    TARGET=$DATASETDIR/derivatives/freesurfer/sub-$SUBJECT/ses-$SESSION
+fi
 
-
-subject=$( get_subject $SOURCE )
-session=$( get_session $SOURCE )    
-derivatives=$( get_derivatives $SOURCE )
+if [[ ! -d $SOURCE ]];then
+    >&2 echo "ERROR: Specified source directory doesn't exist: ($SOURCE)"
+    exit 1
+fi
 
 cd $SOURCE
 if [[ ! -d "anat" ]];then
-    echo "T1 Structural directory not found in $WD/anat"
+    >&2 echo "T1 Structural directory not found in $WD/anat"
     exit 1
 fi
+cd $SOURCE
 
-infile=$( ls anat/${subject}_${session}*.nii |head -1)
+infile=$( ls anat/sub-${SUBJECT}*.nii.gz |head -1)
 
 if [[ ! -f $infile ]];then
-    echo "ERROR: T1 Structural volume not found (anat/${subject}_${session}*.nii)"
+    >&2 echo "ERROR: T1 Structural volume not found (anat/sub-${SUBJECT}*.nii.gz)"
     exit 1
 fi
-####################### START OF TRANSACTON  ###################################
-transactiondir=$( begin_transaction $SOURCE )
-ecode=$?
-if [[ ! $ecode == 0 ]];then
-    echo "Unable to continue.  Error code $ecode returned in begin_transaction (helper.sh). [$transactiondir]"
-    exit 1
-fi
-cd $transactiondir
+
 #######################  DO THE WORK   #########################################
 # Do Reconstruction here
 
-mkdir -p Freesurfer/mri
-touch Freesurfer/mri/wmparc.mgz 
+mkdir -p $TARGET/mri
+touch $TARGET/mri/wmparc.mgz 
+ecode=$?
 
 #######################  VALIDATE   ############################################
 # Validate the work
-if [ ! -f "Freesurfer/mri/wmparc.mgz" ];then echo "ERROR: Transaction failed.  No changes committed"; exit 2; fi
-
-if [[ ! $PIPELINE == "" ]];then
-    target=$derivatives/$PIPELINE/$subject/$session
-else
-    target=$source
+if [ ! -f "$TARGET/mri/wmparc.mgz" ];then 
+    >&2 echo "ERROR: recon_all failed.  No changes committed"; 
+    exit 1; 
 fi
-######################  COMMIT THE WORK   ######################################
 
 
-result=$( end_transaction $transactiondir $target)
-ecode=$?
-if [[ ! $result == "" ]];then 
-    echo $result; 
-fi
-exit $ecode
+exit
 
 
 

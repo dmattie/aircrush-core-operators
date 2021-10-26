@@ -6,6 +6,8 @@ From: ubuntu:18.04
     apt-get update
     apt-get install -y wget
     apt-get install -y unzip
+    apt-get install -y rsync
+    apt-get install -y tar
 
     #Download Trackvis
     cd /usr/local/
@@ -38,6 +40,32 @@ From: ubuntu:18.04
 %labels
     Author dmattie
 
+
+###############
+# pull_dataset
+###############
+%apphelp pull_dataset
+       
+Copy data from the data commons to local working directory."
+
+Usage: pull_dataset [OPTIONS...]"
+options:"
+--help                                 Print this Help."
+--datacommons DIR                      Path to data commons root"
+--stage [source|rawdata|derivatives]   Stage to clone. All if omitted"
+--workingdir  DIR                      Path to working directory"
+--project PROJECT                      Project ID.  If subject and/or session not"
+                                       specified, clone the entire project"
+--subject SUBJECT                      Specify subject ID to clone.  If session not"
+                                       specified, then clone the entire subject"
+--session SESSION                      Specify session ID to clone"
+--pipeline PIPELINE                    If stage is set to derivatives, pipeline ID must be specified"
+
+
+    Example:
+        singularity run --app pull_dataset air-neuro.sif --datacommons ~/projects/def-user/datacommons --workingdir ~/scratch/aircrush -project projectid --subject 1234
+%apprun pull_dataset
+    /usr/local/aircrush/scripts/pull_dataset.sh $*
 
 ###############
 # bids
