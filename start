@@ -3,12 +3,12 @@
 
 from aircrushcore.controller.configuration import AircrushConfig
 from aircrushcore.dag import Workload
-from aircrushcore.cms.models import *
+from aircrushcore.cms import *
 from os.path import exists,dirname
 import os
 import importlib
 import getpass
-from operators import invoke_operator
+#from operators import invoke_operator
 import datetime
 import ast
 import subprocess

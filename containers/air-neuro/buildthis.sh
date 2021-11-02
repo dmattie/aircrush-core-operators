@@ -1,16 +1,17 @@
 #!/bin/bash
 
-if [[ -d /tmp/air-neuro ]];then
- rm -r /tmp/air-neuro
-fi
-mkdir -p /tmp/air-neuro
-cp -r scripts /tmp/air-neuro
+#if [[ -d /tmp/air-neuro ]];then
+# rm -r /opt/local/air-neuro
+#fi
+#mkdir -p /opt/local/air-neuro
+#cp -r scripts /opt/local/air-neuro
 
-cd /media/dmattie/GENERAL/singularity-containers
-sudo singularity build  air-neuro.sif ~/projects/ac-core/containers/air-neuro/air-neuro.def 
+sudo singularity build  air-neuro.sif /home/vagrant/ac-client/containers/air-neuro/air-neuro.def 
+
 if [[ $? -eq 0 ]];then
+sudo mv air-neuro.sif /home/vagrant/singularity-containers
 echo run this:
-echo singularity push -U /media/dmattie/GENERAL/singularity-containers/air-neuro.sif library://dmattie/default/image 
+echo singularity push -U /home/vagrant/singularity-containers/air-neuro.sif library://dmattie/default/image 
 echo then update tasks
 fi
 

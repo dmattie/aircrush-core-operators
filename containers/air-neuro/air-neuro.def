@@ -1,37 +1,44 @@
-BootStrap: library
+BootStrap: docker
 From: ubuntu:18.04
 
+
+%files    
+    scripts /usr/local
+    /home/vagrant/ac-software /usr/local
+    
+
+%environment
+    export LC_ALL=C
+    export PATH=/usr/local:/usr/local/scripts:$PATH
+
+
 %post
-    #Install required software
-    apt-get update
+    apt-get update && apt-get install -y netcat
+    NOW=`date`
+    echo "export NOW=\"${NOW}\"" >> $SINGULARITY_ENVIRONMENT
     apt-get install -y wget
     apt-get install -y unzip
     apt-get install -y rsync
     apt-get install -y tar
 
-    #Download Trackvis
-    cd /usr/local/
-    #wget -q https://www.nitrc.org/frs/download.php/12104/MRIcroGL_linux.zip
-    #unzip MRIcroGL_linux.zip
+    apt install -y python-minimal
+    apt-get install -y python3
+    apt-get install -y python3-pip
+    pip3 install -i https://test.pypi.org/simple/ aircrushcore
 
-    apt-get install -y python3.6
-    update-alternatives --install /usr/bin/python python /usr/bin/python3.6 1
-    update-alternatives  --set python /usr/bin/python3.6
+    
+    python /usr/local/ac-software/fslinstaller.py -d /opt/fsl
+
+    apt install -t /usr/local/ac-software/freesurfer_7.2.0_amd64.deb
+    #apt-get install -y python3.6
+    #update-alternatives --install /usr/bin/python python /usr/bin/python3.6 1
+    #update-alternatives  --set python /usr/bin/python3.6
 
     #git clone https://github.com/dmattie/aircrush-core-operators
     #mv aircrush-core-operators/operators operators
     #rm -r aircrush-core-operators
 
-    chmod ugo+x /usr/local/aircrush/scripts/*
-    
-%files
-    /tmp/air-neuro/scripts /usr/local/aircrush/scripts
-    
-
-%environment
-    export LC_ALL=C
-    export PATH=/usr/local:/usr/local/aircrush/scripts:$PATH
-
+    chmod ugo+x /usr/local/scripts/*
 %runscript    
     echo "Arguments received: first: $1    all:$*"
     /bin/bash $*
@@ -65,7 +72,7 @@ options:"
     Example:
         singularity run --app pull_dataset air-neuro.sif --datacommons ~/projects/def-user/datacommons --workingdir ~/scratch/aircrush -project projectid --subject 1234
 %apprun pull_dataset
-    /usr/local/aircrush/scripts/pull_dataset.sh $*
+    /usr/local/scripts/pull_dataset.sh $*
 
 ###############
 # bids
@@ -78,7 +85,7 @@ options:"
     Example:
         singularity run --app bids air-neuro.sif ~/scratch/dataset/source/123456 ~/scratch/dataset/rawdata
 %apprun bids
-    /usr/local/aircrush/scripts/bids.sh $*
+    /usr/local/scripts/bids.sh $*
 
 ###############
 # recon
@@ -91,7 +98,7 @@ options:"
     Example: 
         singularity run --app recon air-neuro.sif rawdata/sub-12345/ses-001
 %apprun recon
-    /usr/local/aircrush/scripts/recon.sh $*
+    /usr/local/scripts/recon.sh $*
 
 ###############
 # registration
@@ -103,7 +110,7 @@ options:"
     Example: 
         singularity run --app registration air-neuro.sif rawdata/sub-12345/ses-001
 %apprun registration
-    /usr/local/aircrush/scripts/registration.sh $*
+    /usr/local/scripts/registration.sh $*
     
 ###############
 # parcellate
@@ -115,7 +122,7 @@ options:"
     Example: 
         singularity run --app parcellate air-neuro.sif rawdata/sub-12345/ses-001 levman
 %apprun parcellate
-    /usr/local/aircrush/scripts/parcellate.sh $*
+    /usr/local/scripts/parcellate.sh $*
 
 ###############
 # crush
@@ -127,5 +134,5 @@ options:"
     Example: 
         singularity run --app crush air-neuro.sif derivatives/levman/sub-12345/ses-001 levman
 %apprun crush
-    /usr/local/aircrush/scripts/crush.sh $*
+    /usr/local/scripts/crush.sh $*
     

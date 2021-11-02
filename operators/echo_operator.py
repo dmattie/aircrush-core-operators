@@ -1,7 +1,7 @@
 import datetime
 from aircrushcore.operators.base_operator import BaseOperator
-from aircrushcore.cms.models import *
-from aircrushcore.controller.configuration import AircrushConfig
+from aircrushcore.cms import *
+#from aircrushcore.controller.configuration import AircrushConfig
 import json
 import ast
 
