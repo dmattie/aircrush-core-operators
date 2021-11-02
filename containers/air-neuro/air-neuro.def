@@ -4,7 +4,7 @@ From: ubuntu:18.04
 
 %files    
     scripts /usr/local
-    /home/vagrant/ac-software /usr/local
+    ~/software /usr/local
     
 
 %environment
