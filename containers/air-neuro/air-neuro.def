@@ -20,19 +20,21 @@ From: ubuntu:18.04
     apt-get install -y tar
     apt-get install -y dialog
 
-    apt install -y python-minimal
-    apt-get install -y python3
-    apt-get install -y python3-pip
-    pip3 install -i https://test.pypi.org/simple/ aircrushcore
-
-#    wget -O- http://neuro.debian.net/lists/bionic.us-nh.full | tee /etc/apt/sources.list.d/neurodebian.sources.list
-#    apt-key adv --recv-keys --keyserver hkps://keyserver.ubuntu.com 0xA5D32F012649A5A9
-#    apt-get update
-#    apt-get install -y fsl-5.0-core
+    dpkg -i /usr/local/software/freesurfer_7.2.0_amd64.deb; apt-get -fy install
+#    apt install -y python-minimal
     
-    python /usr/local/software/fslinstaller.py -d /opt/fsl
+#    python /usr/local/software/fslinstaller.py -d /opt/fsl
 
-    apt install -t /usr/local/software/freesurfer_7.2.0_amd64.deb
+#    apt-get install -y python3
+#    apt-get install -y python3-pip
+#    pip3 install -i https://test.pypi.org/simple/ aircrushcore
+
+##    wget -O- http://neuro.debian.net/lists/bionic.us-nh.full | tee /etc/apt/sources.list.d/neurodebian.sources.list
+##    apt-key adv --recv-keys --keyserver hkps://keyserver.ubuntu.com 0xA5D32F012649A5A9
+##    apt-get update
+##    apt-get install -y fsl-5.0-core
+    
+#    python /usr/local/software/fslinstaller.py -d /opt/fsl
 
     chmod ugo+x /usr/local/scripts/*
 %runscript    
