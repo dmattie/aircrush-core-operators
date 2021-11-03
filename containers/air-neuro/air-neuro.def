@@ -1,16 +1,14 @@
 BootStrap: docker
 From: ubuntu:18.04
 
-
-%files    
+%files
     scripts /usr/local
-    ~/software /usr/local
-    
+    /home/dmattie/software /usr/local
 
 %environment
     export LC_ALL=C
     export PATH=/usr/local:/usr/local/scripts:$PATH
-
+    export LD_LIBRARY_PATH=/usr/lib/fsl/5.0:$LD_LIBRARY_PATH
 
 %post
     apt-get update && apt-get install -y netcat
@@ -20,23 +18,21 @@ From: ubuntu:18.04
     apt-get install -y unzip
     apt-get install -y rsync
     apt-get install -y tar
+    apt-get install -y dialog
 
     apt install -y python-minimal
     apt-get install -y python3
     apt-get install -y python3-pip
     pip3 install -i https://test.pypi.org/simple/ aircrushcore
 
+#    wget -O- http://neuro.debian.net/lists/bionic.us-nh.full | tee /etc/apt/sources.list.d/neurodebian.sources.list
+#    apt-key adv --recv-keys --keyserver hkps://keyserver.ubuntu.com 0xA5D32F012649A5A9
+#    apt-get update
+#    apt-get install -y fsl-5.0-core
     
-    python /usr/local/ac-software/fslinstaller.py -d /opt/fsl
+    python /usr/local/software/fslinstaller.py -d /opt/fsl
 
-    apt install -t /usr/local/ac-software/freesurfer_7.2.0_amd64.deb
-    #apt-get install -y python3.6
-    #update-alternatives --install /usr/bin/python python /usr/bin/python3.6 1
-    #update-alternatives  --set python /usr/bin/python3.6
-
-    #git clone https://github.com/dmattie/aircrush-core-operators
-    #mv aircrush-core-operators/operators operators
-    #rm -r aircrush-core-operators
+    apt install -t /usr/local/software/freesurfer_7.2.0_amd64.deb
 
     chmod ugo+x /usr/local/scripts/*
 %runscript    
