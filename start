@@ -1,11 +1,11 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-
+import argparse
 from aircrushcore.controller.configuration import AircrushConfig
 from aircrushcore.dag import Workload
 from aircrushcore.cms import *
 from os.path import exists,dirname
-import os
+import os,sys
 import importlib
 import getpass
 #from operators import invoke_operator
@@ -14,14 +14,9 @@ import ast
 import subprocess
 import argparse
 
-crush_config='crush.ini'
-aircrush=AircrushConfig(crush_config)
-
-crush_host=Host(
-    endpoint=aircrush.config['REST']['endpoint'],
-    username=aircrush.config['REST']['username'],
-    password=aircrush.config['REST']['password']
-    )
+aircrush=None
+crush_host=None
+args=None
 
 def ready():
     #Sense readiness to do something
@@ -69,6 +64,9 @@ def getMyComputeNodeUUID():
 
 
 def pullContainer(uri:str):
+    if (args.container):
+        return args.container
+
     try:        
         container_dir=aircrush.config['COMPUTE']['singularity_container_location']
     except:
@@ -215,9 +213,7 @@ def parameter_expansion(cmdArray,parms_to_add,**kwargs):
         datacommons=kwargs['datacommons']
     if 'pipeline' in kwargs:
         pipeline=kwargs['pipeline']
-    if 'datasetdir' in kwargs:
-        datasetdir=kwargs['pipeline']
-    
+ 
 
     for k in parms_to_add:   
 
@@ -228,7 +224,7 @@ def parameter_expansion(cmdArray,parms_to_add,**kwargs):
         parm = parm.replace("#subject",subject.title)
         parm = parm.replace("#session",session.title)
         parm = parm.replace('#project',project.field_path_to_exam_data)
-        para = parm.replace('#datasetdir',f"{workingdir}/projects/{project}/dataset/")
+        parm = parm.replace('#datasetdir',f"{workingdir}/projects/{project.field_path_to_exam_data}/dataset/")
    
         cmdArray.append(f"--{k}")
         cmdArray.append(parm) 
@@ -243,7 +239,7 @@ def doSomething():
     w=Workload(aircrush) #The list of things to do
     todo = w.get_next_task(node_uuid=nuid) #Do whatever the big brain tells us to do next
     if(todo):  #Todo is a TaskInstance        
-        print("-----------------------")  
+        print("----------Got one-------------")  
         task_col =  TaskCollection(cms_host=crush_host)
         task = task_col.get_one(uuid=todo.field_task)    
         #execute(operator=task.field_operator,params=task.field_parameters)
@@ -274,10 +270,15 @@ def doSomething():
 
             container = pullContainer(task.field_singularity_container)
             workingdir=aircrush.config['COMPUTE']['working_directory']   
-            datacommons=aircrush.config['COMPUTE']['commons_path']     
-            cmdArray=["singularity","run","--app",task.field_operator,container]  
-            parms = ast.literal_eval(task.field_parameters)
-
+            datacommons=aircrush.config['COMPUTE']['commons_path']                 
+            cmdArray=["singularity","run","--app",task.field_operator,container]              
+            try:
+                parms = ast.literal_eval(task.field_parameters) 
+            except:
+                msg=f"Parameters for task {task.field_operator} are malformed. Expected valid JSON string:{task.field_parameters}"
+                print(msg)
+                messages.append(msg)
+                sys.exit(1)            
             # pullSession(project,subject,session)
 
             # # pulldata
@@ -295,10 +296,11 @@ def doSomething():
                 workingdir=workingdir,
                 project=project,
                 subject=subject,
-                session=session)
-             
-            print(cmdArray)  
-            ret = subprocess.run(cmdArray,stdout=subprocess.PIPE,stderr=subprocess.PIPE, universal_newlines=True)
+                session=session)                        
+            messages.append(f"cmdArray:{cmdArray}")
+            print(cmdArray)
+            
+            ret = subprocess.run(cmdArray,stdout=subprocess.PIPE,stderr=subprocess.PIPE, universal_newlines=True)            
 #            ret = subprocess.call(cmdArray)
             
             messages.append(f"Operation executed:{cmdArray}") 
@@ -358,6 +360,34 @@ def updateStatus(task_instance,status:str,detail:str="",new_errors:str=""):
     uuid=task_instance.upsert()
 
 def main():
+
+    global aircrush,crush_host,args
+
+    crush_config='crush.ini'
+    aircrush=AircrushConfig(crush_config)
+    try:
+        crush_host=Host(
+            endpoint=aircrush.config['REST']['endpoint'],
+            username=aircrush.config['REST']['username'],
+            password=aircrush.config['REST']['password']
+            )
+    except:
+        print("[ERROR] .ini setting now found; expected 'username','password', and 'endpoint' in section [REST]")
+        sys.exit(1)
+
+    try:
+        os.putenv('AIRCRUSH_CONTAINERS',aircrush.config['COMPUTE']['singularity_container_location'])
+    except:
+        print("[ERROR] .ini setting now found; expected 'singularity_container_location' in section [COMPUTE]")
+        sys.exit(1)
+
+    parser = argparse.ArgumentParser(
+        description="CRUSH client command line utility. Start all tasks with this command")
+    parser.add_argument('-container',action='store',type=str)
+
+    args = parser.parse_args()
+
+    
     if ready():
         doSomething()
 

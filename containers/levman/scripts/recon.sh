@@ -87,7 +87,7 @@ fi
 
 cd $SOURCE
 if [[ ! -d "anat" ]];then
-    >&2 echo "T1 Structural directory not found in $WD/anat"
+    >&2 echo "T1 Structural directory not found in $SOURCE/anat"
     exit 1
 fi
 cd $SOURCE
@@ -102,9 +102,35 @@ fi
 #######################  DO THE WORK   #########################################
 # Do Reconstruction here
 
-mkdir -p $TARGET/mri
-touch $TARGET/mri/wmparc.mgz 
-ecode=$?
+mkdir -p $TARGET
+
+cd $SOURCE/anat
+
+infile=$( ls sub-${SUBJECT}_ses-${SESSION}*.nii )
+infile_gz=$( ls sub-${SUBJECT}_ses-${SESSION}*.nii.gz )
+if [[ ! -f $SOURCE/anat/$infile && -f $infile_gz ]];then
+   infile=$infile_gz
+   echo "found compressed version: $SOURCE/anat/$infile"
+fi  
+
+cd $TARGET
+singularity exec --bind $DATASETDIR:/dataset \
+    $AIRCRUSH_CONTAINERS/air-neuro.sif \
+    /usr/local/freesurfer/7.2.0/bin/recon-all \
+    -s freesurfer  \
+    -i /dataset/rawdata/sub-29152/ses-1/anat/sub-29152_ses-1_anat.nii.gz
+
+
+echo recon-all -s freesurfer -i $SOURCE/anat/$infile -all 
+if [[ $? -eq 0 && -f $TARGET/freesurfer/mri/wmparc.mgz ]];then
+    mv $TARGET/freesurfer/* $TARGET
+    rmdir $TARGET/freesurfer
+    echo "recon-all complete"
+fi
+
+# mkdir -p $TARGET/mri
+# touch $TARGET/mri/wmparc.mgz 
+# ecode=$?
 
 #######################  VALIDATE   ############################################
 # Validate the work
