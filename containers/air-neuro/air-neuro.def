@@ -53,7 +53,6 @@ From: ubuntu:18.04
     apt-get install -y python3-pip
     pip3 install -i https://test.pypi.org/simple/ aircrushcore
  
-    chmod -R a+rx /usr/local/scripts/*
     chmod -R a+rx /usr/local/software/*
 %runscript    
     echo "Arguments received: first: $1    all:$*"
