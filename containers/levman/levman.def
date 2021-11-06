@@ -42,9 +42,11 @@ From: ubuntu:18.04
     wget https://dl.google.com/go/go$VERSION.$OS-$ARCH.tar.gz
     tar -C /usr/local -xzvf go$VERSION.$OS-$ARCH.tar.gz
     rm go$VERSION.$OS-$ARCH.tar.gz
+    
+    export PATH=/usr/local/go/bin:$PATH
 
-    echo 'export PATH=/usr/local/go/bin:$PATH' >> ~/.bashrc && \
-    source ~/.bashrc
+    #echo 'export PATH=/usr/local/go/bin:$PATH' >> ~/.bashrc && \
+    #source ~/.bashrc
 
     export VERSION=3.8.1
     wget https://github.com/sylabs/singularity/releases/download/v${VERSION}/singularity-ce-${VERSION}.tar.gz
