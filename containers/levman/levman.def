@@ -16,6 +16,10 @@ From: ubuntu:18.04
     apt-get update && apt-get install -y netcat
     NOW=`date`
     echo "export NOW=\"${NOW}\"" >> $SINGULARITY_ENVIRONMENT
+
+    apt-get install -y software-properties-common
+    add-apt-repository universe
+
     apt-get install -y wget
     apt-get install -y unzip
     apt-get install -y rsync
@@ -24,7 +28,7 @@ From: ubuntu:18.04
     apt-get install -y python3-pip
     pip3 install -i https://test.pypi.org/simple/ aircrushcore
 
-    sudo apt-get install -y \
+    apt-get install -y \
         build-essential \
         libssl-dev \
         uuid-dev \
@@ -38,11 +42,11 @@ From: ubuntu:18.04
 
     export VERSION=1.16.4 OS=linux ARCH=amd64 && \  
     wget https://dl.google.com/go/go$VERSION.$OS-$ARCH.tar.gz && \ 
-    sudo tar -C /usr/local -xzvf go$VERSION.$OS-$ARCH.tar.gz && \ 
+    tar -C /usr/local -xzvf go$VERSION.$OS-$ARCH.tar.gz && \ 
     rm go$VERSION.$OS-$ARCH.tar.gz   
 
-    echo 'export PATH=/usr/local/go/bin:$PATH' >> ~/.bashrc && \
-    source ~/.bashrc
+    #echo 'export PATH=/usr/local/go/bin:$PATH' >> ~/.bashrc && \
+    #source ~/.bashrc
 
     export VERSION=3.8.1 && # adjust this as necessary \
     wget https://github.com/sylabs/singularity/releases/download/v${VERSION}/singularity-ce-${VERSION}.tar.gz && \
@@ -51,7 +55,7 @@ From: ubuntu:18.04
 
     ./mconfig && \
     make -C builddir && \
-    sudo make -C builddir install
+    make -C builddir install
 
     chmod ugo+x /usr/local/scripts/*
 %runscript    
