@@ -57,7 +57,7 @@ From: ubuntu:18.04
     make -C builddir
     make -C builddir install
 
-    chmod ugo+x /usr/local/scripts/*
+    chmod -R a+rx /usr/local/scripts
 %runscript    
     echo "Arguments received: first: $1    all:$*"
     /bin/bash $*
