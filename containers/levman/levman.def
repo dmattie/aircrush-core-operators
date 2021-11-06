@@ -3,9 +3,7 @@ From: ubuntu:18.04
 
 
 %files    
-    scripts /usr/local
-    #~/software /usr/local
-    
+    scripts /usr/local    
 
 %environment
     export LC_ALL=C
@@ -40,21 +38,21 @@ From: ubuntu:18.04
         git \
         cryptsetup
 
-    export VERSION=1.16.4 OS=linux ARCH=amd64 && \  
-    wget https://dl.google.com/go/go$VERSION.$OS-$ARCH.tar.gz && \ 
-    tar -C /usr/local -xzvf go$VERSION.$OS-$ARCH.tar.gz && \ 
-    rm go$VERSION.$OS-$ARCH.tar.gz   
+    export VERSION=1.16.4 OS=linux ARCH=amd64
+    wget https://dl.google.com/go/go$VERSION.$OS-$ARCH.tar.gz
+    tar -C /usr/local -xzvf go$VERSION.$OS-$ARCH.tar.gz
+    rm go$VERSION.$OS-$ARCH.tar.gz
 
     #echo 'export PATH=/usr/local/go/bin:$PATH' >> ~/.bashrc && \
     #source ~/.bashrc
 
-    export VERSION=3.8.1 && # adjust this as necessary \
-    wget https://github.com/sylabs/singularity/releases/download/v${VERSION}/singularity-ce-${VERSION}.tar.gz && \
-    tar -xzf singularity-ce-${VERSION}.tar.gz && \
+    export VERSION=3.8.1
+    wget https://github.com/sylabs/singularity/releases/download/v${VERSION}/singularity-ce-${VERSION}.tar.gz
+    tar -xzf singularity-ce-${VERSION}.tar.gz
     cd singularity-ce-${VERSION}
 
-    ./mconfig && \
-    make -C builddir && \
+    ./mconfig
+    make -C builddir
     make -C builddir install
 
     chmod ugo+x /usr/local/scripts/*
