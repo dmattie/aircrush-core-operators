@@ -53,7 +53,7 @@ From: ubuntu:18.04
     tar -xzf singularity-ce-${VERSION}.tar.gz
     cd singularity-ce-${VERSION}
 
-    ./mconfig
+    ./mconfig --without-suid
     make -C builddir
     make -C builddir install
 
