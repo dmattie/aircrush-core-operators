@@ -2,7 +2,7 @@ BootStrap: library
 From: ubuntu:18.04
 
 
-%files    
+%files
     scripts /usr/local    
 
 %environment
