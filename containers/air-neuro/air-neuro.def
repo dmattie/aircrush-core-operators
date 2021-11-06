@@ -1,7 +1,7 @@
 BootStrap: docker
 From: ubuntu:18.04
 
-%files    
+%files
     /home/dmattie/software /usr/local
     /home/dmattie/software/freesurfer_license.txt /usr/local/freesurfer/7.2.0
 
