@@ -1,5 +1,15 @@
 #!/bin/bash
 
+function get_setting {
+    setting=$1
+    default=$2
+    if [[ -f ~/.airneuro.conf ]];then
+        RES=$(cat .airneuro.conf|grep ${setting}|cut -d= -f2)
+    else
+        RES=$default
+    fi
+    echo $RES
+}
 function get_subject {    
     absolute_path=$( readlink -f $1 )    
     anticipated_subject=$( echo $absolute_path |rev|cut -d'/' -f2|rev )

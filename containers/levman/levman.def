@@ -104,7 +104,13 @@ options:"
     Example:
         singularity run --app bids air-neuro.sif ~/scratch/dataset/source/123456 ~/scratch/dataset/rawdata
 %apprun bids
-    /usr/local/scripts/bids.sh $*
+    if [[ -f ~/.airneuro.conf ]];then
+        SCRIPT_HOME=$(cat .airneuro.conf|grep script_home_override|cut -d= -f2)
+        echo "Script home overridden from .airneuro.conf setting:  $SCRIPT_HOME to be used"
+    else
+        RES=/usr/local/scripts
+    fi
+    $SCRIPT_HOME/bids.sh $*
 
 ###############
 # recon
