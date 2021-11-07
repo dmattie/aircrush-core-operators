@@ -91,7 +91,13 @@ options:"
     Example:
         singularity run --app pull_dataset air-neuro.sif --datacommons ~/projects/def-user/datacommons --workingdir ~/scratch/aircrush -project projectid --subject 1234
 %apprun pull_dataset
-    /usr/local/scripts/pull_dataset.sh $*
+    if [ -f ~/.airneuro.conf ];then
+        SCRIPT_HOME=$(cat ~/.airneuro.conf|grep script_home_override|cut -d= -f2)
+        echo "Script home overridden from .airneuro.conf setting:  $SCRIPT_HOME to be used"
+    else
+        SCRIPT_HOME=/usr/local/scripts
+    fi
+    $SCRIPT_HOME/pull_dataset.sh $*
 
 ###############
 # bids
@@ -108,7 +114,7 @@ options:"
         SCRIPT_HOME=$(cat ~/.airneuro.conf|grep script_home_override|cut -d= -f2)
         echo "Script home overridden from .airneuro.conf setting:  $SCRIPT_HOME to be used"
     else
-        RES=/usr/local/scripts
+        SCRIPT_HOME=/usr/local/scripts
     fi
     $SCRIPT_HOME/bids.sh $*
 
@@ -123,7 +129,13 @@ options:"
     Example: 
         singularity run --app recon air-neuro.sif rawdata/sub-12345/ses-001
 %apprun recon
-    /usr/local/scripts/recon.sh $*
+    if [ -f ~/.airneuro.conf ];then
+        SCRIPT_HOME=$(cat ~/.airneuro.conf|grep script_home_override|cut -d= -f2)
+        echo "Script home overridden from .airneuro.conf setting:  $SCRIPT_HOME to be used"
+    else
+        SCRIPT_HOME=/usr/local/scripts
+    fi
+    $SCRIPT_HOME/recon.sh $*
 
 ###############
 # registration
@@ -135,7 +147,13 @@ options:"
     Example: 
         singularity run --app registration air-neuro.sif rawdata/sub-12345/ses-001
 %apprun registration
-    /usr/local/scripts/registration.sh $*
+    if [ -f ~/.airneuro.conf ];then
+        SCRIPT_HOME=$(cat ~/.airneuro.conf|grep script_home_override|cut -d= -f2)
+        echo "Script home overridden from .airneuro.conf setting:  $SCRIPT_HOME to be used"
+    else
+        SCRIPT_HOME=/usr/local/scripts
+    fi
+    $SCRIPT_HOME/registration.sh $*
     
 ###############
 # parcellate
@@ -147,7 +165,13 @@ options:"
     Example: 
         singularity run --app parcellate air-neuro.sif rawdata/sub-12345/ses-001 levman
 %apprun parcellate
-    /usr/local/scripts/parcellate.sh $*
+    if [ -f ~/.airneuro.conf ];then
+        SCRIPT_HOME=$(cat ~/.airneuro.conf|grep script_home_override|cut -d= -f2)
+        echo "Script home overridden from .airneuro.conf setting:  $SCRIPT_HOME to be used"
+    else
+        SCRIPT_HOME=/usr/local/scripts
+    fi
+    $SCRIPT_HOME/parcellate.sh $*
 
 ###############
 # crush
@@ -159,5 +183,11 @@ options:"
     Example: 
         singularity run --app crush air-neuro.sif derivatives/levman/sub-12345/ses-001 levman
 %apprun crush
-    /usr/local/scripts/crush.sh $*
+    if [ -f ~/.airneuro.conf ];then
+        SCRIPT_HOME=$(cat ~/.airneuro.conf|grep script_home_override|cut -d= -f2)
+        echo "Script home overridden from .airneuro.conf setting:  $SCRIPT_HOME to be used"
+    else
+        SCRIPT_HOME=/usr/local/scripts
+    fi
+    $SCRIPT_HOME/crush.sh $*
     

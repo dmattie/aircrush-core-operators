@@ -4,7 +4,7 @@ SCRIPTPATH=$( dirname $SCRIPT )
 source "${SCRIPTPATH}/lib/helper.sh"
 
 #set -e #Exit when a command fails
-set -x #echo each command before it runs
+#set -x #echo each command before it runs
 
 ############################################################
 # Help                                                     #
