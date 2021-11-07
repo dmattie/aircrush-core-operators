@@ -26,36 +26,36 @@ From: ubuntu:18.04
     apt-get install -y python3-pip
     pip3 install -i https://test.pypi.org/simple/ aircrushcore
 
-    DEBIAN_FRONTEND=noninteractive apt-get install -y \
-        build-essential \
-        libssl-dev \
-        uuid-dev \
-        libgpgme11-dev \
-        squashfs-tools \
-        libseccomp-dev \
-        wget \
-        pkg-config \
-        git \
-        cryptsetup
+    #DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    #    build-essential \
+    #    libssl-dev \
+    #    uuid-dev \
+    #    libgpgme11-dev \
+    #    squashfs-tools \
+    #    libseccomp-dev \
+    #    wget \
+    #    pkg-config \
+    #    git \
+    #    cryptsetup
 
-    export VERSION=1.16.4 OS=linux ARCH=amd64
-    wget https://dl.google.com/go/go$VERSION.$OS-$ARCH.tar.gz
-    tar -C /usr/local -xzvf go$VERSION.$OS-$ARCH.tar.gz
-    rm go$VERSION.$OS-$ARCH.tar.gz
+    #export VERSION=1.16.4 OS=linux ARCH=amd64
+    #wget https://dl.google.com/go/go$VERSION.$OS-$ARCH.tar.gz
+    #tar -C /usr/local -xzvf go$VERSION.$OS-$ARCH.tar.gz
+    #rm go$VERSION.$OS-$ARCH.tar.gz
     
-    export PATH=/usr/local/go/bin:$PATH
+    #export PATH=/usr/local/go/bin:$PATH
 
-    #echo 'export PATH=/usr/local/go/bin:$PATH' >> ~/.bashrc && \
-    #source ~/.bashrc
+    ##echo 'export PATH=/usr/local/go/bin:$PATH' >> ~/.bashrc && \
+    ##source ~/.bashrc
 
-    export VERSION=3.8.1
-    wget https://github.com/sylabs/singularity/releases/download/v${VERSION}/singularity-ce-${VERSION}.tar.gz
-    tar -xzf singularity-ce-${VERSION}.tar.gz
-    cd singularity-ce-${VERSION}
+    #export VERSION=3.8.1
+    #wget https://github.com/sylabs/singularity/releases/download/v${VERSION}/singularity-ce-${VERSION}.tar.gz
+    #tar -xzf singularity-ce-${VERSION}.tar.gz
+    #cd singularity-ce-${VERSION}
 
-    ./mconfig --without-suid
-    make -C builddir
-    make -C builddir install
+    #./mconfig --without-suid
+    #make -C builddir
+    #make -C builddir install
 
     chmod -R a+rx /usr/local/scripts
 %runscript    
