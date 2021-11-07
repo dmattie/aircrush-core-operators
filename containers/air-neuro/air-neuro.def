@@ -4,6 +4,7 @@ From: ubuntu:18.04
 %files
     /home/dmattie/software /usr/local
     /home/dmattie/software/freesurfer_license.txt /usr/local/freesurfer/7.2.0
+    scripts /usr/local
 
 %environment
     export LC_ALL=C
@@ -24,7 +25,7 @@ From: ubuntu:18.04
     apt-get install -y unzip
     apt-get install -y rsync
     apt-get install -y tar
-    apt-get install -y dialog
+    apt-get install -y dialog    
 
     apt-get install -y software-properties-common
     add-apt-repository universe
@@ -54,6 +55,7 @@ From: ubuntu:18.04
     pip3 install -i https://test.pypi.org/simple/ aircrushcore
  
     chmod -R a+rx /usr/local/software/*
+    chmod -R a+rx /usr/local/scripts
 %runscript    
     echo "Arguments received: first: $1    all:$*"
     /bin/bash $*
@@ -87,7 +89,13 @@ options:"
     Example:
         singularity run --app pull_dataset air-neuro.sif --datacommons ~/projects/def-user/datacommons --workingdir ~/scratch/aircrush -project projectid --subject 1234
 %apprun pull_dataset
-    /usr/local/scripts/pull_dataset.sh $*
+    if [ -f ~/.airneuro.conf ];then
+        SCRIPT_HOME=$(cat ~/.airneuro.conf|grep script_home_override|cut -d= -f2)
+        echo "Script home overridden from .airneuro.conf setting:  $SCRIPT_HOME to be used"
+    else
+        SCRIPT_HOME=/usr/local/scripts
+    fi
+    $SCRIPT_HOME/pull_dataset.sh $*
 
 ###############
 # bids
@@ -100,7 +108,13 @@ options:"
     Example:
         singularity run --app bids air-neuro.sif ~/scratch/dataset/source/123456 ~/scratch/dataset/rawdata
 %apprun bids
-    /usr/local/scripts/bids.sh $*
+    if [ -f ~/.airneuro.conf ];then
+        SCRIPT_HOME=$(cat ~/.airneuro.conf|grep script_home_override|cut -d= -f2)
+        echo "Script home overridden from .airneuro.conf setting:  $SCRIPT_HOME to be used"
+    else
+        SCRIPT_HOME=/usr/local/scripts
+    fi
+    $SCRIPT_HOME/bids.sh $*
 
 ###############
 # recon
@@ -113,7 +127,13 @@ options:"
     Example: 
         singularity run --app recon air-neuro.sif rawdata/sub-12345/ses-001
 %apprun recon
-    /usr/local/scripts/recon.sh $*
+    if [ -f ~/.airneuro.conf ];then
+        SCRIPT_HOME=$(cat ~/.airneuro.conf|grep script_home_override|cut -d= -f2)
+        echo "Script home overridden from .airneuro.conf setting:  $SCRIPT_HOME to be used"
+    else
+        SCRIPT_HOME=/usr/local/scripts
+    fi
+    $SCRIPT_HOME/recon.sh $*
 
 ###############
 # registration
@@ -125,7 +145,13 @@ options:"
     Example: 
         singularity run --app registration air-neuro.sif rawdata/sub-12345/ses-001
 %apprun registration
-    /usr/local/scripts/registration.sh $*
+    if [ -f ~/.airneuro.conf ];then
+        SCRIPT_HOME=$(cat ~/.airneuro.conf|grep script_home_override|cut -d= -f2)
+        echo "Script home overridden from .airneuro.conf setting:  $SCRIPT_HOME to be used"
+    else
+        SCRIPT_HOME=/usr/local/scripts
+    fi
+    $SCRIPT_HOME/registration.sh $*
     
 ###############
 # parcellate
@@ -137,7 +163,13 @@ options:"
     Example: 
         singularity run --app parcellate air-neuro.sif rawdata/sub-12345/ses-001 levman
 %apprun parcellate
-    /usr/local/scripts/parcellate.sh $*
+    if [ -f ~/.airneuro.conf ];then
+        SCRIPT_HOME=$(cat ~/.airneuro.conf|grep script_home_override|cut -d= -f2)
+        echo "Script home overridden from .airneuro.conf setting:  $SCRIPT_HOME to be used"
+    else
+        SCRIPT_HOME=/usr/local/scripts
+    fi
+    $SCRIPT_HOME/parcellate.sh $*
 
 ###############
 # crush
@@ -149,5 +181,11 @@ options:"
     Example: 
         singularity run --app crush air-neuro.sif derivatives/levman/sub-12345/ses-001 levman
 %apprun crush
-    /usr/local/scripts/crush.sh $*
+    if [ -f ~/.airneuro.conf ];then
+        SCRIPT_HOME=$(cat ~/.airneuro.conf|grep script_home_override|cut -d= -f2)
+        echo "Script home overridden from .airneuro.conf setting:  $SCRIPT_HOME to be used"
+    else
+        SCRIPT_HOME=/usr/local/scripts
+    fi
+    $SCRIPT_HOME/crush.sh $*
     
