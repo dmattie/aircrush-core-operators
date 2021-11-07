@@ -7,7 +7,7 @@ From: ubuntu:18.04
 
 %environment
     export LC_ALL=C
-    export PATH=/usr/local:/usr/local/scripts:$PATH
+    export PATH=/usr/local:/usr/local/scripts:$PATH    
 
 
 %post
@@ -104,7 +104,7 @@ options:"
     Example:
         singularity run --app bids air-neuro.sif ~/scratch/dataset/source/123456 ~/scratch/dataset/rawdata
 %apprun bids
-    if [[ -f ~/.airneuro.conf ]];then
+    if [ -f ~/.airneuro.conf ];then
         SCRIPT_HOME=$(cat .airneuro.conf|grep script_home_override|cut -d= -f2)
         echo "Script home overridden from .airneuro.conf setting:  $SCRIPT_HOME to be used"
     else
