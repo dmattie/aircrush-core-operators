@@ -4,6 +4,8 @@ From: ubuntu:18.04
 %files
     /home/dmattie/software /usr/local
     /home/dmattie/software/freesurfer_license.txt /usr/local/freesurfer/7.2.0
+    /home/dmattie/software/freesurfer_license.txt /usr/local/freesurfer/7.2.0/.license
+    
     scripts /usr/local
 
 %environment
