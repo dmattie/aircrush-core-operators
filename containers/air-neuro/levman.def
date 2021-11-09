@@ -3,7 +3,7 @@ From: ubuntu:18.04
 
 
 %files
-    scripts /usr/local    
+    scripts /usr/local
 
 %environment
     export LC_ALL=C
