@@ -114,11 +114,11 @@ if [[ ! -f $SOURCE/anat/$infile && -f $infile_gz ]];then
 fi  
 
 cd $TARGET
-singularity exec --bind $DATASETDIR:/dataset \
-    $AIRCRUSH_CONTAINERS/air-neuro.sif \
-    /usr/local/freesurfer/7.2.0/bin/recon-all \
-    -s freesurfer  \
-    -i /dataset/rawdata/sub-29152/ses-1/anat/sub-29152_ses-1_anat.nii.gz
+# singularity exec --bind $DATASETDIR:/dataset \
+#     $AIRCRUSH_CONTAINERS/air-neuro.sif \
+#     /usr/local/freesurfer/7.2.0/bin/recon-all \
+#     -s freesurfer  \
+#     -i /dataset/rawdata/sub-29152/ses-1/anat/sub-29152_ses-1_anat.nii.gz
 
 
 echo recon-all -s freesurfer -i $SOURCE/anat/$infile -all 
