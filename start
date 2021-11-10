@@ -377,8 +377,9 @@ def main():
             username=aircrush.config['REST']['username'],
             password=aircrush.config['REST']['password']
             )
-    except:
-        print("[ERROR] .ini setting not found; expected 'username','password', and 'endpoint' in section [REST]")
+    except Exception as e:
+        print("[ERROR] setting not found in ~/.crush.ini; expected 'username','password', and 'endpoint' in section [REST]")
+        print(e)
         sys.exit(1)
 
     try:
