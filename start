@@ -369,7 +369,7 @@ def main():
 
     global aircrush,crush_host,args
 
-    crush_config='crush.ini'
+    crush_config='~/.crush.ini'
     aircrush=AircrushConfig(crush_config)
     try:
         crush_host=Host(
@@ -378,7 +378,7 @@ def main():
             password=aircrush.config['REST']['password']
             )
     except:
-        print("[ERROR] .ini setting now found; expected 'username','password', and 'endpoint' in section [REST]")
+        print("[ERROR] .ini setting not found; expected 'username','password', and 'endpoint' in section [REST]")
         sys.exit(1)
 
     try:

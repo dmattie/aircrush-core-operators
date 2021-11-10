@@ -62,7 +62,7 @@ function case_b_autobids {  ##ADNI-ii LOOK-A-LIKE
 #     cp $DATASETDIR/source/$SUBJECT/session_$SESSION/dti_fieldmap/dti.bvals $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi/bvals
 #     cp $DATASETDIR/source/$SUBJECT/session_$SESSION/dti_fieldmap/dti.bvecs_image $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi/bvecs
 #   fi
-  echo "OK" 
+  echo "OK"  
 }
 function case_b_process_mprage {
 
