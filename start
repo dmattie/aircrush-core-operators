@@ -368,8 +368,8 @@ def doSync():
 def main():
 
     global aircrush,crush_host,args
-
-    crush_config='~/.crush.ini'
+    homedir=os.path.expanduser('~')
+    crush_config=f"{homedir}/.crush.ini"
     aircrush=AircrushConfig(crush_config)
     try:
         crush_host=Host(
