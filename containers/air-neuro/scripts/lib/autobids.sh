@@ -81,7 +81,7 @@ function case_b_process_dti {
     newsub=$(echo $SUBJECT | tr -cd '[:alnum:]')
     target="$DATASETDIR/rawdata/sub-${newsub}/ses-${session}/dwi/"
     mkdir -p $target
-    rsync $sessdir/ $target
+    rsync -r $sessdir/ $target
 
     if [ -f $target/*.json ];then 
         rm $d/*.json
