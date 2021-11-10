@@ -83,10 +83,18 @@ function case_b_process_dti {
     mkdir -p $target
     rsync $sessdir/ $target
 
-    [ -f $target/*.json ] && rm $d/*.json
-    [ -f $target/*.nii ] && rm $d/*.nii
-    [ -f $target/*.bvec ] && rm $d/*.bvec
-    [ -f $target/*.bval ] && rm $d/*.bval
+    if [ -f $target/*.json ];then 
+        rm $d/*.json
+    fi
+    if [ -f $target/*.nii ];then
+        rm $d/*.nii
+    fi
+    if [ -f $target/*.bvec ];then
+        rm $d/*.bvec
+    fi
+    if [ -f $target/*.bval ];then
+        rm $d/*.bval
+    fi
 
     dcm2niix $target
     
