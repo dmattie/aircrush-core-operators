@@ -2,6 +2,7 @@
 SCRIPT=$( realpath $0 )
 SCRIPTPATH=$( dirname $SCRIPT )
 source "${SCRIPTPATH}/lib/helper.sh"
+source "${SCRIPTPATH}/lib/autobids.sh"
 
 #set -e #Exit when a command fails
 #set -x #echo each command before it runs
@@ -65,41 +66,27 @@ if [[ $SUBJECT == "" ]];then
     >&2 echo "ERROR: subject not specified"
     exit 1
 fi
-############################################
-# CASE A
-############################################
-case_a_test(){  ## ABIDE
-  echo "[$SESSION]"  
-  if [[ -d $DATASETDIR/source/$SUBJECT 
-  && -d $DATASETDIR/source/$SUBJECT/session_$SESSION
-  && -d $DATASETDIR/source/$SUBJECT/session_$SESSION/anat_1 
-  && -f $DATASETDIR/source/$SUBJECT/session_$SESSION/anat_1/anat.nii.gz ]];then
-    return 0
-  fi
-  return 1
-}
-case_a_autobids(){  ##ABIDE LOOK-A-LIKE
-  echo "It looks like source matches pattern 'A'. Applying autobids rules for pattern 'A'"
-  mkdir -p $TARGET/sub-${SUBJECT}/ses-${SESSION}/anat  
-  cp $DATASETDIR/source/$SUBJECT/session_$SESSION/anat_1/anat.nii.gz $TARGET/sub-${SUBJECT}/ses-${SESSION}/anat/sub-${SUBJECT}_ses-${SESSION}_anat.nii.gz
-  if [[ -d $DATASETDIR/source/$SUBJECT/session_$SESSION/dti_1 ]];then
-    mkdir -p $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi
-    cp $DATASETDIR/source/$SUBJECT/session_$SESSION/dti_1/dti.nii.gz $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi/sub-${SUBJECT}_ses-${SESSION}_dwi.nii.gz
-    cp $DATASETDIR/source/$SUBJECT/session_$SESSION/dti_fieldmap/dti.bvals $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi/bvals
-    cp $DATASETDIR/source/$SUBJECT/session_$SESSION/dti_fieldmap/dti.bvecs_image $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi/bvecs
-  fi
-  return 0
-}
-############################################
+
 TARGET=$DATASETDIR/rawdata/
 
-if case_a_test;then
-  if case_a_autobids;then
+#subject=$( get_subject $SOURCE )
+if [[ $( case_a_test ) == "TRUE" ]];then
+  if [[ $( case_a_autobids ) == "OK" ]];then
     exit 0
   else
-    echo "[ERROR] Pattern A attempted but failed"
+    echo "[ERROR] Autbids Pattern A attempted but failed"
   fi
 fi
+
+if [[ $( case_b_test ) == "TRUE" ]];then
+  echo  $( case_b_autobids ) 
+  if [[ $( case_b_autobids ) == "OK" ]];then
+    exit 0
+  else
+    echo "[ERROR] Autobids Pattern B attempted but failed"
+  fi
+fi
+
 
 echo "[WARNING] Source does not match any convertible pattern.  Manual conversion to BIDS needed. Unable to continue"
 exit 1

@@ -4,6 +4,7 @@ import argparse
 from aircrushcore.controller.configuration import AircrushConfig
 from aircrushcore.dag import Workload
 from aircrushcore.cms import *
+from aircrushcore.datacommons.data_commons import DataCommons
 from os.path import exists,dirname
 import os,sys
 import importlib
@@ -358,6 +359,11 @@ def updateStatus(task_instance,status:str,detail:str="",new_errors:str=""):
     task_instance.field_errorlog = new_errors
 
     uuid=task_instance.upsert()
+def doSync():
+    dc=DataCommons(aircrush)
+    dc.initialize()
+    dc.SyncWithCMS()
+
 
 def main():
 
@@ -383,10 +389,17 @@ def main():
 
     parser = argparse.ArgumentParser(
         description="CRUSH client command line utility. Start all tasks with this command")
-    parser.add_argument('-container',action='store',type=str)
+    parser.add_argument('-sync',action='store_true',
+        help="Synchronize subjects and exams in the data commons with the CMS")
+
+    parser.add_argument('-container',action='store',type=str,
+        help="Specify a local container to override whatever the pipeline task intends to use.")
 
     args = parser.parse_args()
 
+    if (args.sync):
+        doSync()
+        exit()
     
     if ready():
         doSomething()

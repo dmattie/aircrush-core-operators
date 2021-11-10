@@ -1,5 +1,15 @@
 #!/bin/bash
 
+function case_aa_test {  ## ABIDE  
+  if [[ -d $DATASETDIR/source/$SUBJECT 
+  && -d $DATASETDIR/source/$SUBJECT/session_$SESSION
+  && -d $DATASETDIR/source/$SUBJECT/session_$SESSION/anat_1 
+  && -f $DATASETDIR/source/$SUBJECT/session_$SESSION/anat_1/anat.nii.gz ]];then
+    echo 0
+  fi
+  echo 1
+}
+
 function get_setting {
     setting=$1
     default=$2
@@ -133,3 +143,4 @@ export get_derivatives
 export strip_prefix
 export begin_transaction
 export end_transaction
+
