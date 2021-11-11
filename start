@@ -364,6 +364,32 @@ def doSync():
     dc.initialize()
     dc.SyncWithCMS()
 
+def purge():
+    endpoint = aircrush.config['REST']['endpoint']
+    yn = input(f"Are you sure you want to delete all task instance, sessions and subjects from {endpoint} ? [N|y]")
+    if yn=='y' or yn=='Y':
+        print("Purging task instances")
+        ti_collection = TaskInstanceCollection(cms_host=crush_host)
+        tis = ti_collection.get()
+        print(f"\tfound {len(tis)} to delete")
+        for ti in tis:
+            tis[ti].delete()
+
+       
+
+        print("Purging Subjects")
+        sub_collection=SubjectCollection(cms_host=crush_host)
+        subjects = sub_collection.get()
+        print(f"\tfound {len(subjects)} to delete")
+        for sub in subjects:
+            subjects[sub].delete()
+        
+        print("Purging sessions")
+        ses_collection = SessionCollection(cms_host=crush_host)
+        sessions = ses_collection.get()
+        print(f"\tfound {len(sessions)} to delete")
+        for ses in sessions:
+            sessions[ses].delete()
 
 def main():
 
@@ -378,7 +404,7 @@ def main():
             password=aircrush.config['REST']['password']
             )
     except Exception as e:
-        print("[ERROR] setting not found in ~/.crush.ini; expected 'username','password', and 'endpoint' in section [REST]")
+        print("[ERROR] Unable to connect to CMS.  Check host and settings found in ~/.crush.ini; in section [REST].  Is the CMS accessible?")
         print(e)
         sys.exit(1)
 
@@ -395,11 +421,15 @@ def main():
 
     parser.add_argument('-container',action='store',type=str,
         help="Specify a local container to override whatever the pipeline task intends to use.")
-
+    parser.add_argument('-purge',action='store_true',
+        help='Permanently remove all task instances, sessions, and subjects from the CMS' )
     args = parser.parse_args()
 
     if (args.sync):
         doSync()
+        exit()
+    if (args.purge):
+        purge()
         exit()
     
     if ready():
