@@ -394,6 +394,21 @@ def purge():
 def main():
 
     global aircrush,crush_host,args
+    
+    parser = argparse.ArgumentParser(
+        description="CRUSH client command line utility. Start all tasks with this command")
+    parser.add_argument('-sync',action='store_true',
+        help="Synchronize subjects and exams in the data commons with the CMS")
+
+    parser.add_argument('-container',action='store',type=str,
+        help="Specify a local container to override whatever the pipeline task intends to use.")
+    parser.add_argument('-purge',action='store_true',
+        help='Permanently remove all task instances, sessions, and subjects from the CMS' )
+    parser.add_argument('-republish',action='store_true',
+        help='For any objects in CMS that are unpublished, re-publish them if they probably should be')
+    args = parser.parse_args()
+
+    
     homedir=os.path.expanduser('~')
     crush_config=f"{homedir}/.crush.ini"
     aircrush=AircrushConfig(crush_config)
@@ -413,17 +428,6 @@ def main():
     except:
         print("[ERROR] .ini setting now found; expected 'singularity_container_location' in section [COMPUTE]")
         sys.exit(1)
-
-    parser = argparse.ArgumentParser(
-        description="CRUSH client command line utility. Start all tasks with this command")
-    parser.add_argument('-sync',action='store_true',
-        help="Synchronize subjects and exams in the data commons with the CMS")
-
-    parser.add_argument('-container',action='store',type=str,
-        help="Specify a local container to override whatever the pipeline task intends to use.")
-    parser.add_argument('-purge',action='store_true',
-        help='Permanently remove all task instances, sessions, and subjects from the CMS' )
-    args = parser.parse_args()
 
     if (args.sync):
         doSync()
