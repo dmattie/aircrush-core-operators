@@ -66,15 +66,13 @@ def getMyComputeNodeUUID():
 
 
 def pullContainer(uri:str):
-    return "requirements.txt"   ##TODO
+    #return "requirements.txt"   ##TODO
     if (args.container):
         
         return args.container
 
-    try:        
-        container_dir=aircrush.config['COMPUTE']['singularity_container_location']
-    except:
-        container_dir=aircrush.config['COMPUTE']['working_directory']
+    container_dir=aircrush.config['COMPUTE']['singularity_container_location']
+
     sif = f"{container_dir}/{uri[uri.rfind('/')+1:len(uri)].replace(':','_')}.sif"
     if os.path.isfile(sif):
         print(f"Container exists - will not overwrite ({sif})")
@@ -482,15 +480,15 @@ def doSomething():
                 sys.exit(1)            
             # pullSession(project,subject,session)
 
-            # # pulldata
-            # print(f"Pulling any necessary data for operation")            
-            # for k in parms:
-            #     if parms[k]=="#source":
-            #         pull_data("source",project,subject,session)
-            #     if parms[k]=="#rawdata":
-            #         pull_data("rawdata",project,subject,session)
-            #     if parms[k]=="#derivatives":
-            #         pull_data("derivatives",project,subject,session)
+            # pulldata
+            print(f"Pulling any necessary data for operation")            
+            for k in parms:
+                if parms[k]=="#source":
+                    pull_data("source",project,subject,session)
+                if parms[k]=="#rawdata":
+                    pull_data("rawdata",project,subject,session)
+                if parms[k]=="#derivatives":
+                    pull_data("derivatives",project,subject,session)
             
             cmdArray = parameter_expansion(cmdArray,parms,
                 datacommons=datacommons,
