@@ -27,6 +27,11 @@ From: ubuntu:18.04
     apt-get install -y python3-pip
     apt-get install -y git
     pip3 install -i https://test.pypi.org/simple/ aircrushcore
+    pip3 install requests
+    pip3 install asyncssh
+    pip3 install requests-toolbelt
+    pip3 install iniconfig
+
     git clone https://github.com/dmattie/aircrush-core-operators.git /opt/aircrush
     
 %runscript    
