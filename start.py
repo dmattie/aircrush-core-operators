@@ -514,7 +514,7 @@ def doSomething():
 
             if ret.returncode==0:
                 jobid=get_slurm_id(ret.stdout)
-                print(f"got job{jobid}")
+                print(f"SLURM assingned job id:{jobid}")
                 if jobid!=0:
                     todo.field_jobid=jobid
                     todo.field_seff=""
@@ -572,7 +572,7 @@ def updateStatus(task_instance,status:str,detail:str="",new_errors:str=""):
     task_instance.field_status=status        
     task_instance.body = detail
     task_instance.field_errorlog = new_errors
-    print(f"saving jobid:{task_instance.field_jobid}")
+    print(f"saving job to CMS:{task_instance.field_jobid}")
 
     uuid=task_instance.upsert()
 def doSync():
