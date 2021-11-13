@@ -139,7 +139,7 @@ def pull_data(stage,project,subject,session):
         pull_source_data(project,subject,session)
     else:
         wd=aircrush.config['COMPUTE']['working_directory']
-        datacommons=aircrush.config['COMPUTE']['commons_path']
+        datacommons=aircrush.config['COMMONS']['commons_path']
         #Test if we are on an HCP node, use sbatch to perform rsync if so
 
 
@@ -175,7 +175,7 @@ def push_data(stage,project,subject,session):
         return
     else:
         wd=aircrush.config['COMPUTE']['working_directory']
-        datacommons=aircrush.config['COMPUTE']['commons_path']
+        datacommons=aircrush.config['COMMONS']['commons_path']
         #Test if we are on an HCP node, use sbatch to perform rsync if so
 
 
@@ -483,7 +483,7 @@ def doSomething():
             # pulldata
             print(f"Pulling any necessary data for operation") 
 
-            pull_data("source",project,subject,session)
+            #pull_data("source",project,subject,session)
             pull_data("rawdata",project,subject,session)
             pull_data("derivatives",project,subject,session)
             #            
