@@ -143,7 +143,7 @@ def pull_data(stage,project,subject,session):
         #Test if we are on an HCP node, use sbatch to perform rsync if so
 
 
-        root=f"projects/{project.field_path_to_exam_data}/dataset/{stage}/sub-{subject.title}/ses-{session.title}/"
+        root=f"projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
         source_session_dir=f"{datacommons}/{root}"
         target_session_dir=f"{wd}/{root}"
         # if os.path.isdir(target_session_dir):
@@ -179,7 +179,7 @@ def push_data(stage,project,subject,session):
         #Test if we are on an HCP node, use sbatch to perform rsync if so
 
 
-        root="projects/{project.field_path_to_exam_data}/dataset/{stage}/sub-{subject.title}/ses-{session.title}/"
+        root="projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
         source_session_dir=f"{wd}/{root}"
         target_session_dir=f"{datacommons}/{root}"
 
