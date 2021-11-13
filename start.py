@@ -481,14 +481,19 @@ def doSomething():
             # pullSession(project,subject,session)
 
             # pulldata
-            print(f"Pulling any necessary data for operation")            
-            for k in parms:
-                if parms[k]=="#source":
-                    pull_data("source",project,subject,session)
-                if parms[k]=="#rawdata":
-                    pull_data("rawdata",project,subject,session)
-                if parms[k]=="#derivatives":
-                    pull_data("derivatives",project,subject,session)
+            print(f"Pulling any necessary data for operation") 
+
+            pull_data("source",project,subject,session)
+            pull_data("rawdata",project,subject,session)
+            pull_data("derivatives",project,subject,session)
+            #            
+            # for k in parms:
+            #     if parms[k]=="source":
+            #         pull_data("source",project,subject,session)
+            #     if parms[k]=="rawdata":
+            #         pull_data("rawdata",project,subject,session)
+            #     if parms[k=="#erivatives":
+            #         pull_data("derivatives",project,subject,session)
             
             cmdArray = parameter_expansion(cmdArray,parms,
                 datacommons=datacommons,
