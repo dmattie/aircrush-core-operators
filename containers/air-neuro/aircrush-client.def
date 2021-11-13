@@ -28,6 +28,7 @@ From: ubuntu:18.04
     apt-get install -y git
     pip3 install -i https://test.pypi.org/simple/ aircrushcore
     pip3 install requests
+    pip3 install setuptools
     pip3 install asyncssh
     pip3 install requests-toolbelt
     pip3 install iniconfig
