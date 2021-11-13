@@ -485,7 +485,7 @@ def doSomething():
 
             #pull_data("source",project,subject,session)
             pull_data("rawdata",project,subject,session)
-            pull_data("derivatives",project,subject,session)
+            #pull_data("derivatives",project,subject,session)
             #            
             # for k in parms:
             #     if parms[k]=="source":
