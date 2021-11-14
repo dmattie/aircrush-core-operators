@@ -392,11 +392,11 @@ def check_running_jobs(node_uuid):
     active_tis=len(tis)
     reviewed_tis=active_tis
     if active_tis>0:
-        print(f"Checking for status on {active_tis} jobs known to be running.")
+        print(f"Checking for status on {active_tis} jobs thought to be running.")
     for ti in tis:
         if tis[ti].field_jobid:
             #seff_cmd=f"/usr/bin/local/seff {tis[ti].field_jobid}"
-            seff_cmd=f"seff {tis[ti].field_jobid}"
+            seff_cmd=f"/usr/bin/env seff {tis[ti].field_jobid}"
             try:
                 ret = subprocess.run(seff_cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE, universal_newlines=True)            
     #            ret = subprocess.call(cmdArray)
@@ -438,7 +438,7 @@ def check_running_jobs(node_uuid):
             except Exception as e:
                 print(f"Failed to execute seff, {e}")
     if reviewed_tis > 0:
-        print(f"\t{reviewed_tis} not accounted for")
+        print(f"\t{reviewed_tis} jobs not accounted for")
     else:
         print("\tAll running jobs accounted for and updated in CMS")
    
