@@ -147,7 +147,7 @@ def pull_data(stage,project,subject,session):
             if not data_transfer_node=="":                
                 if not data_transfer_node[-1]==":":  #Add a colon to the end for rsync syntax if necessary
                     data_transfer_node=f"{data_transfer_node}:"
-                print(f"The data commons is found on another cluster{data_transfer_node}  User must have setup unattended rsync using ssh-keygen.")
+                print(f"The data commons is found on another cluster {data_transfer_node} User must have setup unattended rsync using ssh-keygen.")
                 
         else:
             data_transfer_node=""
@@ -155,16 +155,16 @@ def pull_data(stage,project,subject,session):
         datacommons=aircrush.config['COMMONS']['commons_path']
   
         root=f"projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
-        source_session_dir=f"{datacommons}/{root}"
+        source_session_dir=f"{data_transfer_node}{datacommons}/{root}"
         target_session_dir=f"{wd}/{root}"
 
-        print(f"Cloning ({data_transfer_node}{source_session_dir}) to local working directory ({target_session_dir})")
+        print(f"Cloning ({source_session_dir}) to local working directory ({target_session_dir})")
         os.makedirs(target_session_dir,exist_ok=True)         
 
-        if {data_transfer_node==""}:
+        if data_transfer_node=="":
             if not os.path.isdir(source_session_dir):
                 raise Exception(f"Subject/session not found on data commons ({source_session_dir})")
-        rsync_cmd=["rsync","-r",f"{data_transfer_node}{source_session_dir}",f"{target_session_dir}"]            
+        rsync_cmd=["rsync","-r",f"{source_session_dir}",f"{target_session_dir}"]            
         ret,out = getstatusoutput(rsync_cmd)
         if ret[0]!=0:
             raise Exception(f"Failed to copy session directory: {out}")
