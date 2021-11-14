@@ -319,7 +319,7 @@ def createJob(cmdArray,parms_to_add,**kwargs):
     pipeline=kwargs['pipeline'] if 'pipeline' in kwargs else ""
 
     sbatch_time = parms_to_add['sbatch-time'] if 'sbatch-time' in parms_to_add else ""
-    sbatch_account = parms_to_add['sbatch-account'] if 'sbatch-account' in parms_to_add else ""
+    sbatch_account = aircrush.config['COMPUTE']['account']
     sbatch_cpus_per_task = parms_to_add['sbatch-cpus-per-task'] if 'sbatch-cpus-per-task' in parms_to_add else ""
     sbatch_mem_per_cpu = parms_to_add['sbatch-mem-per-cpu'] if 'sbatch-mem-per-cpu' in parms_to_add else ""
         
