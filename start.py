@@ -159,7 +159,9 @@ def pull_data(stage,project,subject,session):
         target_session_dir=f"{wd}/{root}"
 
         print(f"Cloning ({source_session_dir}) to local working directory ({target_session_dir})")
-        os.makedirs(target_session_dir,exist_ok=True)         
+        os.makedirs(target_session_dir,exist_ok=True)     
+
+        print(f"DTN:[{data_transfer_node}]")    
 
         if data_transfer_node=="":
             if not os.path.isdir(source_session_dir):
