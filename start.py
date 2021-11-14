@@ -366,7 +366,7 @@ def createJob(cmdArray,parms_to_add,**kwargs):
         f"#SBATCH --account {sbatch_account}" if not sbatch_account=="" else "",
         f"#SBATCH --cpus-per-task {sbatch_cpus_per_task}" if not sbatch_cpus_per_task=="" else "",
         f"#SBATCH --mem-per-cpu {sbatch_mem_per_cpu}" if not sbatch_mem_per_cpu=="" else "",
-        "module load singularity/3.8"
+        "module load singularity/3.8",
         ' '.join(cmdArray),
     ]
     job_script = '\n'.join(L)
