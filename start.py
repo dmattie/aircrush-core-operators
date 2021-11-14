@@ -389,6 +389,8 @@ def get_seff_completion_state(stdout:str):
 def check_running_jobs(node_uuid):
     w=Workload(aircrush)
     tis =w.get_running_tasks(node_uuid)
+    if len(tis)>0:
+        print(f"Checking for status on {len(tis)} jobs known to be running.")
     for ti in tis:
         if tis[ti].field_jobid:
             #seff_cmd=f"/usr/bin/local/seff {tis[ti].field_jobid}"
