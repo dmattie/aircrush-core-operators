@@ -147,7 +147,7 @@ def pull_data(stage,project,subject,session):
             if not data_transfer_node=="":                
                 if not data_transfer_node[-1]==":":  #Add a colon to the end for rsync syntax if necessary
                     data_transfer_node=f"{data_transfer_node}:"
-                print(f"The data commons is found on another cluster {data_transfer_node} User must have setup unattended rsync using ssh-keygen.")
+                print(f"The data commons is found on another cluster {data_transfer_node} User must have setup unattended rsync using ssh-keygen for this process to be scheduled.")
                 
         else:
             data_transfer_node=""
@@ -519,7 +519,7 @@ def doSomething():
             #         pull_data("rawdata",project,subject,session)
             #     if parms[k=="#erivatives":
             #         pull_data("derivatives",project,subject,session)
-            
+            print("Performing Parameter Keyword Expansion")
             cmdArray = parameter_expansion(cmdArray,parms,
                 datacommons=datacommons,
                 workingdir=workingdir,
@@ -527,7 +527,7 @@ def doSomething():
                 subject=subject,
                 session=session)                        
             #messages.append(f"cmdArray:{cmdArray}")            
-            
+            print("Creating SLURM job")
             jobfiles = createJob(cmdArray,parms,
                 datacommons=datacommons,
                 workingdir=workingdir,
@@ -537,6 +537,7 @@ def doSomething():
                 taskinstance_uid=todo.uuid)    
   
             sbatch_cmd=["sbatch",jobfiles['jobfile']]
+            print(sbatch_cmd)
             ret = subprocess.run(sbatch_cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE, universal_newlines=True)            
 
 
