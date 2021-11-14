@@ -92,7 +92,7 @@ def pull_source_data(project,subject,session):
     datacommons=aircrush.config['COMPUTE']['commons_path']
     #Test if we are on an HCP node, use sbatch to perform rsync if so
 
-    root=f"/projects/{project.field_path_to_exam_data}/dataset/source"
+    root=f"/projects/{project.field_path_to_exam_data}/datasets/source"
     
 
     #If none of the if statements below match, the entire source will be cloned
@@ -225,7 +225,7 @@ def parameter_expansion(cmdArray,parms_to_add,**kwargs):
         parm = parm.replace("#subject",subject.title)
         parm = parm.replace("#session",session.title)
         parm = parm.replace('#project',project.field_path_to_exam_data)
-        parm = parm.replace('#datasetdir',f"{workingdir}/projects/{project.field_path_to_exam_data}/dataset/")
+        parm = parm.replace('#datasetdir',f"{workingdir}/projects/{project.field_path_to_exam_data}/datasets/")
 
         if not k[0:7]=="sbatch-":
             cmdArray.append(f"--{k}")
