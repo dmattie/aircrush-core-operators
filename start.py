@@ -163,7 +163,7 @@ def pull_data(stage,project,subject,session):
         #     print(f"{target_session_dir} Already exists")
         #     return
         # else:
-        print(f"Cloning ({source_session_dir}) to local working directory ({target_session_dir})")
+        print(f"Cloning ({data_transfer_node}{source_session_dir}) to local working directory ({target_session_dir})")
         os.makedirs(target_session_dir,exist_ok=True)         
 
         # ret = subprocess.getstatusoutput("which sbatch")
@@ -171,16 +171,23 @@ def pull_data(stage,project,subject,session):
         #     print("sbatch exists, starting asynchronous copy")
         # else:
         #     print("SBATCH doesn't exist, performing synchronous copy")
-            
-        if not os.path.isdir(source_session_dir):
-            raise Exception(f"Subject/session not found on data commons ({source_session_dir})")
-        rsync_cmd=f"rsync -r {data_transfer_node}{source_session_dir} {target_session_dir}"
-        print(rsync_cmd)
-        
-        ret = subprocess.getstatusoutput(rsync_cmd)
+        if {data_transfer_node==""}:
+            if not os.path.isdir(source_session_dir):
+                raise Exception(f"Subject/session not found on data commons ({source_session_dir})")
+        rsync_cmd=["rsync","-r",f"{data_transfer_node}{source_session_dir}",f"{target_session_dir}"]            
+        ret,out = getstatusoutput(rsync_cmd)
         if ret[0]!=0:
-            raise Exception(f"Failed to copy session directory: {ret[1]}")
-        
+            raise Exception(f"Failed to copy session directory: {out}")
+
+        if not os.path.exists(target_session_dir):       
+            raise Exception(f"rsync didn't produce a target directory as hoped")
+
+def getstatusoutput(command):
+    print(command)    
+    process = subprocess.Popen(command, stdout=subprocess.PIPE)
+    out, _ = process.communicate()
+    return (process.returncode, out)
+
 def push_data(stage,project,subject,session):
     if stage=="source":
         print("ERROR: Source data is read-only.  It cannot be pushed back to the data commons")
@@ -260,7 +267,7 @@ def ini_settings():
 
         settings['REST']['endpoint']=input("What is the URL of your Aircrush CMS [http://20.63.59/9/]:")
         if settings['REST']['endpoint'] == "":
-            settings['REST']['endpoint']= "http://20.63.59/9/"
+            settings['REST']['endpoint']= "http://20.63.59.9/"
 
         settings['REST']['username']=input("Aircrush username:")
         while settings['REST']['username']=="":
@@ -283,9 +290,10 @@ def ini_settings():
         scratch=os.environ.get("SCRATCH")
         if scratch==None:
             scratch="~/scratch"
-        settings['COMPUTE']['working_directory']=input(f"Working directory for scratch [{scratch}]:")
+        settings['COMPUTE']['working_directory']=input(f"Working directory for scratch [{scratch}/aircrush]:")
         if settings['COMPUTE']['working_directory']=="":
-            settings['COMPUTE']['working_directory']=scratch
+            settings['COMPUTE']['working_directory']=f"{scratch}/aircrush"
+        os.makedirs(settings['COMPUTE']['working_directory'])
 
         
         settings['COMPUTE']['concurrency_limit']=input("Max concurrent jobs [10]:")
@@ -293,7 +301,7 @@ def ini_settings():
             settings['COMPUTE']['concurrency_limit']=10
 
         
-        settings['COMMONS']['commons_path']=input(f"Location of data commons (e.g. ...[HERE]/projects/project-id/datasets/source):")
+        settings['COMMONS']['commons_path']=input(f"Location of data commons.  If DC is remote, provide path on that host.  (e.g. ...[HERE]/projects/project-id/datasets/source):")
         while settings['COMMONS']['commons_path']=="":
             print("\thint: /home/username/projects/def-username/shared/")
             settings['COMMONS']['commons_path']=input(f"Location of data commons (e.g. ...[HERE]/projects/project-id/datasets/source):")
@@ -303,7 +311,7 @@ def ini_settings():
         settings['COMPUTE']['singularity_container_location']=input(f"Location for storing active singularity containers [{settings['COMMONS']['commons_path']}/code/containers]:")
         if settings['COMPUTE']['singularity_container_location']=="":
             settings['COMPUTE']['singularity_container_location']=f"{settings['COMMONS']['commons_path']}/code/containers"
-
+        os.makedirs(settings['COMPUTE']['singularity_container_location'])
     
         print("Writing file")
         L = [
@@ -318,7 +326,8 @@ def ini_settings():
             f"concurrency_limit={settings['COMPUTE']['concurrency_limit']}\n",
             f"singularity_container_location={settings['COMPUTE']['singularity_container_location']}\n\n",
             "[COMMONS]\n",
-            f"commons_path={settings['COMMONS']['commons_path']}\n"
+            f"commons_path={settings['COMMONS']['commons_path']}\n",
+            f"data_transfer_node={settings['COMMONS']['data_transfer_node']}\n"
             ]
         conf.writelines(L) 
         conf.close() 
@@ -363,6 +372,7 @@ def createJob(cmdArray,parms_to_add,**kwargs):
         f"#SBATCH --account {sbatch_account}" if not sbatch_account=="" else "",
         f"#SBATCH --cpus-per-task {sbatch_cpus_per_task}" if not sbatch_cpus_per_task=="" else "",
         f"#SBATCH --mem-per-cpu {sbatch_mem_per_cpu}" if not sbatch_mem_per_cpu=="" else "",
+        "module load singularity/3.8"
         ' '.join(cmdArray),
     ]
     job_script = '\n'.join(L)
