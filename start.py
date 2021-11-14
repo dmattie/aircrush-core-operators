@@ -139,6 +139,18 @@ def pull_data(stage,project,subject,session):
         pull_source_data(project,subject,session)
     else:
         wd=aircrush.config['COMPUTE']['working_directory']
+
+        ##Get the hostname of cluster hosting data commons for remote rsync
+        ##user must have setup known_hosts for unattended rsync
+        if aircrush.config['COMMONS']['data_transfer_node']:            
+            data_transfer_node=aircrush.config['COMMONS']['data_transfer_node']
+            if not data_transfer_node=="":
+                print("The data commons is found on another cluster.  User must have setup unattended rsync using ssh-keygen.")
+                if not data_transfer_node[-1]==":":  #Add a colon to the end for rsync syntax if necessary
+                    data_transfer_node=f"{data_transfer_node}:"
+        else:
+            data_transfer_node=""
+
         datacommons=aircrush.config['COMMONS']['commons_path']
         #Test if we are on an HCP node, use sbatch to perform rsync if so
 
@@ -162,7 +174,7 @@ def pull_data(stage,project,subject,session):
             
         if not os.path.isdir(source_session_dir):
             raise Exception(f"Subject/session not found on data commons ({source_session_dir})")
-        rsync_cmd=f"rsync -r {source_session_dir} {target_session_dir}"
+        rsync_cmd=f"rsync -r {data_transfer_node}{source_session_dir} {target_session_dir}"
         print(rsync_cmd)
         
         ret = subprocess.getstatusoutput(rsync_cmd)
@@ -257,7 +269,9 @@ def ini_settings():
         while settings['REST']['password']=="":
             settings['REST']['password']=input("Aircrush password:")
 
-        hostname=socket.gethostname()
+        hostname=os.environ.get("CC_CLUSTER")
+        if hostname==None:
+            hostname=socket.gethostname()
         settings['COMPUTE']['cluster']=input(f"Cluster name [{hostname}]")
         if settings['COMPUTE']['cluster']=="":
             settings['COMPUTE']['cluster']=hostname
@@ -284,6 +298,8 @@ def ini_settings():
             print("\thint: /home/username/projects/def-username/shared/")
             settings['COMMONS']['commons_path']=input(f"Location of data commons (e.g. ...[HERE]/projects/project-id/datasets/source):")
 
+        settings['COMMONS']['data_tranfer_node']=input(f"Data transfer node of cluster hosting data commons (leave blank if the data commons is on this cluster):")
+        
         settings['COMPUTE']['singularity_container_location']=input(f"Location for storing active singularity containers [{settings['COMMONS']['commons_path']}/code/containers]:")
         if settings['COMPUTE']['singularity_container_location']=="":
             settings['COMPUTE']['singularity_container_location']=f"{settings['COMMONS']['commons_path']}/code/containers"
