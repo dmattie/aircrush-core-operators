@@ -120,7 +120,7 @@ cd $TARGET
 #     -s freesurfer  \
 #     -i /dataset/rawdata/sub-29152/ses-1/anat/sub-29152_ses-1_anat.nii.gz
 
-
+echo "Performing cortical reconstruction of $SOURCE/anat/$infile"
 recon-all -s freesurfer -i $SOURCE/anat/$infile -all 
 if [[ $? -eq 0 && -f $TARGET/freesurfer/mri/wmparc.mgz ]];then
     mv $TARGET/freesurfer/* $TARGET
