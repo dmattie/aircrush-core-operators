@@ -396,7 +396,7 @@ def check_running_jobs(node_uuid):
     for ti in tis:
         if tis[ti].field_jobid:
             #seff_cmd=f"/usr/bin/local/seff {tis[ti].field_jobid}"
-            seff_cmd=f"/usr/bin/env seff {tis[ti].field_jobid}"
+            seff_cmd=['seff',f"{tis[ti].field_jobid}"]
             try:
                 ret = subprocess.run(seff_cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE, universal_newlines=True)            
     #            ret = subprocess.call(cmdArray)
