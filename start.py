@@ -389,12 +389,14 @@ def get_seff_completion_state(stdout:str):
 def check_running_jobs(node_uuid):
     w=Workload(aircrush)
     tis =w.get_running_tasks(node_uuid)
-    if len(tis)>0:
-        print(f"Checking for status on {len(tis)} jobs known to be running.")
+    active_tis=len(tis)
+    reviewed_tis=active_tis
+    if active_tis>0:
+        print(f"Checking for status on {active_tis} jobs known to be running.")
     for ti in tis:
         if tis[ti].field_jobid:
             #seff_cmd=f"/usr/bin/local/seff {tis[ti].field_jobid}"
-            seff_cmd=f"seff"
+            seff_cmd=f"seff {tis[ti].field_jobid}"
             try:
                 ret = subprocess.run(seff_cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE, universal_newlines=True)            
     #            ret = subprocess.call(cmdArray)
@@ -432,8 +434,13 @@ def check_running_jobs(node_uuid):
                                 tis[ti].field_remaining_retries-=1
                                 tis[ti].field_seff=ret.stdout
                                 updateStatus(tis[ti],"failed")
+                reviewed_tis=reviewed_tis-1
             except Exception as e:
                 print(f"Failed to execute seff, {e}")
+    if reviewed_tis > 0:
+        print(f"\t{reviewed_tis} not accounted for")
+    else:
+        print("\tAll running jobs accounted for and updated in CMS")
    
 def doSomething():
     
