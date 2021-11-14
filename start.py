@@ -168,7 +168,7 @@ def pull_data(stage,project,subject,session):
                 raise Exception(f"Subject/session not found on data commons ({source_session_dir})")
         rsync_cmd=["rsync","-r",f"{source_session_dir}",f"{target_session_dir}"]            
         ret,out = getstatusoutput(rsync_cmd)
-        if ret[0]!=0:
+        if ret!=0:
             raise Exception(f"Failed to copy session directory: {out}")
         
 
