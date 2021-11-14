@@ -170,7 +170,7 @@ def pull_data(stage,project,subject,session):
         ret,out = getstatusoutput(rsync_cmd)
         if ret!=0:
             raise Exception(f"Failed to copy session directory: {out}")
-        
+
 
 def getstatusoutput(command):
     print(command)    
@@ -290,6 +290,9 @@ def ini_settings():
         if settings['COMPUTE']['concurrency_limit']=="":
             settings['COMPUTE']['concurrency_limit']=10
 
+        settings['COMPUTE']['seconds_between_failures']=input("Seconds to wait between failures[18000](default 5 hrs, providing time for mitigation):")
+        if settings['COMPUTE']['seconds_between_failures']=="":
+            settings['COMPUTE']['seconds_between_failures']=18000
         
         settings['COMMONS']['commons_path']=input(f"Location of data commons.  If DC is remote, provide path on that host.  (e.g. ...[HERE]/projects/project-id/datasets/source):")
         while settings['COMMONS']['commons_path']=="":
@@ -314,6 +317,7 @@ def ini_settings():
             f"account={settings['COMPUTE']['account']}\n",
             f"working_directory={settings['COMPUTE']['working_directory']}\n",
             f"concurrency_limit={settings['COMPUTE']['concurrency_limit']}\n",
+            f"seconds_between_failures={settings['COMPUTE']['seconds_between_failures']}\n"
             f"singularity_container_location={settings['COMPUTE']['singularity_container_location']}\n\n",
             "[COMMONS]\n",
             f"commons_path={settings['COMMONS']['commons_path']}\n",
