@@ -144,33 +144,23 @@ def pull_data(stage,project,subject,session):
         ##user must have setup known_hosts for unattended rsync
         if aircrush.config['COMMONS']['data_transfer_node']:            
             data_transfer_node=aircrush.config['COMMONS']['data_transfer_node']
-            if not data_transfer_node=="":
-                print("The data commons is found on another cluster.  User must have setup unattended rsync using ssh-keygen.")
+            if not data_transfer_node=="":                
                 if not data_transfer_node[-1]==":":  #Add a colon to the end for rsync syntax if necessary
                     data_transfer_node=f"{data_transfer_node}:"
+                print(f"The data commons is found on another cluster{data_transfer_node}  User must have setup unattended rsync using ssh-keygen.")
+                
         else:
             data_transfer_node=""
 
         datacommons=aircrush.config['COMMONS']['commons_path']
-        #Test if we are on an HCP node, use sbatch to perform rsync if so
-
-
+  
         root=f"projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
         source_session_dir=f"{datacommons}/{root}"
         target_session_dir=f"{wd}/{root}"
-        # if os.path.isdir(target_session_dir):
-        #     #It's already there, ignore quietly
-        #     print(f"{target_session_dir} Already exists")
-        #     return
-        # else:
+
         print(f"Cloning ({data_transfer_node}{source_session_dir}) to local working directory ({target_session_dir})")
         os.makedirs(target_session_dir,exist_ok=True)         
 
-        # ret = subprocess.getstatusoutput("which sbatch")
-        # if ret[0]==0:
-        #     print("sbatch exists, starting asynchronous copy")
-        # else:
-        #     print("SBATCH doesn't exist, performing synchronous copy")
         if {data_transfer_node==""}:
             if not os.path.isdir(source_session_dir):
                 raise Exception(f"Subject/session not found on data commons ({source_session_dir})")
@@ -178,9 +168,7 @@ def pull_data(stage,project,subject,session):
         ret,out = getstatusoutput(rsync_cmd)
         if ret[0]!=0:
             raise Exception(f"Failed to copy session directory: {out}")
-
-        if not os.path.exists(target_session_dir):       
-            raise Exception(f"rsync didn't produce a target directory as hoped")
+        
 
 def getstatusoutput(command):
     print(command)    
