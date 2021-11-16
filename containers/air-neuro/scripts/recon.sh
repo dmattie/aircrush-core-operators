@@ -92,11 +92,15 @@ if [[ ! -d "anat" ]];then
 fi
 cd $SOURCE
 
-infile=$( ls anat/sub-${SUBJECT}*.nii.gz |head -1)
+infile=$( ls anat/sub-${SUBJECT}*.nii |head -1)
 
 if [[ ! -f $infile ]];then
-    >&2 echo "ERROR: T1 Structural volume not found (anat/sub-${SUBJECT}*.nii.gz)"
-    exit 1
+    if [[ ! -f "${infile}.gz" ]];then
+        >&2 echo "ERROR: T1 Structural volume not found (anat/sub-${SUBJECT}*.nii.gz)"
+        exit 1
+    else
+        infile="${infile}.gz"
+    fi
 fi
 
 #######################  DO THE WORK   #########################################
