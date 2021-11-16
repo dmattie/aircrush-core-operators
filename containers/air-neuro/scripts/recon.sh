@@ -123,7 +123,7 @@ cd $TARGET
 #     /usr/local/freesurfer/7.2.0/bin/recon-all \
 #     -s freesurfer  \
 #     -i /dataset/rawdata/sub-29152/ses-1/anat/sub-29152_ses-1_anat.nii.gz
-
+SUBJECTS_DIR=$TARGET
 echo "Performing cortical reconstruction of $SOURCE/anat/$infile"
 recon-all -s freesurfer -i $SOURCE/anat/$infile -all 
 if [[ $? -eq 0 && -f $TARGET/freesurfer/mri/wmparc.mgz ]];then
