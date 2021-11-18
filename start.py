@@ -499,12 +499,13 @@ def doSomething():
             container = pullContainer(task.field_singularity_container)
             workingdir=aircrush.config['COMPUTE']['working_directory']   
             datacommons=aircrush.config['COMMONS']['commons_path']    
+
+            bindings=""
             if args.bind:
                 mounts=args.bind.split() 
                 for mount in mounts:            
                     bindings=bindings+f"-B {mount} "
-            else:
-                bindings=""
+                    
             cmdArray=["singularity","run","--app",task.field_operator,bindings,container]              
             try:
                 parms = ast.literal_eval(task.field_parameters) 
