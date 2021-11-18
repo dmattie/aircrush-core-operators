@@ -498,8 +498,14 @@ def doSomething():
 
             container = pullContainer(task.field_singularity_container)
             workingdir=aircrush.config['COMPUTE']['working_directory']   
-            datacommons=aircrush.config['COMMONS']['commons_path']                 
-            cmdArray=["singularity","run","--app",task.field_operator,container]              
+            datacommons=aircrush.config['COMMONS']['commons_path']    
+            if args.bind:
+                mounts=args.bind.split() 
+                for mount in mounts:            
+                    bindings=bindings+f"-B {mount} "
+            else:
+                bindings=""
+            cmdArray=["singularity","run","--app",task.field_operator,bindings,container]              
             try:
                 parms = ast.literal_eval(task.field_parameters) 
             except:
@@ -655,6 +661,8 @@ def main():
         help='Permanently remove all task instances, sessions, and subjects from the CMS' )
     parser.add_argument('-republish',action='store_true',
         help='For any objects in CMS that are unpublished, re-publish them if they probably should be')
+    parser.add_argument('-bind',action='store',type=str,
+        help='A comma separated list of directories that should be bound to the singularity container so files are accessible to the container')
     args = parser.parse_args()
 
     
