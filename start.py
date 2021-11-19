@@ -468,7 +468,7 @@ def doSomething():
     
     check_running_jobs(nuid)
 
-    if args.stausonly:
+    if args.statusonly:
         return
 
     w=Workload(aircrush) #The list of things to do
