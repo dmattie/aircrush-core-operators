@@ -468,6 +468,9 @@ def doSomething():
     
     check_running_jobs(nuid)
 
+    if args.stausonly:
+        return
+
     w=Workload(aircrush) #The list of things to do
     
     todo = w.get_next_task(node_uuid=nuid) #Do whatever the big brain tells us to do next
