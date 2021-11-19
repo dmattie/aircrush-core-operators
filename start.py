@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+from aircrushcore.cms import session_collection, task_instance_collection
 from aircrushcore.controller.configuration import AircrushConfig
 from aircrushcore.dag import Workload
 from aircrushcore.cms import *
@@ -464,6 +465,7 @@ def check_running_jobs(node_uuid):
    
 def doSomething():
     
+    #nuid = "4d065840-dd33-44dc-be97-623e7d743bce" #dmattie on narval
     nuid = getMyComputeNodeUUID()
     
     check_running_jobs(nuid)
@@ -615,9 +617,62 @@ def updateStatus(task_instance,status:str,detail:str="",new_errors:str=""):
     task_instance.field_status=status        
     task_instance.body = detail
     task_instance.field_errorlog = new_errors
-    print(f"saving job to CMS:{task_instance.field_jobid}")
-
+    print(f"Updating job status to CMS:{task_instance.field_jobid} ({task_instance.title}")
     uuid=task_instance.upsert()
+    session=task_instance.associated_session()
+    cascade_status_to_subject(session,status)
+def cascade_status_to_subject(session,status):
+
+    count_running=0
+    count_failed=0
+    count_completed=0
+
+    ti_col=task_instance_collection(cms_host=crush_host,session=session.uuid)
+    tis_for_session=ti_col.get()
+    for ti in tis_for_session:
+        if tis_for_session[ti].field_status=='completed':
+            count_completed+=1
+        if tis_for_session[ti].field_status=='running':
+            count_running+=1
+        if tis_for_session[ti].field_status=='failed':
+            count_failed+=1
+
+    session.field_status=derive_parent_status(count_failed,count_running,count_completed)
+    session.upsert()
+
+    subject=session.subject()
+    count_running=0
+    count_failed=0
+    count_completed=0
+
+    ses_col=session_collection(cms_host=crush_host,subject=subject.uuid)
+    sessions_for_subject=ses_col.get()
+    for sess in sessions_for_subject:
+        if sessions_for_subject[sess].field_status=='completed':
+            count_completed+=1
+        if sessions_for_subject[sess].field_status=='running':
+            count_running+=1
+        if sessions_for_subject[sess].field_status=='failed':
+            count_failed+=1
+
+    session.field_status=derive_parent_status(count_failed,count_running,count_completed)
+    subject.upsert()
+
+def derive_parent_status(failed,running,completed):
+    if running>0:
+        if failed>0:
+            return "limping"
+        if failed==0:
+            return "running"
+    
+    if failed>0:
+        return "failed"
+
+    if completed>0:
+        return "completed"
+
+    return "notstarted"
+
 def doSync():
     dc=DataCommons(aircrush)
     dc.initialize()
