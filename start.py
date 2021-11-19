@@ -419,7 +419,7 @@ def check_running_jobs(node_uuid):
             #seff_cmd=f"/usr/bin/local/seff {tis[ti].field_jobid}"
             seff_cmd=['seff',f"{tis[ti].field_jobid}"]
             try:
-                ret = subprocess.run(seff_cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE, universal_newlines=True)            
+                ret = subprocess.run(seff_cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE, universal_newlines=True,shell=True)            
     #            ret = subprocess.call(cmdArray)
 
                 if ret.returncode==0:
@@ -554,7 +554,7 @@ def doSomething():
   
             sbatch_cmd=["sbatch",jobfiles['jobfile']]
             print(sbatch_cmd)
-            ret = subprocess.run(sbatch_cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE, universal_newlines=True)            
+            ret = subprocess.run(sbatch_cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE, universal_newlines=True,shell=True)            
 
 
             if ret.returncode==0:
