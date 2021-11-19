@@ -412,7 +412,7 @@ def check_running_jobs(node_uuid):
     active_tis=len(tis)
     reviewed_tis=active_tis
     if active_tis>0:
-        print(f"Checking for status on {active_tis} jobs thought to be running.")
+        print(f"Checking for status on {active_tis} jobs thought to be running on this compute node.")
     for ti in tis:
         if tis[ti].field_jobid:
             #seff_cmd=f"/usr/bin/local/seff {tis[ti].field_jobid}"
@@ -460,7 +460,7 @@ def check_running_jobs(node_uuid):
     if reviewed_tis > 0:
         print(f"\t{reviewed_tis} jobs not accounted for")
     else:
-        print("\tAll running jobs accounted for and updated in CMS")
+        print("\tAll running jobs on this node accounted for and updated in CMS")
    
 def doSomething():
     
@@ -664,6 +664,8 @@ def main():
         help='For any objects in CMS that are unpublished, re-publish them if they probably should be')
     parser.add_argument('-bind',action='store',type=str,
         help='A comma separated list of directories that should be bound to the singularity container so files are accessible to the container')
+    parser.add_argument('-statusonly',action='store_true',
+        help="Update the status of running jobs, do not invoke more work")
     args = parser.parse_args()
 
     
