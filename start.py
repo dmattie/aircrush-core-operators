@@ -623,7 +623,7 @@ def updateStatus(task_instance,status:str,detail:str="",new_errors:str=""):
     
     
 def cascade_status_to_subject(node_uuid):
-    node_col=compute_node_collection(cms_host=crush_host);
+    node_col=ComputeNodeCollection(cms_host=crush_host);
     node=node_col.get_one(uuid=node_uuid)
     attached_sessions=node.allocated_sessions()
     for session_uuid in attached_sessions:
@@ -633,7 +633,7 @@ def cascade_status_to_subject(node_uuid):
         count_failed=0
         count_completed=0
 
-        ti_col=task_instance_collection(cms_host=crush_host,session=session.uuid)
+        ti_col=TaskInstanceCollection(cms_host=crush_host,session=session.uuid)
         tis_for_session=ti_col.get()
         for ti in tis_for_session:
             if tis_for_session[ti].field_status=='completed':
@@ -651,7 +651,7 @@ def cascade_status_to_subject(node_uuid):
         count_failed=0
         count_completed=0
 
-        ses_col=session_collection(cms_host=crush_host,subject=subject.uuid)
+        ses_col=SessionCollection(cms_host=crush_host,subject=subject.uuid)
         sessions_for_subject=ses_col.get()
         for sess in sessions_for_subject:
             if sessions_for_subject[sess].field_status=='completed':
