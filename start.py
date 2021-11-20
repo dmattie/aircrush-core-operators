@@ -661,7 +661,7 @@ def cascade_status_to_subject(node_uuid):
         count_completed=0
         count_notstarted=0
 
-        ses_col=SessionCollection(cms_host=crush_host,subject=subject.uuid)
+        ses_col=SessionCollection(cms_host=crush_host,subject=subject)
         sessions_for_subject=ses_col.get()
         for sess in sessions_for_subject:
             if sessions_for_subject[sess].field_status=='completed':
@@ -675,8 +675,8 @@ def cascade_status_to_subject(node_uuid):
                 continue
             count_notstarted+=1
 
-        subject.field_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted)
-        subject.upsert()
+        subjects_of_attached_sessions[subject].field_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted)
+        subjects_of_attached_sessions[subject].upsert()
 
 def derive_parent_status(failed,running,completed,notstarted):
     if running>0:
