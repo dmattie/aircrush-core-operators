@@ -185,25 +185,39 @@ def push_data(stage,project,subject,session):
         return
     else:
         wd=aircrush.config['COMPUTE']['working_directory']
+
+        ##Get the hostname of cluster hosting data commons for remote rsync
+        ##user must have setup known_hosts for unattended rsync
+        if aircrush.config['COMMONS']['data_transfer_node']:            
+            data_transfer_node=aircrush.config['COMMONS']['data_transfer_node']
+            if not data_transfer_node=="":                
+                if not data_transfer_node[-1]==":":  #Add a colon to the end for rsync syntax if necessary
+                    data_transfer_node=f"{data_transfer_node}:"
+                print(f"The data commons is found on another cluster {data_transfer_node} User must have setup unattended rsync using ssh-keygen for this process to be scheduled.")
+                
+        else:
+            data_transfer_node=""
+
         datacommons=aircrush.config['COMMONS']['commons_path']
         #Test if we are on an HCP node, use sbatch to perform rsync if so
 
 
-        root="projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
+        root=f"projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
         source_session_dir=f"{wd}/{root}"
-        target_session_dir=f"{datacommons}/{root}"
+        target_session_dir=f"{data_transfer_node}{datacommons}/{root}"
 
-        print(f"Cloning ({target_session_dir}) to data commons ({source_session_dir})")
-        os.makedirs(target_session_dir,exist_ok=True)         
+        print(f"Cloning ({source_session_dir}) back to data commons ({target_session_dir})")
+        #os.makedirs(target_session_dir,exist_ok=True)         
 
-        if not os.path.isdir(source_session_dir):
-            raise Exception(f"Subject/session not found on working directory ({source_session_dir})")
-        rsync_cmd=f"rsync -r {source_session_dir} {target_session_dir}"
+        print(f"DTN:[{data_transfer_node}]") 
+
+
+        rsync_cmd=["rsync","-r",f"{source_session_dir}",f"{target_session_dir}"]
         print(rsync_cmd)
         
-        ret = subprocess.getstatusoutput(rsync_cmd)
+        ret,out = getstatusoutput(rsync_cmd)
         if ret[0]!=0:
-            raise Exception(f"Failed to copy session directory: {ret[1]}")
+            raise Exception(f"Failed to copy session directory: {out}")
         
 def parameter_expansion(cmdArray,parms_to_add,**kwargs):
     project=None
@@ -635,6 +649,8 @@ def cascade_status_to_subject(node_uuid):
         count_completed=0
         count_notstarted=0
 
+        pipelines={}
+
         ti_col=TaskInstanceCollection(cms_host=crush_host,session=session.uuid)
         tis_for_session=ti_col.get()
         for ti in tis_for_session:
@@ -648,12 +664,18 @@ def cascade_status_to_subject(node_uuid):
                 count_failed+=1
                 continue
             count_notstarted+=1
+            if ti.field_pipeline:
+                pipelines[ti.field_pipeline]=ti.pipeline()
 
         session.field_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted)
-        session.upsert()
-
         subject=session.subject()
         subjects_of_attached_sessions[subject.uuid]=subject
+        project=subject.project()
+        if session.field_status=='completed':
+            push_data("rawdata",project.uuid,subject.uuid,session.uuid)
+            push_data("derivatives",project.uuid,subject.uuid,session.uuid)
+            session.field_responsible_compute_node=None #Free up a slot on compute node for more
+        session.upsert()
 
     for subject in subjects_of_attached_sessions:
         count_running=0
