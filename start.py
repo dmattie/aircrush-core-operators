@@ -465,10 +465,10 @@ def check_running_jobs(node_uuid):
    
 def doSomething():
     
-    #nuid = "4d065840-dd33-44dc-be97-623e7d743bce" #dmattie on narval
-    nuid = getMyComputeNodeUUID()
+    nuid = "4d065840-dd33-44dc-be97-623e7d743bce" #dmattie on narval
+    #nuid = getMyComputeNodeUUID()
     
-    check_running_jobs(nuid)
+   # check_running_jobs(nuid)
     cascade_status_to_subject(nuid)
 
     if args.statusonly:
@@ -626,45 +626,59 @@ def cascade_status_to_subject(node_uuid):
     node_col=ComputeNodeCollection(cms_host=crush_host);
     node=node_col.get_one(uuid=node_uuid)
     attached_sessions=node.allocated_sessions()
+    subjects_of_attached_sessions={}
     for session_uuid in attached_sessions:
 
         session=attached_sessions[session_uuid]
         count_running=0
         count_failed=0
         count_completed=0
+        count_notstarted=0
 
         ti_col=TaskInstanceCollection(cms_host=crush_host,session=session.uuid)
         tis_for_session=ti_col.get()
         for ti in tis_for_session:
             if tis_for_session[ti].field_status=='completed':
                 count_completed+=1
+                continue
             if tis_for_session[ti].field_status=='running':
                 count_running+=1
+                continue
             if tis_for_session[ti].field_status=='failed':
                 count_failed+=1
+                continue
+            count_notstarted+=1
 
-        session.field_status=derive_parent_status(count_failed,count_running,count_completed)
+        session.field_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted)
         session.upsert()
 
         subject=session.subject()
+        subjects_of_attached_sessions[subject.uuid]=subject
+
+    for subject in subjects_of_attached_sessions:
         count_running=0
         count_failed=0
         count_completed=0
+        count_notstarted=0
 
         ses_col=SessionCollection(cms_host=crush_host,subject=subject.uuid)
         sessions_for_subject=ses_col.get()
         for sess in sessions_for_subject:
             if sessions_for_subject[sess].field_status=='completed':
                 count_completed+=1
+                continue
             if sessions_for_subject[sess].field_status=='running':
                 count_running+=1
+                continue
             if sessions_for_subject[sess].field_status=='failed':
                 count_failed+=1
+                continue
+            count_notstarted+=1
 
-        session.field_status=derive_parent_status(count_failed,count_running,count_completed)
+        subject.field_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted)
         subject.upsert()
 
-def derive_parent_status(failed,running,completed):
+def derive_parent_status(failed,running,completed,notstarted):
     if running>0:
         if failed>0:
             return "limping"
@@ -672,10 +686,16 @@ def derive_parent_status(failed,running,completed):
             return "running"
     
     if failed>0:
-        return "failed"
+        if notstarted==0:
+            return "failed"
+        else:
+            return "limping"
 
     if completed>0:
-        return "completed"
+        if notstarted==0:
+            return "completed"
+        else:
+            return "running"
 
     return "notstarted"
 
