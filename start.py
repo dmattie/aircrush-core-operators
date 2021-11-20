@@ -672,8 +672,8 @@ def cascade_status_to_subject(node_uuid):
         subjects_of_attached_sessions[subject.uuid]=subject
         project=subject.project()
         if session.field_status=='completed':
-            push_data("rawdata",project.uuid,subject.uuid,session.uuid)
-            push_data("derivatives",project.uuid,subject.uuid,session.uuid)
+            push_data("rawdata",project,subject,session)
+            push_data("derivatives",project,subject,session)
             session.field_responsible_compute_node=None #Free up a slot on compute node for more
         session.upsert()
 
