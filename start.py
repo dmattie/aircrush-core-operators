@@ -212,11 +212,10 @@ def push_data(stage,project,subject,session):
         print(f"DTN:[{data_transfer_node}]") 
 
 
-        rsync_cmd=["rsync","-r",f"{source_session_dir}",f"{target_session_dir}"]
-        print(rsync_cmd)
+        rsync_cmd=["rsync","-r",f"{source_session_dir}",f"{target_session_dir}"]      
         
         ret,out = getstatusoutput(rsync_cmd)
-        if ret[0]!=0:
+        if ret!=0:
             raise Exception(f"Failed to copy session directory: {out}")
         
 def parameter_expansion(cmdArray,parms_to_add,**kwargs):
