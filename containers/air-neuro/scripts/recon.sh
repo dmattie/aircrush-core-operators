@@ -27,7 +27,8 @@ Help()
    echo "--datasetdir  DIR                      Path to dataset directory (just above ../[source|rawdata|derivatives]/..)"
    echo "--subject SUBJECT                      Specify subject ID to clone.  If session not"
    echo "                                       specified, then clone the entire subject"
-   echo "--session SESSION                      Specify session ID to clone"   
+   echo "--session SESSION                      Specify session ID to clone"  
+   echo "--pipeline PIPELINE_ID                 Specify derivatives directory to store output.  If unspecified, store in rawdata." 
    echo
 }
 
@@ -36,7 +37,7 @@ Help()
 ############################################################
 # Get the options
 
-TEMP=`getopt -o h: --long help,datasetdir:,subject:,session:, \
+TEMP=`getopt -o h: --long help,datasetdir:,subject:,session:,pipeline:, \
              -n 'recon' -- "$@"`
 
 if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
@@ -47,6 +48,7 @@ eval set -- "$TEMP"
 DATASETDIR=""
 SUBJECT=""
 SESSION=""
+PIPELINE=""
 
 while true; do
   case "$1" in
@@ -54,6 +56,7 @@ while true; do
     --datasetdir ) DATASETDIR="$2";shift 2;;     
     --subject ) SUBJECT="$2";shift 2;;
     --session ) SESSION="$2";shift 2;;
+    --pipeline ) PIPELINE="$2";shift 2;;
     -- ) shift; break ;;
     * ) break ;;
   esac
@@ -74,10 +77,20 @@ if [[ $SUBJECT == "" ]];then
 fi
 if [[ $SESSION == "" ]];then
     SOURCE=$DATASETDIR/rawdata/sub-$SUBJECT
-    TARGET=$DATASETDIR/derivatives/freesurfer/sub-$SUBJECT
+    if [[ $PIPELINE =="" ]];then
+        TARGET=$DATASETDIR/rawdata/freesurfer/sub-$SUBJECT
+    else
+        TARGET=$DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT
+    fi
 else
     SOURCE=$DATASETDIR/rawdata/sub-$SUBJECT/ses-$SESSION
-    TARGET=$DATASETDIR/derivatives/freesurfer/sub-$SUBJECT/ses-$SESSION
+    if [[ $PIPELINE =="" ]];then
+        TARGET=$DATASETDIR/derivatives/freesurfer/sub-$SUBJECT/ses-$SESSION
+    else
+        TARGET=$DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/ses-$SESSION
+        
+    fi
+    
 fi
 
 if [[ ! -d $SOURCE ]];then

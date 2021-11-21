@@ -179,7 +179,7 @@ def getstatusoutput(command):
     out, _ = process.communicate()
     return (process.returncode, out)
 
-def push_data(stage,project,subject,session):
+def push_data(stage,project,subject,session),**kwargs:
     if stage=="source":
         print("ERROR: Source data is read-only.  It cannot be pushed back to the data commons")
         return
@@ -201,23 +201,36 @@ def push_data(stage,project,subject,session):
         datacommons=aircrush.config['COMMONS']['commons_path']
         #Test if we are on an HCP node, use sbatch to perform rsync if so
 
+        if stage=="derivatives":
+            if "pipelines" in kwargs:
+                pipelines=kwargs['pipelines']
+                for pipeline in pipelines:
 
-        root=f"projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
-        source_session_dir=f"{wd}/{root}"
-        target_session_dir=f"{data_transfer_node}{datacommons}/{root}"
+                    root=f"projects/{project.field_path_to_exam_data}/datasets/{pipeline.field_id}/{stage}/sub-{subject.title}/ses-{session.title}/"
+                    source_session_dir=f"{wd}/{root}"
+                    target_session_dir=f"{data_transfer_node}{datacommons}/{root}"
+                    print(f"Cloning ({source_session_dir}) back to data commons ({target_session_dir})")        
+                    print(f"DTN:[{data_transfer_node}]") 
+                    rsync_cmd=["rsync","-r",f"{source_session_dir}",f"{target_session_dir}"]                  
+                    ret,out = getstatusoutput(rsync_cmd)
+                    if ret!=0:
+                        raise Exception(f"Failed to copy session directory: {out}")
 
-        print(f"Cloning ({source_session_dir}) back to data commons ({target_session_dir})")
-        #os.makedirs(target_session_dir,exist_ok=True)         
+            else:
+                raise Exception("WARNING: You attepted to return derivatives to the data commons but did not specify which pipelines.")
+                
 
-        print(f"DTN:[{data_transfer_node}]") 
-
-
-        rsync_cmd=["rsync","-r",f"{source_session_dir}",f"{target_session_dir}"]      
-        
-        ret,out = getstatusoutput(rsync_cmd)
-        if ret!=0:
-            raise Exception(f"Failed to copy session directory: {out}")
-        
+        else:
+            root=f"projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
+            source_session_dir=f"{wd}/{root}"
+            target_session_dir=f"{data_transfer_node}{datacommons}/{root}"
+            print(f"Cloning ({source_session_dir}) back to data commons ({target_session_dir})")        
+            print(f"DTN:[{data_transfer_node}]") 
+            rsync_cmd=["rsync","-r",f"{source_session_dir}",f"{target_session_dir}"]                  
+            ret,out = getstatusoutput(rsync_cmd)
+            if ret!=0:
+                raise Exception(f"Failed to copy session directory: {out}")
+            
 def parameter_expansion(cmdArray,parms_to_add,**kwargs):
     project=None
     subject=None
@@ -672,7 +685,7 @@ def cascade_status_to_subject(node_uuid):
         project=subject.project()
         if session.field_status=='completed':
             push_data("rawdata",project,subject,session)
-            push_data("derivatives",project,subject,session)
+            push_data("derivatives",project,subject,session,pipelines=pipelines)
             session.field_responsible_compute_node=None #Free up a slot on compute node for more
         session.upsert()
 
