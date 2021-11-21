@@ -179,7 +179,7 @@ def getstatusoutput(command):
     out, _ = process.communicate()
     return (process.returncode, out)
 
-def push_data(stage,project,subject,session),**kwargs:
+def push_data(stage,project,subject,session,**kwargs):
     if stage=="source":
         print("ERROR: Source data is read-only.  It cannot be pushed back to the data commons")
         return
