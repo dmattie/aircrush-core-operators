@@ -27,7 +27,7 @@ function case_a_test {  ## ABIDE
 #   echo "OK"
 # }
 function case_a_autobids {  ##ABIDE LOOK-A-LIKE  
-  mkdir -p $TARGET/sub-${SUBJECT}/ses-${SESSION}/anat  
+  echo "============ HERE ========="
   shopt -s globstar
   echo "Process ANAT"
   for eachdir in $DATASETDIR/source/$SUBJECT/session_$SESSION/anat*;do
@@ -44,7 +44,7 @@ function case_a_autobids {  ##ABIDE LOOK-A-LIKE
 function process_anat {
     anatdir=$( dirname $1 )
     SCANID=$( echo $anatdir |rev|cut -d\_ -f1 |rev )
-
+    mkdir -p $TARGET/sub-${SUBJECT}/ses-${SESSION}/anat  
     cp $DATASETDIR/source/$SUBJECT/session_$SESSION/anat_${SCANID}/anat.nii.gz $TARGET/sub-${SUBJECT}/ses-${SESSION}/anat/sub-${SUBJECT}_ses-${SESSION}_anat_${SCANID}.nii.gz
 
 }
