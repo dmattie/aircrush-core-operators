@@ -9,8 +9,9 @@ function case_a_test {  ## ABIDE
     && -f $DATASETDIR/source/$SUBJECT/session_$SESSION/anat_1/anat.nii.gz ]]
   then
     echo "TRUE"
+  else
+    echo "FALSE"
   fi
-  echo "FALSE"
 }
 
 function case_a_autobids {  ##ABIDE LOOK-A-LIKE
@@ -30,7 +31,7 @@ function case_a_autobids {  ##ABIDE LOOK-A-LIKE
 ############################################
 function case_b_test {  ## ADNI-ii   
   
-  if [ -d $DATASETDIR/source/$SUBJECT ] && 
+  if [ -d $DATASETDIR/source/$SUBJECT/ ] && 
     (
        [ -d $DATASETDIR/source/$SUBJECT/MPRAGE ] || 
        [ -d $DATASETDIR/source/$SUBJECT/Axial_DTI ] ||
@@ -106,3 +107,6 @@ export case_a_autobids
 
 export case_b_test
 export case_b_autobids
+
+export case_c_test
+export case_c_autobids
