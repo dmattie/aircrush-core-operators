@@ -6,7 +6,7 @@ source "${SCRIPTPATH}/autobids/case_a.sh"
 source "${SCRIPTPATH}/autobids/case_b.sh"
 
 [[ $0 != $BASH_SOURCE ]] && echo "Script is being sourced"
-echo $0
+echo "${BASH_SOURCE[${#BASH_SOURCE[@]} - 1]}"
 export case_a_test
 export case_a_autobids
 
