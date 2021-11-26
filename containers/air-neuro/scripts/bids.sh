@@ -70,6 +70,7 @@ fi
 TARGET=$DATASETDIR/rawdata/
 
 #subject=$( get_subject $SOURCE )
+echo "CASE A TESTING START"
 if [[ $( case_a_test ) == "TRUE" ]];then
   if [[ $( case_a_autobids ) == "OK" ]];then
     exit 0
