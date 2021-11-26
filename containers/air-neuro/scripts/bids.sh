@@ -71,6 +71,18 @@ TARGET=$DATASETDIR/rawdata/
 
 #subject=$( get_subject $SOURCE )
 echo "CASE A TESTING START"
+
+echo $DATASETDIR/source/$SUBJECT/session_$SESSION/anat_1/anat.nii.gz
+if [[ -d $DATASETDIR/source/$SUBJECT 
+  && -d $DATASETDIR/source/$SUBJECT/session_$SESSION
+  && -d $DATASETDIR/source/$SUBJECT/session_$SESSION/anat_1 
+  && -f $DATASETDIR/source/$SUBJECT/session_$SESSION/anat_1/anat.nii.gz ]]
+then
+  echo "TRUE"
+else
+  echo "FALSE"
+fi
+echo "FUNCTION START"
 if [[ $( case_a_test ) == "TRUE" ]];then
   echo "CASE A TRUE"
   if [[ $( case_a_autobids ) == "OK" ]];then
