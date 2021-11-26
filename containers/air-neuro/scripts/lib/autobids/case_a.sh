@@ -35,7 +35,7 @@ function case_a_autobids {  ##ABIDE LOOK-A-LIKE
     fi
   done    
   for eachdir in $DATASETDIR/source/$SUBJECT/session_$SESSION/dti*;do
-    if [[ -d $eachdir ]];then              
+    if [[ -d $eachdir && $( basename $eachdir ) != "dti_fieldmap" ]];then              
         process_dti $eachdir
     fi
   done    
