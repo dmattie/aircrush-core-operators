@@ -74,6 +74,8 @@ echo "CASE A TESTING START"
 
 if [[ $( case_a_test ) == "TRUE" ]];then
   echo "It looks like source matches pattern 'A'. Applying autobids rules for pattern 'A'"
+  x=$( case_a_autobids )
+  echo $x
   if [[ $( case_a_autobids ) == "OK" ]];then
     exit 0
   else      
