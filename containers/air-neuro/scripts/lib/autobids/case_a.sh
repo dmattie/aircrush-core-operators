@@ -33,6 +33,7 @@ function case_a_autobids {  ##ABIDE LOOK-A-LIKE
     process_anat $eachdir
   done  
   for eachdir in $DATASETDIR/source/$SUBJECT/session_$SESSION/dti*;do
+    echo $eachdir
     process_dti $eachdir
   done    
   echo "OK"
