@@ -44,7 +44,7 @@ function case_a_autobids {  ##ABIDE LOOK-A-LIKE
   
 }
 function process_anat {
-    anatdir=$( $1 )
+    anatdir=$1
     SCANID=$( echo $anatdir |rev|cut -d\_ -f1 |rev )
     mkdir -p $TARGET/sub-${SUBJECT}/ses-${SESSION}/anat  
     cp $DATASETDIR/source/$SUBJECT/session_$SESSION/anat_${SCANID}/anat.nii.gz $TARGET/sub-${SUBJECT}/ses-${SESSION}/anat/sub-${SUBJECT}_ses-${SESSION}_anat_${SCANID}.nii.gz
@@ -52,7 +52,7 @@ function process_anat {
 }
 function process_dti {
 
-    dtidir=$( $1 )    
+    dtidir=$1
     SCANID=$( echo $dtidir |rev|cut -d\_ -f1 |rev )
     echo "++$eachdir++$SCANID"
     mkdir -p $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi
