@@ -72,11 +72,14 @@ TARGET=$DATASETDIR/rawdata/
 #subject=$( get_subject $SOURCE )
 echo "CASE A TESTING START"
 if [[ $( case_a_test ) == "TRUE" ]];then
+  echo "CASE A TRUE"
   if [[ $( case_a_autobids ) == "OK" ]];then
     exit 0
   else
     echo "[ERROR] Autbids Pattern A attempted but failed"
   fi
+else
+  echo "FALSE"
 fi
 
 if [[ $( case_b_test ) == "TRUE" ]];then
