@@ -82,7 +82,7 @@ then
 else
   echo "FALSE"
 fi
-x = $( case_a_test )
+x=$( case_a_test )
 echo $x
 echo "FUNCTION START"
 if [[ $( case_a_test ) == "TRUE" ]];then
