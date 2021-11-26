@@ -73,12 +73,10 @@ TARGET=$DATASETDIR/rawdata/
 echo "CASE A TESTING START"
 
 if [[ $( case_a_test ) == "TRUE" ]];then
-
+  echo "It looks like source matches pattern 'A'. Applying autobids rules for pattern 'A'"
   if [[ $( case_a_autobids ) == "OK" ]];then
     exit 0
-  else
-    x=$( case_a_autobids )
-    echo $x
+  else      
     echo "[ERROR] Autbids Pattern A attempted but failed"
   fi
 else
@@ -86,7 +84,7 @@ else
 fi
 
 if [[ $( case_b_test ) == "TRUE" ]];then
-  echo  $( case_b_autobids ) 
+  echo "It looks like source matches pattern 'B'. Applying autobids rules for pattern 'B'"
   if [[ $( case_b_autobids ) == "OK" ]];then
     exit 0
   else
