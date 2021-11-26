@@ -59,8 +59,7 @@ function process_dti {
     if [[ -f $dtidir/dti.bval ]];then
       cp $dtidir/dti.bval $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi/bvals
       cp $dtidir/dti.bvec $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi/bvecs
-    else
-     echo "no bvals"
+    else     
       if [[ -d $DATASETDIR/source/$SUBJECT/session_$SESSION/dti_fieldmap ]];then
         cp $DATASETDIR/source/$SUBJECT/session_$SESSION/dti_fieldmap/dti.bvals $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi/bvals
         cp $DATASETDIR/source/$SUBJECT/session_$SESSION/dti_fieldmap/dti.bvecs_image $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi/bvecs
