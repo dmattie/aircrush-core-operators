@@ -29,9 +29,12 @@ function case_a_test {  ## ABIDE
 function case_a_autobids {  ##ABIDE LOOK-A-LIKE  
   mkdir -p $TARGET/sub-${SUBJECT}/ses-${SESSION}/anat  
   shopt -s globstar
+  echo "Process ANAT"
   for eachdir in $DATASETDIR/source/$SUBJECT/session_$SESSION/anat*;do
+    echo $eachdir
     process_anat $eachdir
   done  
+  echo "Process DTI"
   for eachdir in $DATASETDIR/source/$SUBJECT/session_$SESSION/dti*;do
     echo $eachdir
     process_dti $eachdir
