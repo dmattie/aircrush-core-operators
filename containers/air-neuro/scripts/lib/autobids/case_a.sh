@@ -27,22 +27,20 @@ function case_a_test {  ## ABIDE
 #   echo "OK"
 # }
 function case_a_autobids {  ##ABIDE LOOK-A-LIKE  
-  echo "============ HERE ========="
-  shopt -s globstar
-  echo "Process ANAT"
+  
+  shopt -s globstar  
   for eachdir in $DATASETDIR/source/$SUBJECT/session_$SESSION/anat*;do
     if [[ -d $eachdir ]];then        
         process_anat $eachdir
     fi
-  done  
-  echo "Process DTI"
+  done    
   for eachdir in $DATASETDIR/source/$SUBJECT/session_$SESSION/dti*;do
-    if [[ -d $eachdir ]];then
-        echo $eachdir
+    if [[ -d $eachdir ]];then        
         process_dti $eachdir
     fi
   done    
   echo "OK"
+  
 }
 function process_anat {
     anatdir=$( dirname $1 )

@@ -74,12 +74,12 @@ echo "CASE A TESTING START"
 
 if [[ $( case_a_test ) == "TRUE" ]];then
   echo "It looks like source matches pattern 'A'. Applying autobids rules for pattern 'A'"
-  x=$( case_a_autobids )
-  echo $x
-  if [[ $( case_a_autobids ) == "OK" ]];then
+  res=$( case_a_autobids )
+  if [[ $res == "OK" ]];then
     exit 0
   else      
     echo "[ERROR] Autbids Pattern A attempted but failed"
+    echo $res
   fi
 else
   echo "FALSE"
@@ -87,10 +87,12 @@ fi
 
 if [[ $( case_b_test ) == "TRUE" ]];then
   echo "It looks like source matches pattern 'B'. Applying autobids rules for pattern 'B'"
-  if [[ $( case_b_autobids ) == "OK" ]];then
+  res=$( case_b_autobids )
+  if [[ $res == "OK" ]];then
     exit 0
   else
     echo "[ERROR] Autobids Pattern B attempted but failed"
+    echo $res
   fi
 fi
 
