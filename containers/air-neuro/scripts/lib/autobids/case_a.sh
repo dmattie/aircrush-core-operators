@@ -53,13 +53,21 @@ function process_anat {
 function process_dti {
 
     dtidir=$1
-    SCANID=$( echo $dtidir |rev|cut -d\_ -f1 |rev )
-    echo "++$eachdir++$SCANID"
+    SCANID=$( echo $dtidir |rev|cut -d\_ -f1 |rev )    
     mkdir -p $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi
-    echo "cp $dtidir/dti.nii.gz $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi/sub-${SUBJECT}_ses-${SESSION}_dwi_${SCANID}.nii.gz"
+    
     cp $dtidir/dti.nii.gz $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi/sub-${SUBJECT}_ses-${SESSION}_dwi_${SCANID}.nii.gz
-    cp $DATASETDIR/source/$SUBJECT/session_$SESSION/dti_fieldmap/dti.bvals $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi/bvals
-    cp $DATASETDIR/source/$SUBJECT/session_$SESSION/dti_fieldmap/dti.bvecs_image $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi/bvecs
+    if [[ -f $dtidir/dti.bval ]];then
+      cp $dtidir/dti.bval $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi/bvals
+      cp $dtidir/dti.bvec $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi/bvecs
+    else
+      if [[ -d $DATASETDIR/source/$SUBJECT/session_$SESSION/dti_fieldmap ]];then
+        cp $DATASETDIR/source/$SUBJECT/session_$SESSION/dti_fieldmap/dti.bvals $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi/bvals
+        cp $DATASETDIR/source/$SUBJECT/session_$SESSION/dti_fieldmap/dti.bvecs_image $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi/bvecs
+      else
+        echo "Unable to locate BVALs/BVECs"
+      fi
+    fi
 
     
 }
