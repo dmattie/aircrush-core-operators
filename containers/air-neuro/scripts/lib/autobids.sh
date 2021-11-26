@@ -2,8 +2,7 @@
 ############################################
 # CASE A
 ############################################
-function case_a_test {  ## ABIDE  
-  echo $DATASETDIR/source/$SUBJECT/session_$SESSION/anat_1/anat.nii.gz
+function case_a_test {  ## ABIDE    
   if [[ -d $DATASETDIR/source/$SUBJECT 
     && -d $DATASETDIR/source/$SUBJECT/session_$SESSION
     && -d $DATASETDIR/source/$SUBJECT/session_$SESSION/anat_1 
