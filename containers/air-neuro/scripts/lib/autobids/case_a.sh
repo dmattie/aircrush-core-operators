@@ -35,8 +35,7 @@ function case_a_autobids {  ##ABIDE LOOK-A-LIKE
     fi
   done    
   for eachdir in $DATASETDIR/source/$SUBJECT/session_$SESSION/dti*;do
-    if [[ -d $eachdir ]];then  
-        echo "::$eachdir::"      
+    if [[ -d $eachdir ]];then              
         process_dti $eachdir
     fi
   done    
@@ -61,6 +60,7 @@ function process_dti {
       cp $dtidir/dti.bval $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi/bvals
       cp $dtidir/dti.bvec $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi/bvecs
     else
+     echo "no bvals"
       if [[ -d $DATASETDIR/source/$SUBJECT/session_$SESSION/dti_fieldmap ]];then
         cp $DATASETDIR/source/$SUBJECT/session_$SESSION/dti_fieldmap/dti.bvals $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi/bvals
         cp $DATASETDIR/source/$SUBJECT/session_$SESSION/dti_fieldmap/dti.bvecs_image $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi/bvecs
