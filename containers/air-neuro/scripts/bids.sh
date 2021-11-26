@@ -70,7 +70,6 @@ fi
 TARGET=$DATASETDIR/rawdata/
 
 #subject=$( get_subject $SOURCE )
-echo "CASE A TESTING START"
 
 if [[ $( case_a_test ) == "TRUE" ]];then
   echo "It looks like source matches pattern 'A'. Applying autobids rules for pattern 'A'"

@@ -35,7 +35,8 @@ function case_a_autobids {  ##ABIDE LOOK-A-LIKE
     fi
   done    
   for eachdir in $DATASETDIR/source/$SUBJECT/session_$SESSION/dti*;do
-    if [[ -d $eachdir ]];then        
+    if [[ -d $eachdir ]];then  
+        echo "::$eachdir::"      
         process_dti $eachdir
     fi
   done    
@@ -51,8 +52,9 @@ function process_anat {
 }
 function process_dti {
 
-    dtidir=$( dirname $1 )
+    dtidir=$( dirname $1 )    
     SCANID=$( echo $dtidir |rev|cut -d\_ -f1 |rev )
+    echo "++$eachdir++$SCANID"
     mkdir -p $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi
     cp $dtidir/dti.nii.gz $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi/sub-${SUBJECT}_ses-${SESSION}_dwi_${SCANID}.nii.gz
     cp $DATASETDIR/source/$SUBJECT/session_$SESSION/dti_fieldmap/dti.bvals $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi/bvals
