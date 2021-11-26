@@ -31,13 +31,16 @@ function case_a_autobids {  ##ABIDE LOOK-A-LIKE
   shopt -s globstar
   echo "Process ANAT"
   for eachdir in $DATASETDIR/source/$SUBJECT/session_$SESSION/anat*;do
-    echo $eachdir
-    process_anat $eachdir
+    if [[ -d $eachdir ]];then        
+        process_anat $eachdir
+    fi
   done  
   echo "Process DTI"
   for eachdir in $DATASETDIR/source/$SUBJECT/session_$SESSION/dti*;do
-    echo $eachdir
-    process_dti $eachdir
+    if [[ -d $eachdir ]];then
+        echo $eachdir
+        process_dti $eachdir
+    fi
   done    
   echo "OK"
 }
