@@ -56,6 +56,7 @@ function process_dti {
     SCANID=$( echo $dtidir |rev|cut -d\_ -f1 |rev )
     echo "++$eachdir++$SCANID"
     mkdir -p $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi
+    echo "cp $dtidir/dti.nii.gz $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi/sub-${SUBJECT}_ses-${SESSION}_dwi_${SCANID}.nii.gz"
     cp $dtidir/dti.nii.gz $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi/sub-${SUBJECT}_ses-${SESSION}_dwi_${SCANID}.nii.gz
     cp $DATASETDIR/source/$SUBJECT/session_$SESSION/dti_fieldmap/dti.bvals $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi/bvals
     cp $DATASETDIR/source/$SUBJECT/session_$SESSION/dti_fieldmap/dti.bvecs_image $TARGET/sub-${SUBJECT}/ses-${SESSION}/dwi/bvecs
