@@ -136,11 +136,23 @@ function end_transaction {
     if [ ! $? == 0 ];then echo "ERROR: Failed to cleanup temporary transaction directory ($transactiondir)"; exit 2; fi
 
 }
+function mgz_to_nifti {
+    absolute_path=$( readlink -f $1 )
+    filename=$( basename -- $1 )
+    extension="${filename##*.}"
+    filename="${filename%.*}"
 
+    if [[ -d $absolute_path ]];then
+        cd $absolute_path
+        mri_convert -rt nearest -nc -ns 1 $1 ${filename}.nii               
+    fi
+
+}
 export get_subject
 export get_session
 export get_derivatives
 export strip_prefix
 export begin_transaction
 export end_transaction
+export mgz_to_nifti
 

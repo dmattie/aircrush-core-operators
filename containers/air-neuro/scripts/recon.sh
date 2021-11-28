@@ -25,10 +25,12 @@ Help()
    echo
 }
 
+
 ############################################################
 # Process the input options. Add options as needed.        #
 ############################################################
 # Get the options
+
 
 TEMP=`getopt -o h: --long help,datasetdir:,subject:,session:,pipeline:, \
              -n 'recon' -- "$@"`
@@ -135,6 +137,16 @@ recon-all -s freesurfer -i $SOURCE/anat/$infile -all
 if [[ $? -eq 0 && -f $TARGET/freesurfer/mri/wmparc.mgz ]];then
     mv $TARGET/freesurfer/* $TARGET
     rmdir $TARGET/freesurfer
+
+    shopt -s globstar  
+    for eachmgz in $TARGET/*.mgz;do
+        if [[ -f $eachmgz ]];then        
+            mgz_to_nifti $eachmgz
+        fi
+    done  
+
+    # Convert mgz 2 nifti files
+
     echo "recon-all complete"
 fi
 
