@@ -137,13 +137,13 @@ function end_transaction {
 
 }
 function mgz_to_nifti {
-    absolute_path=$( readlink -f $1 )
+    filepath=$( dirname -- $1 )
     filename=$( basename -- $1 )
     extension="${filename##*.}"
     filename="${filename%.*}"
 
-    if [[ -d $absolute_path ]];then
-        cd $absolute_path
+    if [[ -d $filepath ]];then
+        cd $filepath
         mri_convert -rt nearest -nc -ns 1 $1 ${filename}.nii               
     fi
 
