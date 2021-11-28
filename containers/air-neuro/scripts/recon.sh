@@ -72,14 +72,14 @@ if [[ $SUBJECT == "" ]];then
 fi
 if [[ $SESSION == "" ]];then
     SOURCE=$DATASETDIR/rawdata/sub-$SUBJECT
-    if [[ $PIPELINE =="" ]];then
+    if [[ $PIPELINE == "" ]];then
         TARGET=$DATASETDIR/rawdata/freesurfer/sub-$SUBJECT
     else
         TARGET=$DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT
     fi
 else
     SOURCE=$DATASETDIR/rawdata/sub-$SUBJECT/ses-$SESSION
-    if [[ $PIPELINE =="" ]];then
+    if [[ $PIPELINE == "" ]];then
         TARGET=$DATASETDIR/derivatives/freesurfer/sub-$SUBJECT/ses-$SESSION
     else
         TARGET=$DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/ses-$SESSION
