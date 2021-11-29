@@ -2,7 +2,7 @@ BootStrap: docker
 From: ubuntu:18.04
 
 %files
-    /home/dmattie/software /usr/local
+    #/home/dmattie/software /usr/local
     /home/dmattie/software/freesurfer_license.txt /usr/local/freesurfer/7.2.0/license.txt
     /home/dmattie/software/freesurfer_license.txt /usr/local/freesurfer/7.2.0/.license
     
@@ -28,36 +28,37 @@ From: ubuntu:18.04
     apt-get install -y rsync
     apt-get install -y tar
     apt-get install -y dialog
-    apt-get install -y redis-server    
 
     apt-get install -y software-properties-common
     add-apt-repository universe
 
-    DEBIAN_FRONTEND=noninteractive apt-get install -y xorg xorg-dev
-  
-    apt-get install -y language-pack-en binutils libx11-dev gettext x11-apps perl make file bc \
-    xserver-xorg-video-intel libdbus-1-3 libdrm2 libexpat1 libfontconfig1 libfreetype6 libgl1 \
-    libglib2.0-0 libglu1-mesa libglvnd0 libglx0 libgomp1 libgssapi-krb5-2 libice6 libjpeg-dev libk5crypto3 \
-    libkeyutils1 libkrb5-3 libkrb5support0 libkrb5support0 libpng16-16 libsm6 libx11-6 \
-    libx11-xcb1 libxau6 libxcb1 libxdmcp6 libxext6 libxft2 libxi6 libxmu6 libxrender1 libxss1 libxt6
+    apt-get install -y redis-server
 
-    apt-get install -y xterm csh tcsh libjpeg62 
+#    DEBIAN_FRONTEND=noninteractive apt-get install -y xorg xorg-dev
+#  
+#    apt-get install -y language-pack-en binutils libx11-dev gettext x11-apps perl make file bc \
+#    xserver-xorg-video-intel libdbus-1-3 libdrm2 libexpat1 libfontconfig1 libfreetype6 libgl1 \
+#    libglib2.0-0 libglu1-mesa libglvnd0 libglx0 libgomp1 libgssapi-krb5-2 libice6 libjpeg-dev libk5crypto3 \
+#    libkeyutils1 libkrb5-3 libkrb5support0 libkrb5support0 libpng16-16 libsm6 libx11-6 \
+#    libx11-xcb1 libxau6 libxcb1 libxdmcp6 libxext6 libxft2 libxi6 libxmu6 libxrender1 libxss1 libxt6
+#
+#    apt-get install -y xterm csh tcsh libjpeg62 
+#
+#    dpkg -i /usr/local/software/freesurfer_7.2.0_amd64.deb; apt-get -fy install
+#    apt install -y python-minimal
+#    
+#    python /usr/local/software/fslinstaller.py -d /opt/fsl
 
-    dpkg -i /usr/local/software/freesurfer_7.2.0_amd64.deb; apt-get -fy install
-    apt install -y python-minimal
+##    wget -O- http://neuro.debian.net/lists/bionic.us-nh.full | tee /etc/apt/sources.list.d/neurodebian.sources.list
+##    apt-key adv --recv-keys --keyserver hkps://keyserver.ubuntu.com 0xA5D32F012649A5A9
+##    apt-get update
+##    apt-get install -y fsl-5.0-core
     
-    python /usr/local/software/fslinstaller.py -d /opt/fsl
-
-#    wget -O- http://neuro.debian.net/lists/bionic.us-nh.full | tee /etc/apt/sources.list.d/neurodebian.sources.list
-#    apt-key adv --recv-keys --keyserver hkps://keyserver.ubuntu.com 0xA5D32F012649A5A9
-#    apt-get update
-#    apt-get install -y fsl-5.0-core
-    
-    apt-get install -y python3
-    apt-get install -y python3-pip
-    pip3 install -i https://test.pypi.org/simple/ aircrushcore
+#    apt-get install -y python3
+#    apt-get install -y python3-pip
+#    pip3 install -i https://test.pypi.org/simple/ aircrushcore
  
-    chmod -R a+rx /usr/local/software/*
+#    chmod -R a+rx /usr/local/software/*
     chmod -R a+rx /usr/local/scripts
 %runscript    
     echo "Arguments received: first: $1    all:$*"
