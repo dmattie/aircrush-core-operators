@@ -84,6 +84,32 @@ if [[ ! -d $SOURCE ]];then
 fi
 
 mkdir -p $TARGET/parcellations
-touch $TARGET/parcellations/wmparc0002.nii
-touch $TARGET/parcellations/wmparc0004.nii
-touch $TARGET/parcellations/wmparc0005.nii
+if [[ ! -f $SOURCE/mri/wmparc.nii && -f $SOURCE/mri/wmparc.mgz ]];then
+    #MGZ2Nifti not called yet.  lets convert inline
+    mri_convert -rt nearest -nc -ns 1 $SOURCE/mri/wmparc.mgz $SOURCE/mri/wmparc.nii
+fi
+if [[ ! -f $SOURCE/mri/wmparc.nii ]];then
+    >&2 echo "ERROR: $SOURCE/mri/wmparc.nii not found.  If an .mgz file was found I would have attempted conversion first."
+    exit 1
+# else
+#     cp $SOURCE/mri/wmparc.nii $TARGET/parcellations
+fi
+
+#Iterate segment map, get a list of ROIs and split wmparc into individual components, one per ROI
+cat "${SCRIPTPATH}/assets/segmentMap.csv"|grep -v "#"|cut -d, -f1 | while read -r line; do
+    mri_extract_label $SOURCE/mri/wmparc.nii $line wmparc$line.nii
+done
+
+
+parcels=$(cat "${SCRIPTPATH}/assets/segmentMap.csv"|grep -v "#"|cut -d, -f1|wc -l)
+echo "$parcels rois expected to be produced"
+
+rendered=$(ls $TARGET/parcellations|wc -l) 
+echo "$rendered rendered"
+
+if [ "$rendered" -lt "$parcels" ];then
+    >&2 echo "WARNING: Not all parcellations were created. Expected $parcels, found $rendered wmparc files."
+fi
+echo "Parcellation completed, $rendered files created in $TARGET/parcellations"
+exit 0
+

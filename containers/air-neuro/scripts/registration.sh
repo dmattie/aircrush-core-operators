@@ -3,49 +3,127 @@ SCRIPT=$( realpath $0 )
 SCRIPTPATH=$( dirname $SCRIPT )
 source "${SCRIPTPATH}/lib/helper.sh"
 
-if [ ! $# -eq 2 ];then
-    printf "ERROR:Two parameters expected\n"    
-    printf "\tUSAGE:\t\tregistration.sh SOURCE PIPELINE"
-    printf "\n\tEXAMPLE:\tregistration.sh ~/scratch/dataset/rawdata/sub-0001/ses-000A levman\n\n"
-    printf "\tResults will appear in ~/scratch/dataset/derivatives/levman/sub-0001/ses-000A/\n\n"    
-    exit
-fi
-SOURCE=$1
-PIPELINE=$2
+
+#set -e #Exit when a command fails
+#set -x #echo each command before it runs
+
+############################################################
+# Help                                                     #
+############################################################
+Help()
+{
+   # Display Help
+   echo "Registration of DWI image to T1 image"
+   echo
+   echo "Usage: bids [OPTIONS...]"
+   echo "options:"
+   echo "--help                                 Print this Help."
+   echo "--datasetdir  DIR                      Path to dataset directory (just above ../[source|rawdata|derivatives]/..)"
+   echo "--subject SUBJECT                      Specify subject ID to clone.  If session not"
+   echo "                                       specified, then clone the entire subject"
+   echo "--session SESSION                      Specify session ID to clone"  
+   echo "--pipeline PIPELINE                    Specify the derivative pipeline ID where the registered image and transformation matrix will be stored"
+   echo "--timepoint TIMEPOINT                  [Optional] Specify which sequence/timepoint to use for" 
+   echo "                                       image if multiple captured during the same exam. Default is 1."
+   echo
+}
+
+############################################################
+# Process the input options. Add options as needed.        #
+############################################################
+# Get the options
 
 
-if [[ ! -d $SOURCE ]];then
-    echo "ERROR: Specified source directory does not exist: (${SOURCE})"
-    exit
+TEMP=`getopt -o h: --long help,datasetdir:,subject:,session:,pipeline:,timepoint:, \
+             -n 'registration' -- "$@"`
+
+if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
+
+# Note the quotes around `$TEMP': they are essential!
+eval set -- "$TEMP"
+
+DATASETDIR=""
+SUBJECT=""
+SESSION=""
+PIPELINE=""
+TIMEPOINT="1"
+
+while true; do
+  case "$1" in
+    -h | --help ) Help;exit 1;;
+    --datasetdir ) DATASETDIR="$2";shift 2;;     
+    --subject ) SUBJECT="$2";shift 2;;
+    --session ) SESSION="$2";shift 2;;
+    --pipeline ) PIPELINE="$2";shift 2;;
+    --timepoint ) TIMEPOINT="$2";shift 2;;
+    -- ) shift; break ;;
+    * ) break ;;
+  esac
+done
+
+
+if [[ $DATASETDIR == "" ]];then
+    >&2 echo "ERROR: --datasetdir not specified"
+    exit 1
+fi
+if [[ ! -d $DATASETDIR ]];then
+    >&2 echo "ERROR: dataset directory specified not found ($datasetdir)"
+    exit 1
+fi
+if [[ $SUBJECT == "" ]];then
+    >&2 echo "ERROR: subject not specified"
+    exit 1
+fi
+if [[ $SESSION == "" ]];then
+    >&2 echo "ERROR: session not specified"
+    exit 1
+fi
+if [[ $PIPELINE =="" ]];then
+    >&2 echo "ERROR: pipeline ID not specified"
+    exit 1
 fi
 
-subject=$( get_subject $SOURCE )
-session=$( get_session $SOURCE )    
-derivatives=$( get_derivatives $SOURCE )
-
-
-#Lets look for T1
-if [[ ! -d $SOURCE/anat ]];then
-    printf "ERROR: anat directory not found in source\n"
-    exit
-fi
-t1=$( ls $SOURCE/anat/*.nii |head -1)
-if [[  ! -f $t1 ]];then
-    printf "ERROR: No structural T1 image found\n"
-    exit
+if [[ $TIMEPOINT <> "" ]];then
+    TIMEPOINT="_${TIMEPOINT}"
 fi
 
-#Lets see if dwi exists
-if [[ ! -d $SOURCE/dwi ]];then
-    printf "ERROR: No diffusion directory (dwi) found\n"
-    exit
+
+SOURCE_dwi=${DATASETDIR}/rawdata/sub-${SUBJECT}/ses-${SESSION}/anat/sub-${SUBJECT}_ses-${SESSION}_dwi${TIMEPOINT}.nii.gz
+REFERENCE=${DATASETDIR}/derivatives/freesurfer/sub-${SUBJECT}/ses-${SESSION}/mri/brainmask.nii
+TARGET=${DATASETDIR}/derivatives/$PIPELINE/sub-${SUBJECT}/ses-${SESSION}
+
+
+if [[ ! -f $SOURCE_dwi ]];then
+    >&2 echo "ERROR: Specified source file doesn't exist: ($SOURCE_dwi)"
+    exit 1
 fi
-dwi=$( ls $SOURCE/dwi/*.nii |head -1 )
-if [[ ! -f $dwi ]];then    
-    printf "ERROR: Diffusion volume not found in dwi directory\n"
-    exit
+
+mkdir -p $TARGET
+if [[ ! -d $TARGET ]];then
+    >&2 echo "ERROR: Destination derivatives directory doesn't exist or cannot be created ($TARGET)"
+    exit 1
 fi
-mkdir -p $derivatives/$PIPELINE/$subject/$session
-cp $t1 $derivatives/$PIPELINE/$subject/$session
-cp $dwi $derivatives/$PIPELINE/$subject/$session
-touch $derivatives/$PIPELINE/$subject/$session/reg2brain.data.nii.gz
+
+
+FILES=vol*.n*
+
+echo "Registering DWI [$1] to Reference [$2]"
+cp $SOURCE_dwi $TARGET
+cd $TARGET
+fslsplit sub-${SUBJECT}_ses-${SESSION}_dwi${TIMEPOINT}.nii.gz
+for f in $FILES
+do
+   fbase=$(echo $f|cut -f 1 -d '.')
+   echo "flirt -in $f -ref $REFERENCE -omat $fbase.RegTransform4D -out reg2ref.$fbase.nii.gz"
+   flirt -in $f -ref $REFERENCE -omat $fbase.RegTransform4D -out reg2ref.$fbase.nii.gz
+done
+fslmerge -a reg2brain.data.nii.gz reg2ref.*
+mkdir registration
+mv vol* registration
+mv reg2ref* egistration
+
+if [[ ! -f "reg2brain.data.nii.gz" ]];then
+    >&2 echo "ERROR: failed to complete image registration.  Expected to see a file reg2brain.data.nii.gz produced, but didn't"
+    exit 1
+fi
+exit 0
