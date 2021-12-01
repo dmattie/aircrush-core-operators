@@ -725,9 +725,15 @@ def cascade_status_to_subject(node_uuid):
                 pipelines[tis_for_session[ti].field_pipeline]=tis_for_session[ti].pipeline()
 
         session.field_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted)
-        subject=session.subject()
+        subject=session.subject()                        
+
         subjects_of_attached_sessions[subject.uuid]=subject
         project=subject.project()
+
+        if subject == None or project == None:
+            print(f"Session {session.title} is orphaned, please conduct a health check.\n\tSubject:{subject}\n\tProject:{project}  Skipping")
+            continue
+        
         if session.field_status=='processed':
             push_data("rawdata",project,subject,session)
             push_data("derivatives",project,subject,session,pipelines=pipelines)
