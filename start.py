@@ -564,7 +564,10 @@ def doSomething():
                 if not subject == None:
                     project = subject.project()
                     
-
+            if project == None:
+                print(f"ERROR: Assigned session {session.title} is orphaned or the project is unpublished")
+                return
+                
             container = pullContainer(task.field_singularity_container)
             workingdir=aircrush.config['COMPUTE']['working_directory']   
             datacommons=aircrush.config['COMMONS']['commons_path']    
