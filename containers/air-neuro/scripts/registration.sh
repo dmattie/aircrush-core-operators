@@ -131,7 +131,7 @@ done
 fslmerge -a reg2brain.data.nii.gz reg2ref.*
 mkdir registration
 mv vol* registration
-mv reg2ref* egistration
+mv reg2ref* registration
 
 if [[ ! -f "reg2brain.data.nii.gz" ]];then
     >&2 echo "ERROR: failed to complete image registration.  Expected to see a file reg2brain.data.nii.gz produced, but didn't"
