@@ -83,7 +83,7 @@ if [[ $PIPELINE == "" ]];then
     exit 1
 fi
 
-if [[ $TIMEPOINT <> "" ]];then
+if [[ $TIMEPOINT != "" ]];then
     TIMEPOINT="_${TIMEPOINT}"
 fi
 
