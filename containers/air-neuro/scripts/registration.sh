@@ -78,7 +78,7 @@ if [[ $SESSION == "" ]];then
     >&2 echo "ERROR: session not specified"
     exit 1
 fi
-if [[ $PIPELINE =="" ]];then
+if [[ $PIPELINE == "" ]];then
     >&2 echo "ERROR: pipeline ID not specified"
     exit 1
 fi
@@ -101,6 +101,17 @@ fi
 mkdir -p $TARGET
 if [[ ! -d $TARGET ]];then
     >&2 echo "ERROR: Destination derivatives directory doesn't exist or cannot be created ($TARGET)"
+    exit 1
+fi
+
+
+#Convert reference to nii from mgz if not done already
+if [[ ! -f ${DATASETDIR}/derivatives/freesurfer/sub-${SUBJECT}/ses-${SESSION}/mri/brainmask.nii && -f ${DATASETDIR}/derivatives/freesurfer/sub-${SUBJECT}/ses-${SESSION}/mri/brainmask.mgz ]];then
+    #MGZ2Nifti not called yet.  lets convert inline
+    mri_convert -rt nearest -nc -ns 1 ${DATASETDIR}/derivatives/freesurfer/sub-${SUBJECT}/ses-${SESSION}/mri/brainmask.mgz ${DATASETDIR}/derivatives/freesurfer/sub-${SUBJECT}/ses-${SESSION}/mri/brainmask.nii
+fi
+if [[ ! -f $REFERENCE ]];then
+    >&2 echo "ERROR: $SOURCE/mri/wmparc.nii not found.  If an .mgz file was found I would have attempted conversion first."
     exit 1
 fi
 
