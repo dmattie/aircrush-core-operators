@@ -83,7 +83,7 @@ if [[ $SESSION == "" ]];then
     exit 1
 fi
 
-if [[ $GRADIENTMATRIX <> "" && ! -f $GRADIENTMATRIX ]];then
+if [[ $GRADIENTMATRIX != "" && ! -f $GRADIENTMATRIX ]];then
     >&2 echo "ERROR: A gradient matrix has been specified but cannot be found ($GRADIENTMATRIX)"
     exit 1
 fi
