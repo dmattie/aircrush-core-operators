@@ -33,7 +33,7 @@ From: ubuntu:18.04
     add-apt-repository universe
 
     apt-get install -y gsl-bin
-    apt-get install -y libgsl-def
+    apt-get install -y libgsl-dev
 
 #apt-get install -y redis-server
 
