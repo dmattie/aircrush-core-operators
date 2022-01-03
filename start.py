@@ -143,7 +143,7 @@ def pull_data(stage,project,subject,session):
 
         ##Get the hostname of cluster hosting data commons for remote rsync
         ##user must have setup known_hosts for unattended rsync
-        if aircrush.config['COMMONS']['data_transfer_node']:            
+        if aircrush.config.has_option('COMMONS','data_transfer_node'):            
             data_transfer_node=aircrush.config['COMMONS']['data_transfer_node']
             if not data_transfer_node=="":                
                 if not data_transfer_node[-1]==":":  #Add a colon to the end for rsync syntax if necessary
@@ -188,7 +188,7 @@ def push_data(stage,project,subject,session,**kwargs):
 
         ##Get the hostname of cluster hosting data commons for remote rsync
         ##user must have setup known_hosts for unattended rsync
-        if aircrush.config['COMMONS']['data_transfer_node']:            
+        if aircrush.config.has_option('COMMONS','data_transfer_node'):         
             data_transfer_node=aircrush.config['COMMONS']['data_transfer_node']
             if not data_transfer_node=="":                
                 if not data_transfer_node[-1]==":":  #Add a colon to the end for rsync syntax if necessary
@@ -257,7 +257,7 @@ def parameter_expansion(cmdArray,parms_to_add,**kwargs):
         parm= parms_to_add[k]
         parm = parm.replace("#workingdir",workingdir)
         parm = parm.replace("#datacommons",datacommons)
-        parm = parm.replace("#pipeline",pipeline)
+        parm = parm.replace("#pipeline",pipeline.field_id)
         parm = parm.replace("#subject",subject.title)
         parm = parm.replace("#session",session.title)
         parm = parm.replace('#project',project.field_path_to_exam_data)
@@ -460,7 +460,7 @@ def check_running_jobs(node_uuid):
                                 log_contents=f"log file has been truncated.  see output log for complete detail\n\n{log_contents[-2000:]}"                            
                             tis[ti].body=log_contents
 
-                        updateStatus(tis[ti],"completed")
+                        updateStatus(tis[ti],"processed")
                     if status=='FAILED':
                         if tis[ti].field_errorfile and os.path.isfile(tis[ti].field_errorfile):
                             logfile = open(tis[ti].field_errorfile,'r')
@@ -488,11 +488,46 @@ def check_running_jobs(node_uuid):
         print(f"\t{reviewed_tis} jobs not accounted for")
     else:
         print("\tAll running jobs on this node accounted for and updated in CMS")
-   
+
+def validate_config():
+    passed=True
+    
+    if not aircrush.config.has_option('REST','username'):
+        print("Configuration settings incomplete, expected [REST] username")
+        passed=False
+    if not aircrush.config.has_option('REST','password'):
+        print("Configuration settings incomplete, expected [REST] password")
+        passed=False        
+    if not aircrush.config.has_option('REST','endpoint'):
+        print("Configuration settings incomplete, expected [REST] endpoint")
+        passed=False  
+
+    if not aircrush.config.has_option('COMPUTE','cluster'):
+        print("Configuration settings incomplete, expected [COMPUTE] cluster")
+        passed=False
+    if not aircrush.config.has_option('COMPUTE','account'):
+        print("Configuration settings incomplete, expected [COMPUTE] account")
+        passed=False
+    if not aircrush.config.has_option('COMPUTE','working_directory'):
+        print("Configuration settings incomplete, expected [COMPUTE] working_directory")
+        passed=False        
+    if not aircrush.config.has_option('COMPUTE','singularity_container_location'):
+        print("Configuration settings incomplete, expected [COMPUTE] singularity_container_location")
+        passed=False    
+
+    if not aircrush.config.has_option('COMMONS','commons_path'):
+        print("Configuration settings incomplete, expected [COMMONS] commons_path")
+        passed=False   
+    if not aircrush.config.has_option('COMMONS','staging_path'):
+        print("Configuration settings incomplete, expected [COMMONS] staging_path")
+        passed=False                   
+    
+    return passed
+
 def doSomething():
     
-    nuid = "4d065840-dd33-44dc-be97-623e7d743bce" #dmattie on narval
-    #nuid = getMyComputeNodeUUID()
+    #nuid = "4d065840-dd33-44dc-be97-623e7d743bce" #dmattie on narval
+    nuid = getMyComputeNodeUUID()
     
    # check_running_jobs(nuid)
     cascade_status_to_subject(nuid)
@@ -519,6 +554,8 @@ def doSomething():
 
             session_col = SessionCollection(cms_host=crush_host)
             session = session_col.get_one(todo.field_associated_participant_ses)
+            pipeline = task.pipeline()
+
             subject=None
             project=None
 
@@ -527,7 +564,10 @@ def doSomething():
                 if not subject == None:
                     project = subject.project()
                     
-
+            if project == None:
+                print(f"ERROR: Assigned session {session.title} is orphaned or the project is unpublished")
+                return
+                
             container = pullContainer(task.field_singularity_container)
             workingdir=aircrush.config['COMPUTE']['working_directory']   
             datacommons=aircrush.config['COMMONS']['commons_path']    
@@ -568,7 +608,8 @@ def doSomething():
                 workingdir=workingdir,
                 project=project,
                 subject=subject,
-                session=session)                        
+                session=session,
+                pipeline=pipeline)                        
             #messages.append(f"cmdArray:{cmdArray}")            
             print("Creating SLURM job")
             jobfiles = createJob(cmdArray,parms,
@@ -606,7 +647,7 @@ def doSomething():
                 updateStatus(todo,"failed",'<br/>\n'.join(messages),ret.stderr)
         except Exception as e:
             print(e)
-            print("there")
+            print("An error has accurred.  Unable to proceed.  See previous messages.")
             if hasattr(e, 'message'):
                 new_errors=e.message
             else:
@@ -659,7 +700,7 @@ def cascade_status_to_subject(node_uuid):
         count_running=0
         count_failed=0
         count_completed=0
-        count_notstarted=0
+        count_notstarted=0        
 
         pipelines={}
 
@@ -669,6 +710,13 @@ def cascade_status_to_subject(node_uuid):
             if tis_for_session[ti].field_status=='completed':
                 count_completed+=1
                 continue
+            if tis_for_session[ti].field_status=='processed':
+                ############ ATTENTION #############
+                # This increments running ,but is the processed flag.  We don't need the noise in higher levels. processed code limited to task instances
+                # but is basically the same as running until it commits
+                ####################################
+                count_running+=1
+                continue            
             if tis_for_session[ti].field_status=='running':
                 count_running+=1
                 continue
@@ -676,16 +724,23 @@ def cascade_status_to_subject(node_uuid):
                 count_failed+=1
                 continue
             count_notstarted+=1
-            if ti.field_pipeline:
-                pipelines[ti.field_pipeline]=ti.pipeline()
+            if tis_for_session[ti].field_pipeline:
+                pipelines[tis_for_session[ti].field_pipeline]=tis_for_session[ti].pipeline()
 
         session.field_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted)
-        subject=session.subject()
+        subject=session.subject()                        
+
         subjects_of_attached_sessions[subject.uuid]=subject
         project=subject.project()
-        if session.field_status=='completed':
+
+        if subject == None or project == None:
+            print(f"Session {session.title} is orphaned, please conduct a health check.\n\tSubject:{subject}\n\tProject:{project}  Skipping")
+            continue
+        
+        if session.field_status=='processed':
             push_data("rawdata",project,subject,session)
             push_data("derivatives",project,subject,session,pipelines=pipelines)
+            session.field_status='completed'
             session.field_responsible_compute_node=None #Free up a slot on compute node for more
         session.upsert()
 
@@ -788,6 +843,9 @@ def main():
 
     
     aircrush=ini_settings()
+    if not validate_config():
+        print ("Configuration incomplete")
+        exit(1)
 
     try:
         crush_host=Host(

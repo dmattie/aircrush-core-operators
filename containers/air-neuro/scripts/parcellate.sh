@@ -95,13 +95,14 @@ if [[ ! -f $SOURCE/mri/wmparc.nii ]];then
 #     cp $SOURCE/mri/wmparc.nii $TARGET/parcellations
 fi
 
+cd $TARGET/parcellations
 #Iterate segment map, get a list of ROIs and split wmparc into individual components, one per ROI
-cat "${SCRIPTPATH}/assets/segmentMap.csv"|grep -v "#"|cut -d, -f1 | while read -r line; do
+cat "${SCRIPTPATH}/../assets/segmentMap.csv"|grep -v "#"|cut -d, -f1 | while read -r line; do
     mri_extract_label $SOURCE/mri/wmparc.nii $line wmparc$line.nii
 done
 
 
-parcels=$(cat "${SCRIPTPATH}/assets/segmentMap.csv"|grep -v "#"|cut -d, -f1|wc -l)
+parcels=$(cat "${SCRIPTPATH}/../assets/segmentMap.csv"|grep -v "#"|cut -d, -f1|wc -l)
 echo "$parcels rois expected to be produced"
 
 rendered=$(ls $TARGET/parcellations|wc -l) 

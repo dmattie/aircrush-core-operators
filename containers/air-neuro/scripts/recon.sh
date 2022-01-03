@@ -22,6 +22,7 @@ Help()
    echo "                                       specified, then clone the entire subject"
    echo "--session SESSION                      Specify session ID to clone"  
    echo "--pipeline PIPELINE_ID                 Specify derivatives directory to store output.  If unspecified, store in rawdata." 
+   echo "--reprocess                            If recon-all has been previously run, remove it and recon-all again"
    echo
 }
 
@@ -32,7 +33,7 @@ Help()
 # Get the options
 
 
-TEMP=`getopt -o h: --long help,datasetdir:,subject:,session:,pipeline:, \
+TEMP=`getopt -o h: --long help,datasetdir:,subject:,session:,pipeline:,reprocess, \
              -n 'recon' -- "$@"`
 
 if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
@@ -44,6 +45,7 @@ DATASETDIR=""
 SUBJECT=""
 SESSION=""
 PIPELINE=""
+REPROCESS="N"
 
 while true; do
   case "$1" in
@@ -52,10 +54,12 @@ while true; do
     --subject ) SUBJECT="$2";shift 2;;
     --session ) SESSION="$2";shift 2;;
     --pipeline ) PIPELINE="$2";shift 2;;
+    --reprocess ) REPROCESS="Y";shift;break;;
     -- ) shift; break ;;
     * ) break ;;
   esac
 done
+
 
 
 if [[ $DATASETDIR == "" ]];then
@@ -63,7 +67,7 @@ if [[ $DATASETDIR == "" ]];then
     exit 1
 fi
 if [[ ! -d $DATASETDIR ]];then
-    >&2 echo "ERROR: dataset directory specified not found ($datasetdir)"
+    >&2 echo "ERROR: dataset directory specified not found ($DATASETDIR)"
     exit 1
 fi
 if [[ $SUBJECT == "" ]];then
@@ -98,42 +102,41 @@ if [[ ! -d "anat" ]];then
     >&2 echo "T1 Structural directory not found in $SOURCE/anat"
     exit 1
 fi
-cd $SOURCE
 
-infile=$( ls anat/sub-${SUBJECT}*.nii |head -1)
-
-if [[ ! -f $infile ]];then
-    if [[ ! -f "${infile}.gz" ]];then
-        >&2 echo "ERROR: T1 Structural volume not found (anat/sub-${SUBJECT}*.nii.gz)"
-        exit 1
-    else
-        infile="${infile}.gz"
+if [[ $REPROCESS == "N" ]];then
+    echo "Checking existence of $TARGET/mri/wmparc.mgz"
+    if [[ -f $TARGET/mri/wmparc.mgz ]];then
+        echo "This exam as already been reconstructed.  Target exists ($TARGET)"
+        exit 0
+    else 
+        echo "File not found, proceeding with reconstruction"
     fi
+else
+    #Check for empty directory in $TARGET
+    if [ ! -z "$(ls -A $TARGET)" ]; then
+        echo "Reconstruction output exisets.  This will be deleted before continuing"
+        rm -r $TARGET/*
+    fi
+
+
 fi
+
+shopt -s globstar  
+
+for eachnii in $SOURCE/anat/sub-*.nii*;do
+    infile=$eachnii
+    break;
+done
 
 #######################  DO THE WORK   #########################################
 # Do Reconstruction here
 
 mkdir -p $TARGET
 
-cd $SOURCE/anat
-
-infile=$( ls sub-${SUBJECT}_ses-${SESSION}*.nii )
-infile_gz=$( ls sub-${SUBJECT}_ses-${SESSION}*.nii.gz )
-if [[ ! -f $SOURCE/anat/$infile && -f $infile_gz ]];then
-   infile=$infile_gz
-   echo "found compressed version: $SOURCE/anat/$infile"
-fi  
-
-cd $TARGET
-# singularity exec --bind $DATASETDIR:/dataset \
-#     $AIRCRUSH_CONTAINERS/air-neuro.sif \
-#     /usr/local/freesurfer/7.2.0/bin/recon-all \
-#     -s freesurfer  \
-#     -i /dataset/rawdata/sub-29152/ses-1/anat/sub-29152_ses-1_anat.nii.gz
 SUBJECTS_DIR=$TARGET
-echo "Performing cortical reconstruction of $SOURCE/anat/$infile"
-recon-all -s freesurfer -i $SOURCE/anat/$infile -all 
+echo "Performing cortical reconstruction from $infile"
+echo "Output will be written to working directory: $TARGET"
+recon-all -s freesurfer -i $infile -all 
 if [[ $? -eq 0 && -f $TARGET/freesurfer/mri/wmparc.mgz ]];then
     mv $TARGET/freesurfer/* $TARGET
     rmdir $TARGET/freesurfer
