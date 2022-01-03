@@ -6,6 +6,7 @@
 SCRIPT=$( realpath $0 )
 SCRIPTPATH=$( dirname $SCRIPT )
 source "${SCRIPTPATH}/lib/helper.sh"
+source "${SCRIPTPATH}/lib/crush/crush_import.sh"
 
 ############################################################
 # Help                                                     #
@@ -33,7 +34,7 @@ Help()
 ############################################################
 # Get the options
 
-TEMP=`getopt -o h: --long help,datasetdir:,subject:,session:,pipeline:,gradientmatrix:,\
+TEMP=`getopt -o h: --long help,datasetdir:,subject:,session:,pipeline:,gradientmatrix:,bmax:,b0:,\
              -n 'crush' -- "$@"`
 
 if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
@@ -46,6 +47,8 @@ SUBJECT=""
 SESSION=""
 PIPELINE=""
 GRADIENTMATRIX=""
+BMAX=""
+BNOT=""
 
 while true; do
   case "$1" in
@@ -55,6 +58,9 @@ while true; do
     --session ) SESSION="$2";shift 2;;
     --pipeline ) PIPELINE="$2";shift 2;;
     --gradientmatrix ) GRADIENTMATRIX="$2";shift 2;;
+    --bmax ) BMAX="$2";shift 2;;
+    --BNOT ) BNOT="$2";shift 2;;
+
     -- ) shift; break ;;
     * ) break ;;
   esac
@@ -89,6 +95,12 @@ if [[ $GRADIENTMATRIX <> "" && ! -f $GRADIENTMATRIX ]];then
 fi
   
 
+if [[ $BNOT == "" ]];then
+    BNOT="-b0 1"
+else
+    BNOT="-b0 $BNOT"
+fi
+
 SOURCE=$DATASETDIR/rawdata/sub-$SUBJECT/ses-$SESSION
 TARGET=$DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/ses-$SESSION
   
@@ -97,14 +109,32 @@ if [[ ! -d $SOURCE ]];then
     exit 1
 fi
 
-res=$( creategradientmatrix $TARGET/gradientmatrix.txt )
+res=$( $SCRIPTPATH/create_gradient_matrix.py $SOURCE/dwi $TARGET/gradientmatrix.txt )
 if [[ "$res" -ne "0" ]];then
     >&2 echo "ERROR: Unable to establish a gradient matrix.  Unable to continue."
+    exit 1
 fi
+###########################
+# HARDI_MAT               #
+###########################
 
+ hardi_mat $TARGET/gradientmatrix.txt $TARGET/temp_mat.dat -ref $TARGET/reg2brain.data.nii.gz
+ res=$?
 
+ if [[ $res != 0 ]];then
+    >&2 echo "ERROR: Unable to perform hardi_mat.  Unable to continue."
+    exit 1
+ fi
+            
 
-python $CRUSH_PATH/crush.py -samples $SUBJECTS_DIR -patient sub-$patientID -recrush -fixmissing #-gradienttable ~/projects/def-dmattie/crush/plugins/levman/hcp_gradient_table_from_data_dictionary_3T.csv
-pwd
+###########################
+# RECON                   #
+###########################
 
-if [ -f "$SUBJECTS_DIR/sub-$patientID/ses-$sessionID/Tractography/crush/tracts.txt" ]; then
+recon $SOURCE $TARGET
+res=$?
+
+if [[ $res != 0 ]];then
+    >&2 echo "ERROR: Unable to perform Cortical Reconstruction.  Unable to continue."
+    exit 1
+fi
