@@ -2,7 +2,7 @@ BootStrap: docker
 From: ubuntu:18.04
 
 %files
-#    /home/dmattie/software /usr/local
+    /home/dmattie/software /usr/local
     /home/dmattie/software/freesurfer_license.txt /usr/local/freesurfer/7.2.0/license.txt
     /home/dmattie/software/freesurfer_license.txt /usr/local/freesurfer/7.2.0/.license
     
@@ -34,6 +34,7 @@ From: ubuntu:18.04
 
     apt-get install -y gsl-bin
     apt-get install -y libgsl-dev
+    ln -fs /usr/lib/x86_64-linux-gnu/libgsl.so /usr/lib/x86_64-linux-gnu/libgsl.so.0 
 
 #apt-get install -y redis-server
 
