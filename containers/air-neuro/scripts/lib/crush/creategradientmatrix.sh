@@ -7,7 +7,7 @@ creategradientmatrix()
 {
     matrix=$1
 
-    if [[ $GRADIENTMATRIX <> "" && -f $GRADIENTMATRIX]];then
+    if [[ $GRADIENTMATRIX != "" && -f $GRADIENTMATRIX]];then
         cp $GRADIENTMATRIX $matrix
         if [[ ! -f $matrix ]];then
             echo "Unable to copy specified gradient matrix to $matrix"
@@ -19,7 +19,7 @@ creategradientmatrix()
             echo "Gradient table not specified and convertable bvecs not found ($bvecs).  Unable to proceed."
             exit 1
         fi
-
+        echo "${SCRIPTPATH}/lib/crush/create_gradient_patrix.py $bvecs $matrix"
         ${SCRIPTPATH}/lib/crush/create_gradient_patrix.py $bvecs $matrix
 
         if [[ ! -f $matrix ]];then

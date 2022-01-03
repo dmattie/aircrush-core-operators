@@ -11,3 +11,5 @@ dti_recon()
         echo "Matrix file already exists. I will use it."
         exit 0
     fi
+
+}
