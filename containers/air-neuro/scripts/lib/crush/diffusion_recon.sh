@@ -1,11 +1,17 @@
 
 #!/bin/bash
 
+SCRIPT=$( realpath $0 )
+SCRIPTPATH=$( dirname $SCRIPT )
+source "${SCRIPTPATH}/lib/crush/dti_recon.sh"
+source "${SCRIPTPATH}/lib/crush/odf_recon.sh"
+
+
 ############################################################
 # diffusion exists
 ############################################################
 
-diffusion_exists()
+function f_diffusion_exists()
 {
     shopt -s globstar  
     for eachnii in $SOURCE/dwi/sub-*.nii*;do
@@ -13,27 +19,83 @@ diffusion_exists()
         break;
     done
     if [[ ! -f $dwifile ]];then
+        echo "FALSE"
         >&2 echo "ERROR: Diffusion file not found matching search pattern : ($SOURCE/dwi/sub-*.nii*)"
         exit 1
     fi
-    echo "TRUE"
+    echo $dwifile
 }
+
+
+############################################################
+# dti_recon                                                #
+############################################################
+function f_dti_recon()
+{
+    #Params:
+    #  1: path to 3D diffusion weighted image
+    #  2: path to gradientmatrix file
+    #  3: high b value (e.g. 1000)
+    #  4: number of b0 rows in gradient matrix
+  dwi=$1
+  matrix=$2
+  highb=$3
+  b0=$4
+
+  dti_recon $dwi "DTI_Reg2Brain" -gm $matrix -b $highb -b0 $b0 -p 3 -sn 1 -ot nii
+  res=$?
+  if [[ $res != 0 ]];then
+    echo "FALSE"
+  fi
+
+  echo "TRUE"
+
+}
+
+
+############################################################
+# odf_recon                                                #
+############################################################
+function f_odf_recon()
+{
+    #Params:
+    #  1: path to 3D diffusion weighted image
+    #  2: path to gradientmatrix file
+    #  3: high b value (e.g. 1000)
+    #  4: number of b0 rows in gradient matrix
+  dwi=$1
+  matrix=$2
+  highb=$3
+  b0=$4
+
+  odf_recon $dwi "ODF_Reg2Brain" -gm $matrix -b $highb -b0 $b0 -p 3 -sn 1 -ot nii
+  res=$?
+  if [[ $res != 0 ]];then
+    echo "FALSE"
+  fi
+
+  echo "TRUE"
+
+}
+
 ############################################################
 # recon                                                    #
 ############################################################
-diffusion_recon()
+function f_diffusion_recon()
 {
+    dwifile=f_diffusion_exists
 
-    if [[ $( diffusion_exists ) != "TRUE" ]];then
+
+    if [[ $dwifile == "FALSE" ]];then
         >&2 echo "ERROR: Diffusion file not found matching search pattern : ($SOURCE/dwi/sub-*.nii*)."
-        exit 1
+        return 1
     fi
     #How many B values do we have.  If only one, we can use ODF recon, otherwise use DTI
 
     BVALS=$SOURCE/dwi/bvals
     if [[ ! -f $BVALS ]];then    
         >&2 echo "ERROR: $SOURCE/dwi/bvals not found.  Unable to continue, I need to know how many high b values I am working with"
-        exit 1
+        return 1
     fi
 
     #Find highest b val
@@ -45,25 +107,36 @@ diffusion_recon()
         echo "Using high b value of $BMAX_VAL as per dwi/bvals file"
     else
         #Use passed value 
+        BMAX_VAL=$BMAX
         BMAX="-b $BMAX"
+        
     fi   
 
     num_high_b_vals=`cat $SOURCE/dwi/bvals|tr ' ' '\n'|sort -u|grep -v '^0'|grep -v -e '^$'|wc -l`
     if [[ $num_high_b_vals == '1' ]];then
         # ODF Recon can be used   
         echo "Performing ODF Recononstruction"
+        if [[ $( f_odf_recon $dwifile $gradientmatrix $BMAX_VAL $num_high_b_vals) != "TRUE" ]];then
+            >&2 echo "ERROR: odf_recon failed. Previous messages may contain a clue. Unable to proceed."
+            return 1
+        fi
         
-    else
-        echo "Performing DTI Reconstruction"
-    #Must use DTI_RECON
-        # dti_recon ",self.eddyCorrectedData,"%s/DTI_Reg2Brain" %(self.visit.tractographypath),"-gm",defaultGradientMatrix,"-b", "1000","-b0",self.visit.b0,"-p","3","-sn","1","-ot","nii"]
-
-
+    else        
+        #Must use DTI_RECON            
+        echo "Performing DTI Recononstruction"
+        if [[ $( f_dti_recon $dwifile $gradientmatrix $BMAX_VAL $num_high_b_vals) != "TRUE" ]];then
+            >&2 echo "ERROR: dti_recon failed. Previous messages may contain a clue. Unable to proceed."
+            return 1
+        fi
+        
+  
     fi
+    return 0
 
 }
 
-export diffusion_recon
+export f_diffusion_recon
+
 
 
 # dwifiles=os.listdir(args.diffusionpath)

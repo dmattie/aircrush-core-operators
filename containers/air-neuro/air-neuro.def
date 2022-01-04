@@ -60,6 +60,15 @@ From: ubuntu:18.04
     
     apt-get install -y python3
     apt-get install -y python3-pip
+    pip install pandas    
+    pip install nibabel
+    pip install matplotlib
+    pip install scipy
+    pip install IPython
+    pip install mglearn
+    pip install gevent
+    pip install sklearn
+    pip install seaborn
     pip3 install -i https://test.pypi.org/simple/ aircrushcore
 
     chmod -R a+rx /usr/local/software/*

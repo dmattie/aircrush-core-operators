@@ -46,7 +46,7 @@ DATASETDIR=""
 SUBJECT=""
 SESSION=""
 PIPELINE=""
-TIMEPOINT="1"
+TIMEPOINT=""
 
 while true; do
   case "$1" in
@@ -83,12 +83,21 @@ if [[ $PIPELINE == "" ]];then
     exit 1
 fi
 
-if [[ $TIMEPOINT != "" ]];then
+if [[ $TIMEPOINT != "" ]];then    
     TIMEPOINT="_${TIMEPOINT}"
+    SOURCE_dwi=${DATASETDIR}/rawdata/sub-${SUBJECT}/ses-${SESSION}/dwi/sub-${SUBJECT}_ses-${SESSION}_dwi${TIMEPOINT}.nii.gz
+else
+
+
+    shopt -s globstar  
+
+    for eachnii in ${DATASETDIR}/rawdata/sub-${SUBJECT}/ses-${SESSION}/dwi/*.nii*;do
+        infile=$eachnii
+        break;
+    done
+    SOURCE_dwi=$eachnii
 fi
 
-
-SOURCE_dwi=${DATASETDIR}/rawdata/sub-${SUBJECT}/ses-${SESSION}/dwi/sub-${SUBJECT}_ses-${SESSION}_dwi${TIMEPOINT}.nii.gz
 REFERENCE=${DATASETDIR}/derivatives/freesurfer/sub-${SUBJECT}/ses-${SESSION}/mri/brainmask.nii
 TARGET=${DATASETDIR}/derivatives/$PIPELINE/sub-${SUBJECT}/ses-${SESSION}
 
@@ -118,10 +127,17 @@ fi
 
 FILES=vol*.n*
 
-echo "Registering DWI [$1] to Reference [$2]"
+echo "Registering DWI [$SOURCE_dwi] to Reference [$REFERENCE]"
 cp $SOURCE_dwi $TARGET
 cd $TARGET
-fslsplit sub-${SUBJECT}_ses-${SESSION}_dwi${TIMEPOINT}.nii.gz
+echo fslsplit $SOURCE_dwi 
+fslsplit $SOURCE_dwi #sub-${SUBJECT}_ses-${SESSION}_dwi${TIMEPOINT}.nii.gz
+res=$?
+if [[ $res != 0 ]];then
+    >&2 echo "ERROR: Failed to split $SOURCE_dwi.  Unable to continue"
+    exit 1
+fi
+
 for f in $FILES
 do
    fbase=$(echo $f|cut -f 1 -d '.')
@@ -129,7 +145,7 @@ do
    flirt -in $f -ref $REFERENCE -omat $fbase.RegTransform4D -out reg2ref.$fbase.nii.gz
 done
 fslmerge -a reg2brain.data.nii.gz reg2ref.*
-mkdir registration
+mkdir -p registration
 mv vol* registration
 mv reg2ref* registration
 

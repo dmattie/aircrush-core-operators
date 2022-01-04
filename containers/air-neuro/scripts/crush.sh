@@ -1,12 +1,13 @@
 #!/bin/bash
 
-source "${SCRIPTPATH}/lib/crush/crush_import.sh"
+
 #set -e #Exit when a command fails
 #set -x #echo each command before it runs
 
 SCRIPT=$( realpath $0 )
 SCRIPTPATH=$( dirname $SCRIPT )
 source "${SCRIPTPATH}/lib/helper.sh"
+source "${SCRIPTPATH}/lib/crush/crush_import.sh"
 
 ############################################################
 # Help                                                     #
@@ -102,8 +103,9 @@ if [[ ! -d $SOURCE ]];then
     exit 1
 fi
 
-res=$( creategradientmatrix $TARGET/gradientmatrix.txt )
-if [[ "$res" -ne "0" ]];then
+f_creategradientmatrix $TARGET/gradientmatrix.txt
+res=$?
+if [[ $res -ne 0 ]];then
     >&2 echo "ERROR: Unable to establish a gradient matrix.  Unable to continue."
 fi
 
@@ -111,7 +113,7 @@ fi
 # HARDI_MAT               #
 ###########################
 
- hardi_mat $TARGET/gradientmatrix.txt $TARGET/temp_mat.dat -ref $TARGET/reg2brain.data.nii.gz
+ f_hardi_mat $TARGET/gradientmatrix.txt $TARGET/temp_mat.dat -ref $TARGET/reg2brain.data.nii.gz
  res=$?
 
  if [[ $res != 0 ]];then
@@ -124,7 +126,7 @@ fi
 # RECON                   #
 ###########################
 
-diffusion_recon $SOURCE $TARGET
+f_diffusion_recon $SOURCE $TARGET
 res=$?
 
 if [[ $res != 0 ]];then
