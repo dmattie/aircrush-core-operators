@@ -64,7 +64,7 @@ From: ubuntu:18.04
     pip install sklearn
     pip install seaborn
     pip3 install -i https://test.pypi.org/simple/ aircrushcore
-
+    apt install -y python-minimal  
 
     dpkg -i /usr/local/software/freesurfer_7.2.0_amd64.deb; apt-get -fy install   
     python /usr/local/software/fslinstaller.py -d /opt/fsl
