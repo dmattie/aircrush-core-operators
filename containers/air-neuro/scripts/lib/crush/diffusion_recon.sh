@@ -69,9 +69,6 @@ function f_odf_recon()
   b0=$4
 
   nframes=`mri_info $dwi|grep nframes:|cut -d':' -f2|xargs`
-
-  
-  nframes=`mri_info $dwi|grep nframes:|cut -d':' -f2|xargs`
   if [[ ! $((nframes)) -gt 0 ]];then
     >&2 echo "ERROR: Unable to determine the number of frames in dwi file [$dwi]. Unable to proceed, number of directions must be known before performing odf_recon"
     return 1
