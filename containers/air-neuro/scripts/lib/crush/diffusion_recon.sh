@@ -98,7 +98,7 @@ function f_odf_recon()
 ############################################################
 function f_diffusion_recon()
 {
-    dwifile=f_diffusion_exists
+    dwifile=$( f_diffusion_exists )
 
 
     if [[ $dwifile == "FALSE" ]];then

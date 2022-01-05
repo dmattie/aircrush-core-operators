@@ -103,6 +103,7 @@ if [[ ! -d $SOURCE ]];then
     exit 1
 fi
 
+mkdir -p $TARGET
 f_creategradientmatrix $TARGET/gradientmatrix.txt
 res=$?
 if [[ $res -ne 0 ]];then
