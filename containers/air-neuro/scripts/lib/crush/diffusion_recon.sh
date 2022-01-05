@@ -3,8 +3,8 @@
 
 SCRIPT=$( realpath $0 )
 SCRIPTPATH=$( dirname $SCRIPT )
-source "${SCRIPTPATH}/lib/crush/dti_recon.sh"
-source "${SCRIPTPATH}/lib/crush/odf_recon.sh"
+#source "${SCRIPTPATH}/lib/crush/dti_recon.sh"
+#source "${SCRIPTPATH}/lib/crush/odf_recon.sh"
 
 
 ############################################################
@@ -68,7 +68,25 @@ function f_odf_recon()
   highb=$3
   b0=$4
 
-  odf_recon $dwi "ODF_Reg2Brain" -gm $matrix -b $highb -b0 $b0 -p 3 -sn 1 -ot nii
+  nframes=`mri_info $dwi|grep nframes:|cut -d':' -f2|xargs`
+
+  
+  nframes=`mri_info $dwi|grep nframes:|cut -d':' -f2|xargs`
+  if [[ ! $((nframes)) -gt 0 ]];then
+    >&2 echo "ERROR: Unable to determine the number of frames in dwi file [$dwi]. Unable to proceed, number of directions must be known before performing odf_recon"
+    return 1
+  fi
+
+
+  NUMBER_OF_DIRECTIONS=$((nframes+1))
+  NUMBER_OF_OUTPUT_DIRS=181
+
+  #odf_recon RAW_DATA_PREFIX NUMBER_OF_DIRECTIONS NUMBER_OF_OUTPUT_DIRS OUTPUT_FILE_PREFIX [OPTION]
+  #~/bin/odf_recon data.nii 125 181 DTI_Recon -b0 1 -p 3 -sn 1 -ot nii -mat ~/projects/def-dmattie/HCP/100307/T1w/Diffusion/temp_mat.dat
+
+  # cmdArray=["odf_recon",self.eddyCorrectedData,"31","181","%s/DTI_Recon" %(self.visit.tractographypath),"-b0", "5","-mat","%s/temp_mat.dat" %(self.visit.tractographypath),"-p","3","-sn", "1", "-ot", "nii"]
+
+  odf_recon $dwi "ODF_Reg2Brain" $NUMBER_OF_DIRECTIONS $NUMBER_OF_OUTPUT_DIRS -mat $matrix -b0 $b0 -ot nii
   res=$?
   if [[ $res != 0 ]];then
     echo "FALSE"
