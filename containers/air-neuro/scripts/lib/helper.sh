@@ -148,6 +148,15 @@ function mgz_to_nifti {
     fi
 
 }
+
+function spin {
+   local -a marks=( '/' '-' '\' '|' )
+   while [[ 1 ]]; do
+     printf '%s\r' "${marks[i++ % ${#marks[@]}]}"
+     sleep 1
+   done
+ }
+
 export get_subject
 export get_session
 export get_derivatives
@@ -155,4 +164,4 @@ export strip_prefix
 export begin_transaction
 export end_transaction
 export mgz_to_nifti
-
+export spin

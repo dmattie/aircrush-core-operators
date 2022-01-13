@@ -6,6 +6,7 @@
 f_creategradientmatrix()
 {
     matrix=$1
+    imaging_model=$2
 
     if [[ $GRADIENTMATRIX != "" && -f $GRADIENTMATRIX ]];then
         cp $GRADIENTMATRIX $matrix
@@ -21,7 +22,7 @@ f_creategradientmatrix()
             return 1
         fi   
 
-        ${SCRIPTPATH}/lib/crush/create_gradient_matrix.py -bvec $bvecs -out $matrix
+        ${SCRIPTPATH}/lib/crush/create_gradient_matrix.py -bvec $bvecs -out $matrix -imaging_model $imaging_model
 
         if [[ ! -f $matrix ]];then
             >&2 echo "Gradient table ($matrix) could not be created from ($bvecs).  Unable to proceed."

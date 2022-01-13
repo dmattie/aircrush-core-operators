@@ -14,13 +14,17 @@ SCRIPTPATH=$( dirname $SCRIPT )
 function f_diffusion_exists()
 {
     shopt -s globstar  
-    for eachnii in $SOURCE/dwi/sub-*.nii*;do
-        dwifile=$eachnii
-        break;
-    done
+    # for eachnii in $SOURCE/dwi/sub-*.nii*;do
+    #     dwifile=$eachnii
+    #     break;
+    # done
+    dwifile=$TARGET/reg2brain.data.nii.gz
+    #     dwifile=$eachnii
+    #     break;
+    # done
     if [[ ! -f $dwifile ]];then
         echo "FALSE"
-        >&2 echo "ERROR: Diffusion file not found matching search pattern : ($SOURCE/dwi/sub-*.nii*)"
+        >&2 echo "ERROR: Diffusion file not found matching search pattern : ($TARGET/reg2brain.data.nii.gz)"
         exit 1
     fi
     echo $dwifile
@@ -42,13 +46,17 @@ function f_dti_recon()
   highb=$3
   b0=$4
 
-  dti_recon $dwi "DTI_Reg2Brain" -gm $matrix -b $highb -b0 $b0 -p 3 -sn 1 -ot nii
-  res=$?
+  dti_recon $dwi "dti_recon_out" -gm $matrix -b $highb -b0 $b0 -p 3 -sn 1 -ot nii
+  res=$?   
   if [[ $res != 0 ]];then
-    echo "FALSE"
+    >&2 echo "ERROR: Unable to complete dti_recon"
+    return 1
   fi
 
-  echo "TRUE"
+  dti_tracker "dti_recon_out" "crush.trk" -m dti_recon_out_dwi.nii -it "nii"
+      
+  return $?
+
 
 }
 
@@ -64,9 +72,21 @@ function f_odf_recon()
     #  3: high b value (e.g. 1000)
     #  4: number of b0 rows in gradient matrix
   dwi=$1
-  matrix=$2
-  highb=$3
-  b0=$4
+  highb=$2
+  b0=$3
+  shift;shift;shift;
+  echo "f_odf_recon extras:{$@}"
+
+  if [[ -f $TARGET/recon_out_odf.nii && -f $TARGET/recon_out_max.nii && -f $TARGET/recon_out_b0.nii && -f $TARGET/recon_out_dwi.nii ]];then
+    echo "Previous odf_recon output detected. Skipping odf_recon"
+    if [[ ! -f $TARGET/crush.trk ]];then
+        echo "No track file detected.  Tracking $TARGET/crush.trk"
+        echo odf_tracker "recon_out" "crush.trk" -m recon_out_dwi.nii -it "nii" "$@"
+        odf_tracker "recon_out" "crush.trk" -m recon_out_dwi.nii -at 35 -it "nii" "$@"
+        return $?
+    fi
+    return 2
+  fi
 
   nframes=`mri_info $dwi|grep nframes:|cut -d':' -f2|xargs`
   if [[ ! $((nframes)) -gt 0 ]];then
@@ -74,22 +94,20 @@ function f_odf_recon()
     return 1
   fi
 
-
-  NUMBER_OF_DIRECTIONS=$((nframes+1))
+  NUMBER_OF_DIRECTIONS=$((nframes+0))
   NUMBER_OF_OUTPUT_DIRS=181
+  echo odf_recon $dwi $NUMBER_OF_DIRECTIONS $NUMBER_OF_OUTPUT_DIRS "recon_out" -mat $TARGET/hardi_mat_qball.dat -b0 $b0 -ot nii -p 3 -sn 1
+  odf_recon $dwi $NUMBER_OF_DIRECTIONS $NUMBER_OF_OUTPUT_DIRS "recon_out" -mat $TARGET/hardi_mat_qball.dat -b0 $b0 -ot nii -p 3 -sn 1
 
-  #odf_recon RAW_DATA_PREFIX NUMBER_OF_DIRECTIONS NUMBER_OF_OUTPUT_DIRS OUTPUT_FILE_PREFIX [OPTION]
-  #~/bin/odf_recon data.nii 125 181 DTI_Recon -b0 1 -p 3 -sn 1 -ot nii -mat ~/projects/def-dmattie/HCP/100307/T1w/Diffusion/temp_mat.dat
-
-  # cmdArray=["odf_recon",self.eddyCorrectedData,"31","181","%s/DTI_Recon" %(self.visit.tractographypath),"-b0", "5","-mat","%s/temp_mat.dat" %(self.visit.tractographypath),"-p","3","-sn", "1", "-ot", "nii"]
-
-  odf_recon $dwi "ODF_Reg2Brain" $NUMBER_OF_DIRECTIONS $NUMBER_OF_OUTPUT_DIRS -mat $matrix -b0 $b0 -ot nii
   res=$?
   if [[ $res != 0 ]];then
-    echo "FALSE"
+    >&2 echo "ERROR: Unable to complete odf_recon"
+    return 1
   fi
+  echo odf_tracker "recon_out" "crush.trk" -m recon_out_dwi.nii -it "nii" "$@"
+  odf_tracker "recon_out" "crush.trk" -m recon_out_dwi.nii -at 35 -it "nii" "$@"
+  return $?
 
-  echo "TRUE"
 
 }
 
@@ -99,10 +117,11 @@ function f_odf_recon()
 function f_diffusion_recon()
 {
     dwifile=$( f_diffusion_exists )
+   # gradientmatrix=$TARGET/gradientmatrix.txt
 
 
     if [[ $dwifile == "FALSE" ]];then
-        >&2 echo "ERROR: Diffusion file not found matching search pattern : ($SOURCE/dwi/sub-*.nii*)."
+        >&2 echo "ERROR: Diffusion file not found matching search pattern : ($TARGET/reg2brain.data.nii.gz)."
         return 1
     fi
     #How many B values do we have.  If only one, we can use ODF recon, otherwise use DTI
@@ -129,9 +148,14 @@ function f_diffusion_recon()
 
     num_high_b_vals=`cat $SOURCE/dwi/bvals|tr ' ' '\n'|sort -u|grep -v '^0'|grep -v -e '^$'|wc -l`
     if [[ $num_high_b_vals == '1' ]];then
-        # ODF Recon can be used   
-        echo "Performing ODF Recononstruction"
-        if [[ $( f_odf_recon $dwifile $gradientmatrix $BMAX_VAL $num_high_b_vals) != "TRUE" ]];then
+        # ODF Recon can be used           
+        res=$( f_odf_recon $dwifile $BMAX_VAL $num_high_b_vals "$@")        
+        res_code=$?
+        if [[ $res_code != 0 ]];then
+            echo $res
+            if [[ $res_code == 2 ]];then
+                return 0
+            fi        
             >&2 echo "ERROR: odf_recon failed. Previous messages may contain a clue. Unable to proceed."
             return 1
         fi
@@ -139,7 +163,7 @@ function f_diffusion_recon()
     else        
         #Must use DTI_RECON            
         echo "Performing DTI Recononstruction"
-        if [[ $( f_dti_recon $dwifile $gradientmatrix $BMAX_VAL $num_high_b_vals) != "TRUE" ]];then
+        if [[ $( f_dti_recon $dwifile $TARGET/gradientmatrix_dti.txt $BMAX_VAL $num_high_b_vals) != "TRUE" ]];then
             >&2 echo "ERROR: dti_recon failed. Previous messages may contain a clue. Unable to proceed."
             return 1
         fi
