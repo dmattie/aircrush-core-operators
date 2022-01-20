@@ -211,6 +211,33 @@ if [[ $res != 0 ]];then
     exit 1
 fi
 
+#####################################
+#  ROI x ROI measurement extraction #
+#####################################
+
+
+ rois=$( cat ../assets/segmentMap-good-cases.csv |grep -v "^#"|cut -d\, -f 1|tr "\n" ';' )    
+    IFS=";" read -ra roiarray <<< "$rois"
+
+    
+    for roi in "${roiarray[@]}"
+    do
+        for roi2 in "${roiarray[@]}"
+        do
+            if [[ $roi != $roi2 ]];then
+                if [[ -f $TARGET/crush_qball.trk ]];then
+                  CRUSHTRACT="$TARGET/crush_qball.trk"
+                else 
+                  CRUSHTRACT="$TARGET/crush_dti.trk"
+                fi
+                sem -j+0 ${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi
+                sem -j+0 ${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi_end
+            fi            
+        done
+        echo "Measuring $roi against all other ROIs"
+        sem --wait
+      
+    done
 
 #python $CRUSH_PATH/crush.py -samples $SUBJECTS_DIR -patient sub-$patientID -recrush -fixmissing #-gradienttable ~/projects/def-dmattie/crush/plugins/levman/hcp_gradient_table_from_data_dictionary_3T.csv
 #pwd

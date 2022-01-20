@@ -45,6 +45,15 @@ function f_dti_recon()
   matrix=$2
   highb=$3
   b0=$4
+  shift;shift;shift;shift;
+  echo "f_dti_recon extras:{$@}"
+
+  if [[ -f $TARGET/dti_recon_out_fa 
+     && -f $TARGET/dti_recon_out_adc.nii
+     && -f $TARGET/dti_recon_out_dwi.nii ]]
+    echo "Previous dti_recon_out output appears to exist. Skipping dti_recon"
+    return 2
+  fi
 
   dti_recon $dwi "dti_recon_out" -gm $matrix -b $highb -b0 $b0 -p 3 -sn 1 -ot nii
   res=$?   
@@ -53,10 +62,8 @@ function f_dti_recon()
     return 1
   fi
 
-  dti_tracker "dti_recon_out" "crush.trk" -m dti_recon_out_dwi.nii -it "nii"
-      
+  dti_tracker "dti_recon_out" "crush_dti.trk" -m dti_recon_out_dwi.nii -it "nii" "$@"      
   return $?
-
 
 }
 
@@ -68,9 +75,8 @@ function f_odf_recon()
 {
     #Params:
     #  1: path to 3D diffusion weighted image
-    #  2: path to gradientmatrix file
-    #  3: high b value (e.g. 1000)
-    #  4: number of b0 rows in gradient matrix
+    #  2: high b value (e.g. 1000)
+    #  3: number of b0 rows in gradient matrix
   dwi=$1
   highb=$2
   b0=$3
@@ -104,8 +110,8 @@ function f_odf_recon()
     >&2 echo "ERROR: Unable to complete odf_recon"
     return 1
   fi
-  echo odf_tracker "recon_out" "crush.trk" -m recon_out_dwi.nii -it "nii" "$@"
-  odf_tracker "recon_out" "crush.trk" -m recon_out_dwi.nii -at 35 -it "nii" "$@"
+  echo odf_tracker "recon_out" "crush_qball.trk" -m recon_out_dwi.nii -it "nii" "$@"
+  odf_tracker "recon_out" "crush_qball.trk" -m recon_out_dwi.nii -at 35 -it "nii" "$@"
   return $?
 
 
@@ -148,7 +154,8 @@ function f_diffusion_recon()
 
     num_high_b_vals=`cat $SOURCE/dwi/bvals|tr ' ' '\n'|sort -u|grep -v '^0'|grep -v -e '^$'|wc -l`
     if [[ $num_high_b_vals == '1' ]];then
-        # ODF Recon can be used           
+        # ODF Recon can be used     
+        echo "Performing ODF Reconstruction"      
         res=$( f_odf_recon $dwifile $BMAX_VAL $num_high_b_vals "$@")        
         res_code=$?
         if [[ $res_code != 0 ]];then
@@ -159,17 +166,20 @@ function f_diffusion_recon()
             >&2 echo "ERROR: odf_recon failed. Previous messages may contain a clue. Unable to proceed."
             return 1
         fi
-        
-    else        
-        #Must use DTI_RECON            
-        echo "Performing DTI Recononstruction"
-        if [[ $( f_dti_recon $dwifile $TARGET/gradientmatrix_dti.txt $BMAX_VAL $num_high_b_vals) != "TRUE" ]];then
-            >&2 echo "ERROR: dti_recon failed. Previous messages may contain a clue. Unable to proceed."
-            return 1
-        fi
-        
-  
+    fi             
+    #Lets also use DTI_RECON, we need the FA maps anyway
+    echo "Performing DTI Recononstruction"
+
+    res=$( f_dti_recon $dwifile $TARGET/gradientmatrix_dti.txt $BMAX_VAL $num_high_b_vals "$@" ) 
+    res_code=$?
+    if [[ $res_code != 0 ]];then        
+        if [[ $res_code == 2 ]];then
+            return 0
+        fi        
+        >&2 echo "ERROR: dti_recon failed. Previous messages may contain a clue. Unable to proceed."
+        return 1
     fi
+               
     return 0
 
 }

@@ -28,6 +28,7 @@ From: ubuntu:18.04
     apt-get install -y rsync
     apt-get install -y tar
     apt-get install -y dialog
+    apt-get install -y parallel
 
     apt-get install -y software-properties-common
     add-apt-repository universe
