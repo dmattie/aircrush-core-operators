@@ -50,7 +50,7 @@ function f_dti_recon()
 
   if [[ -f $TARGET/dti_recon_out_fa 
      && -f $TARGET/dti_recon_out_adc.nii
-     && -f $TARGET/dti_recon_out_dwi.nii ]]
+     && -f $TARGET/dti_recon_out_dwi.nii ]];then
     echo "Previous dti_recon_out output appears to exist. Skipping dti_recon"
     return 2
   fi
