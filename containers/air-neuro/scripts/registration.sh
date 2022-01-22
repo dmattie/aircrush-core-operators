@@ -67,7 +67,7 @@ if [[ $DATASETDIR == "" ]];then
     exit 1
 fi
 if [[ ! -d $DATASETDIR ]];then
-    >&2 echo "ERROR: dataset directory specified not found ($datasetdir)"
+    >&2 echo "ERROR: dataset directory specified not found ($DATASETDIR)"
     exit 1
 fi
 if [[ $SUBJECT == "" ]];then
