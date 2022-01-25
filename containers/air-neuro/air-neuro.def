@@ -31,7 +31,7 @@ From: ubuntu:20.04
     apt-get install -y dialog
     apt-get install -y parallel
     
-    apt-get install -y appmenu-gtk2-module
+    #apt-get install -y appmenu-gtk2-module
 
     #MRIcroGL for 18.04:    
     #wget -O- http://neuro.debian.net/lists/bionic.us-nh.libre | sudo tee /etc/apt/sources.list.d/neurodebian.sources.list
