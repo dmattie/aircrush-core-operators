@@ -48,7 +48,7 @@ From: ubuntu:20.04
 
     apt-get install -y redis-server
 
-    DEBIAN_FRONTEND=noninteractive apt-get install -y xorg xorg-dev 
+   # DEBIAN_FRONTEND=noninteractive apt-get install -y xorg xorg-dev 
     #libqt5pas1
   
     apt-get install -y language-pack-en binutils libx11-dev gettext x11-apps perl make file bc \
