@@ -29,6 +29,14 @@ From: ubuntu:18.04
     apt-get install -y tar
     apt-get install -y dialog
     apt-get install -y parallel
+    
+    #MRIcroGL for 18.04:
+    apt-get install -y appmenu-gtk2-module
+    wget -O- http://neuro.debian.net/lists/bionic.us-nh.libre | sudo tee /etc/apt/sources.list.d/neurodebian.sources.list
+    sudo apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9
+    sudo apt-get update
+    sudo apt install libqt5pas1
+
 
     apt-get install -y software-properties-common
     add-apt-repository universe
@@ -57,15 +65,16 @@ From: ubuntu:18.04
     apt-get install -y python3-pip
     pip3 install --upgrade pip
 
-    pip install pandas    
-    pip install nibabel
-    pip install matplotlib
-    pip install scipy
-    pip install IPython
-    pip install mglearn
-    pip install gevent
-    pip install sklearn
-    pip install seaborn
+    pip3 install pandas    
+    pip3 install nibabel
+    pip3 install matplotlib
+    pip3 install scipy
+    pip3 install IPython
+    pip3 install mglearn
+    pip3 install gevent
+    pip3 install sklearn
+    pip3 install seaborn
+    
     pip3 install -i https://test.pypi.org/simple/ aircrushcore
     
 #
