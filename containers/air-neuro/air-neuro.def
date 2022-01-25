@@ -59,9 +59,11 @@ From: ubuntu:20.04
        
     apt-get install -y xterm csh tcsh libjpeg62 
 
-    apt install -y python-minimal  
+    #apt install -y python-minimal  
+    apt install -y python2
+    
     dpkg -i /usr/local/software/freesurfer_7.2.0_amd64.deb; apt-get -fy install   
-    python /usr/local/software/fslinstaller.py -d /opt/fsl
+    python2 /usr/local/software/fslinstaller.py -d /opt/fsl
 
     apt-get install -y python3
     apt-get install -y python3-pip
