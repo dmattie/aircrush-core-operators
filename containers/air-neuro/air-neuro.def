@@ -38,14 +38,12 @@ From: ubuntu:20.04
     #sudo apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9
     #sudo apt-get update
     
-    sudo apt install libqt5pas1
-
-
-    apt-get install -y software-properties-common
+        apt-get install -y software-properties-common
     add-apt-repository universe
 
     apt-get install -y gsl-bin
     apt-get install -y libgsl-dev
+    apt-get install -y libqt5pas1
     ln -fs /usr/lib/x86_64-linux-gnu/libgsl.so /usr/lib/x86_64-linux-gnu/libgsl.so.0 
 
     apt-get install -y redis-server
