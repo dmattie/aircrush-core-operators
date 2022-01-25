@@ -86,6 +86,7 @@ From: ubuntu:18.04
 
     chmod -R a+rx /usr/local/software/*
     chmod -R a+rx /usr/local/scripts
+    rm /usr/local/software/freesurfer_7.2.0_amd64.deb
 %runscript    
     echo "Arguments received: first: $1    all:$*"
     /bin/bash $*
