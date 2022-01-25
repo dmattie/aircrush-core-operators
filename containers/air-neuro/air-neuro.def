@@ -46,7 +46,7 @@ From: ubuntu:20.04
     
     ln -fs /usr/lib/x86_64-linux-gnu/libgsl.so /usr/lib/x86_64-linux-gnu/libgsl.so.0 
 
-    apt-get install -y redis-server
+    #apt-get install -y redis-server
 
    # DEBIAN_FRONTEND=noninteractive apt-get install -y xorg xorg-dev 
     #libqt5pas1
