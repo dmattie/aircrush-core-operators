@@ -3,9 +3,9 @@ From: ubuntu:20.04
 #From: ubuntu:18.04
 
 %files
-  #  /home/dmattie/software /usr/local
-  #  /home/dmattie/software/freesurfer_license.txt /usr/local/freesurfer/7.2.0/license.txt
-  #  /home/dmattie/software/freesurfer_license.txt /usr/local/freesurfer/7.2.0/.license
+    /home/dmattie/software /usr/local
+    /home/dmattie/software/freesurfer_license.txt /usr/local/freesurfer/7.2.0/license.txt
+    /home/dmattie/software/freesurfer_license.txt /usr/local/freesurfer/7.2.0/.license
     
     scripts /usr/local
 
@@ -56,15 +56,10 @@ From: ubuntu:20.04
     libkeyutils1 libkrb5-3 libkrb5support0 libkrb5support0 libpng16-16 libsm6 libx11-6 \
     libx11-xcb1 libxau6 libxcb1 libxdmcp6 libxext6 libxft2 libxi6 libxmu6 libxrender1 libxss1 libxt6
 
-    echo "############################"
-    echo "############################"
-    echo "############################"
-    echo "############################"
-    echo "############################"
-        
+       
     apt-get install -y xterm csh tcsh libjpeg62 
 
-    DEBIAN_FRONTEND=noninteractive apt install -y python-minimal  
+    apt install -y python-minimal  
     dpkg -i /usr/local/software/freesurfer_7.2.0_amd64.deb; apt-get -fy install   
     python /usr/local/software/fslinstaller.py -d /opt/fsl
 
