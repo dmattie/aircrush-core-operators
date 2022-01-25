@@ -51,11 +51,11 @@ From: ubuntu:20.04
    # DEBIAN_FRONTEND=noninteractive apt-get install -y xorg xorg-dev 
     #libqt5pas1
   
-    apt-get install -y language-pack-en binutils libx11-dev gettext x11-apps perl make file bc \
-    xserver-xorg-video-intel libdbus-1-3 libdrm2 libexpat1 libfontconfig1 libfreetype6 libgl1 \
-    libglib2.0-0 libglu1-mesa libglvnd0 libglx0 libgomp1 libgssapi-krb5-2 libice6 libjpeg-dev libk5crypto3 \
-    libkeyutils1 libkrb5-3 libkrb5support0 libkrb5support0 libpng16-16 libsm6 libx11-6 \
-    libx11-xcb1 libxau6 libxcb1 libxdmcp6 libxext6 libxft2 libxi6 libxmu6 libxrender1 libxss1 libxt6
+    #apt-get install -y language-pack-en binutils libx11-dev gettext x11-apps perl make file bc \
+    #xserver-xorg-video-intel libdbus-1-3 libdrm2 libexpat1 libfontconfig1 libfreetype6 libgl1 \
+    #libglib2.0-0 libglu1-mesa libglvnd0 libglx0 libgomp1 libgssapi-krb5-2 libice6 libjpeg-dev libk5crypto3 \
+    #libkeyutils1 libkrb5-3 libkrb5support0 libkrb5support0 libpng16-16 libsm6 libx11-6 \
+    #libx11-xcb1 libxau6 libxcb1 libxdmcp6 libxext6 libxft2 libxi6 libxmu6 libxrender1 libxss1 libxt6
 
     apt-get install -y xterm csh tcsh libjpeg62 
 
