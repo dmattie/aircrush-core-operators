@@ -131,8 +131,18 @@ function f_diffusion_recon()
         return 1
     fi
     #How many B values do we have.  If only one, we can use ODF recon, otherwise use DTI
-
+    #Todo support for a "bvecs" filename is non compliant and needs to be deprecated.
     BVALS=$SOURCE/dwi/bvals
+
+    if [[ ! -f $BVALS ]];then
+        #Lets find a bids compliant bvals filename supporting multiple runs (we'll take the first one we find)
+        shopt -s globstar
+        for eachbval in $SOURCE/dwi/sub-${SUBJECT}_ses-${SESSION}_*run-*_dwi.bval; do
+            BVALS=$eachbval
+            break;
+        done
+    fi
+
     if [[ ! -f $BVALS ]];then    
         >&2 echo "ERROR: $SOURCE/dwi/bvals not found.  Unable to continue, I need to know how many high b values I am working with"
         return 1
@@ -142,7 +152,7 @@ function f_diffusion_recon()
 
     if [[ $BMAX == "" ]];then
         #Look at bvals file and find largest integer
-        BMAX_VAL=`cat $SOURCE/dwi/bvals|tr ' ' '\n'|sort -u|grep -v '^0'|grep -v -e '^$'|sort -nr|head -1`
+        BMAX_VAL=`cat $BVALS|tr ' ' '\n'|sort -u|grep -v '^0'|grep -v -e '^$'|sort -nr|head -1`
         BMAX="-b $BMAX_VAL"
         echo "Using high b value of $BMAX_VAL as per dwi/bvals file"
     else
@@ -152,7 +162,7 @@ function f_diffusion_recon()
         
     fi   
 
-    num_high_b_vals=`cat $SOURCE/dwi/bvals|tr ' ' '\n'|sort -u|grep -v '^0'|grep -v -e '^$'|wc -l`
+    num_high_b_vals=`cat $BVALS|tr ' ' '\n'|sort -u|grep -v '^0'|grep -v -e '^$'|wc -l`
     if [[ $num_high_b_vals == '1' ]];then
         # ODF Recon can be used     
         echo "Performing ODF Reconstruction"      
