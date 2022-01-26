@@ -100,7 +100,10 @@ function f_odf_recon()
     return 1
   fi
 
-  NUMBER_OF_DIRECTIONS=$((nframes+0))
+  measurementpoints=`cat $TARGET/gradientmatrix_qball.txt|wc -l`
+
+  #NUMBER_OF_DIRECTIONS=$((nframes+0))
+  NUMBER_OF_DIRECTIONS=$((measurementpoints+0))
   NUMBER_OF_OUTPUT_DIRS=181
   echo odf_recon $dwi $NUMBER_OF_DIRECTIONS $NUMBER_OF_OUTPUT_DIRS "recon_out" -mat $TARGET/hardi_mat_qball.dat -b0 $b0 -ot nii -p 3 -sn 1
   odf_recon $dwi $NUMBER_OF_DIRECTIONS $NUMBER_OF_OUTPUT_DIRS "recon_out" -mat $TARGET/hardi_mat_qball.dat -b0 $b0 -ot nii -p 3 -sn 1
