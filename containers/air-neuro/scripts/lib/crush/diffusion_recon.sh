@@ -83,20 +83,23 @@ function f_odf_recon()
   shift;shift;shift;
   echo "f_odf_recon extras:{$@}"
 
+  
+  cd $TARGET
+
   if [[ -f $TARGET/recon_out_odf.nii && -f $TARGET/recon_out_max.nii && -f $TARGET/recon_out_b0.nii && -f $TARGET/recon_out_dwi.nii ]];then
     echo "Previous odf_recon output detected. Skipping odf_recon"
     if [[ ! -f $TARGET/crush.trk ]];then
         echo "No track file detected.  Tracking $TARGET/crush.trk"
-        echo odf_tracker "recon_out" "crush.trk" -m recon_out_dwi.nii -it "nii" "$@"
-        odf_tracker "recon_out" "crush.trk" -m recon_out_dwi.nii -at 35 -it "nii" "$@"
+        echo odf_tracker "recon_out" "crush.trk" -m recon_out_dwi.nii -it "nii" "$@"        
+        odf_tracker "recon_out" "crush.trk" -m recon_out_dwi.nii -at 35 -it "nii" "$@"        
         return $?
-    fi
+    fi    
     return 2
   fi
 
   nframes=`mri_info $dwi|grep nframes:|cut -d':' -f2|xargs`
   if [[ ! $((nframes)) -gt 0 ]];then
-    >&2 echo "ERROR: Unable to determine the number of frames in dwi file [$dwi]. Unable to proceed, number of directions must be known before performing odf_recon"
+    >&2 echo "ERROR: Unable to determine the number of frames in dwi file [$dwi]. Unable to proceed, number of directions must be known before performing odf_recon"    
     return 1
   fi
 
@@ -104,17 +107,17 @@ function f_odf_recon()
 
   #NUMBER_OF_DIRECTIONS=$((nframes+0))
   NUMBER_OF_DIRECTIONS=$((measurementpoints+0))
-  NUMBER_OF_OUTPUT_DIRS=181
+  NUMBER_OF_OUTPUT_DIRS=181  
   echo odf_recon $dwi $NUMBER_OF_DIRECTIONS $NUMBER_OF_OUTPUT_DIRS "recon_out" -mat $TARGET/hardi_mat_qball.dat -b0 $b0 -ot nii -p 3 -sn 1
   odf_recon $dwi $NUMBER_OF_DIRECTIONS $NUMBER_OF_OUTPUT_DIRS "recon_out" -mat $TARGET/hardi_mat_qball.dat -b0 $b0 -ot nii -p 3 -sn 1
 
   res=$?
   if [[ $res != 0 ]];then
-    >&2 echo "ERROR: Unable to complete odf_recon"
+    >&2 echo "ERROR: Unable to complete odf_recon"    
     return 1
   fi
   echo odf_tracker "recon_out" "crush_qball.trk" -m recon_out_dwi.nii -it "nii" "$@"
-  odf_tracker "recon_out" "crush_qball.trk" -m recon_out_dwi.nii -at 35 -it "nii" "$@"
+  odf_tracker "recon_out" "crush_qball.trk" -m recon_out_dwi.nii -at 35 -it "nii" "$@"  
   return $?
 
 
@@ -124,13 +127,13 @@ function f_odf_recon()
 # recon                                                    #
 ############################################################
 function f_diffusion_recon()
-{
+{    
     dwifile=$( f_diffusion_exists )
    # gradientmatrix=$TARGET/gradientmatrix.txt
 
 
     if [[ $dwifile == "FALSE" ]];then
-        >&2 echo "ERROR: Diffusion file not found matching search pattern : ($TARGET/reg2brain.data.nii.gz)."
+        >&2 echo "ERROR: Diffusion file not found matching search pattern : ($TARGET/reg2brain.data.nii.gz)."        
         return 1
     fi
     #How many B values do we have.  If only one, we can use ODF recon, otherwise use DTI
@@ -147,7 +150,7 @@ function f_diffusion_recon()
     fi
 
     if [[ ! -f $BVALS ]];then    
-        >&2 echo "ERROR: $SOURCE/dwi/bvals not found.  Unable to continue, I need to know how many high b values I am working with"
+        >&2 echo "ERROR: $SOURCE/dwi/bvals not found.  Unable to continue, I need to know how many high b values I am working with"        
         return 1
     fi
 
@@ -176,7 +179,7 @@ function f_diffusion_recon()
             if [[ $res_code == 2 ]];then
                 return 0
             fi        
-            >&2 echo "ERROR: odf_recon failed. Previous messages may contain a clue. Unable to proceed."
+            >&2 echo "ERROR: odf_recon failed. Previous messages may contain a clue. Unable to proceed."            
             return 1
         fi
     fi             
@@ -186,7 +189,7 @@ function f_diffusion_recon()
     res=$( f_dti_recon $dwifile $TARGET/gradientmatrix_dti.txt $BMAX_VAL $num_high_b_vals "$@" ) 
     res_code=$?
     if [[ $res_code != 0 ]];then        
-        if [[ $res_code == 2 ]];then
+        if [[ $res_code == 2 ]];then            
             return 0
         fi        
         >&2 echo "ERROR: dti_recon failed. Previous messages may contain a clue. Unable to proceed."
