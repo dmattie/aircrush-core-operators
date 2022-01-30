@@ -48,6 +48,8 @@ function f_dti_recon()
   shift;shift;shift;shift;
   echo "f_dti_recon extras:{$@}"
 
+  cd $TARGET
+  
   if [[ -f $TARGET/dti_recon_out_fa 
      && -f $TARGET/dti_recon_out_adc.nii
      && -f $TARGET/dti_recon_out_dwi.nii ]];then
