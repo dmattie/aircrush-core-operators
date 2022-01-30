@@ -134,6 +134,8 @@ if [[ $OVERWRITE -eq 1 ]];then
     rm $TARGET/dti_tracker.log 2> /dev/null
     rm $TARGET/RegTransform4D 2> /dev/null #clear flirt output
     rm $TARGET/crush.trk 2> /dev/null #Clear track_transform output
+    rm $TARGET/crush_qball.trk 2> /dev/null #Clear track_transform output
+    rm $TARGET/crush_dti.trk 2> /dev/null #Clear track_transform output
     rm $TARGET/gradientmatrix*.txt 2> /dev/null #Clean up old gradient matrix files
 
     echo "Any previous output have been removed"

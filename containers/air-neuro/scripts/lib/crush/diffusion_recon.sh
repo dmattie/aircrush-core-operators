@@ -49,7 +49,7 @@ function f_dti_recon()
   echo "f_dti_recon extras:{$@}"
 
   cd $TARGET
-  
+
   if [[ -f $TARGET/dti_recon_out_fa 
      && -f $TARGET/dti_recon_out_adc.nii
      && -f $TARGET/dti_recon_out_dwi.nii ]];then
@@ -63,8 +63,9 @@ function f_dti_recon()
     >&2 echo "ERROR: Unable to complete dti_recon"
     return 1
   fi
-
-  dti_tracker "dti_recon_out" "crush_dti.trk" -m dti_recon_out_dwi.nii -it "nii" "$@"      
+  if [[ ! -f "crush_dti.trk" ]];then
+    dti_tracker "dti_recon_out" "crush_dti.trk" -m dti_recon_out_dwi.nii -it "nii" "$@"      
+  fi
   return $?
 
 }
@@ -118,8 +119,10 @@ function f_odf_recon()
     >&2 echo "ERROR: Unable to complete odf_recon"    
     return 1
   fi
-  echo odf_tracker "recon_out" "crush_qball.trk" -m recon_out_dwi.nii -it "nii" "$@"
-  odf_tracker "recon_out" "crush_qball.trk" -m recon_out_dwi.nii -at 35 -it "nii" "$@"  
+  if [[ ! -f "crush_qball.trk" ]];then
+    echo odf_tracker "recon_out" "crush_qball.trk" -m recon_out_dwi.nii -it "nii" "$@"
+    odf_tracker "recon_out" "crush_qball.trk" -m recon_out_dwi.nii -at 35 -it "nii" "$@"  
+  fi
   return $?
 
 

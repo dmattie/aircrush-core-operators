@@ -44,7 +44,7 @@ def process(**kwargs):#segment,counterpart,method):
                 except Exception as e:
                     print(f"Trackvis failed::{e}")                            
 
-            with open (f"{tractographypath}/crush/{segment}/{segment}-{counterpart}-{method}.nii.txt" %(tractographypath,segment,segment,counterpart,method), "r") as myfile:                        
+            with open (f"{tractographypath}/crush/{segment}/{segment}-{counterpart}-{method}.nii.txt", "r") as myfile:                        
                 data=myfile.read()                                   
 
             
