@@ -129,7 +129,7 @@ def process(**kwargs):#segment,counterpart,method):
             if not os.path.isfile(wmparcStart):
                 print(f"{wmparcStart} is missing for {segment}-{counterpart} operation")
             if not os.path.isfile(wmparcEnd):
-                print(f"{wmparcStart} is missing for {segment}-{counterpart} operation" %(wmparcStart,segment,counterpart))
+                print(f"{wmparcStart} is missing for {segment}-{counterpart} operation")
         
 
         try:
@@ -167,10 +167,10 @@ def volume_in_voxels(adcFile,roiFile):
         return
 
     imgADC = nib.load(adcFile) #Untouched
-    dataADC = imgADC.get_data()
+    dataADC = imgADC.get_fdata()
     
     img = nib.load(roiFile)
-    roiData = img.get_data()
+    roiData = img.get_fdata()
 
     indecesOfInterest = np.nonzero(roiData)        
 
