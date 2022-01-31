@@ -190,10 +190,10 @@ def nonZeroMean(faFile,roiFile):
         return
 
     imgFA = nib.load(faFile) #Untouched
-    dataFA = imgFA.get_data()
+    dataFA = imgFA.get_fdata()
     
     img = nib.load(roiFile)
-    roiData = img.get_data()
+    roiData = img.get_fdata()
 
     indecesOfInterest = np.nonzero(roiData)
     
@@ -214,10 +214,10 @@ def nonZeroStdDev(faFile,roiFile):
         return
 
     imgFA = nib.load(faFile) #Untouched
-    dataFA = imgFA.get_data()
+    dataFA = imgFA.get_fdata()
 
     img = nib.load(roiFile)
-    roiData = img.get_data()
+    roiData = img.get_fdata()
 
     indecesOfInterest = np.nonzero(roiData)
 
