@@ -218,7 +218,7 @@ fi
 #####################################
 
 
- rois=$( cat ${SCRIPTPATH}/../assets/segmentMap-good-cases.csv |grep -v "^#"|cut -d\, -f 1|tr "\n" ';' )    
+ rois=$( cat ${SCRIPTPATH}/../assets/segmentMap.csv |grep -v "^#"|cut -d\, -f 1|tr "\n" ';' )    
     IFS=";" read -ra roiarray <<< "$rois"
 
     
