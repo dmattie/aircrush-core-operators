@@ -137,6 +137,7 @@ if [[ $OVERWRITE -eq 1 ]];then
     rm $TARGET/crush_qball.trk 2> /dev/null #Clear track_transform output
     rm $TARGET/crush_dti.trk 2> /dev/null #Clear track_transform output
     rm $TARGET/gradientmatrix*.txt 2> /dev/null #Clean up old gradient matrix files
+    rm -r $TARGET/crush 2>/dev/null #Clean up old crush derived results
 
     echo "Any previous output have been removed"
 fi
@@ -232,8 +233,12 @@ fi
                 else 
                   CRUSHTRACT="$TARGET/crush_dti.trk"
                 fi
-                sem -j+0 ${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi
-                sem -j+0 ${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi_end
+                if [[ ! -f $TARGET/crush/$roi/calcs-$roi-$roi2-roi.json ]];then            
+                    sem -j+0 ${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi
+                fi
+                if [[ ! -f $TARGET/crush/$roi/calcs-$roi-$roi2-roi_end.json ]];then
+                    sem -j+0 ${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi_end
+                fi
             fi            
         done
         echo "Measuring $roi against all other ROIs"
