@@ -92,9 +92,9 @@ function f_odf_recon()
   if [[ -f $TARGET/recon_out_odf.nii && -f $TARGET/recon_out_max.nii && -f $TARGET/recon_out_b0.nii && -f $TARGET/recon_out_dwi.nii ]];then
     echo "Previous odf_recon output detected. Skipping odf_recon"
     if [[ ! -f $TARGET/crush.trk ]];then
-        echo "No track file detected.  Tracking $TARGET/crush.trk"
-        echo odf_tracker "recon_out" "crush.trk" -m recon_out_dwi.nii -it "nii" "$@"        
-        odf_tracker "recon_out" "crush.trk" -m recon_out_dwi.nii -at 35 -it "nii" "$@"        
+        echo "No track file detected.  Tracking $TARGET/crush_qball.trk"
+        echo odf_tracker "recon_out" "crush_qball.trk" -m recon_out_dwi.nii -it "nii" "$@"        
+        odf_tracker "recon_out" "crush_qball.trk" -m recon_out_dwi.nii -at 35 -it "nii" "$@"        
         return $?
     fi    
     return 2
