@@ -237,13 +237,13 @@ fi
                     currdate=$( date )       
                     echo "Started at ${currdate}: ${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi"
                     #sem -j+0 ${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi
-                    ${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi
+                    ${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi &
                 fi
                 if [[ ! -f $TARGET/crush/$roi/calcs-$roi-$roi2-roi_end.json ]];then
                     currdate=$( date )       
                     echo "Started at ${currdate}: ${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi_end"
                     #sem -j+0 ${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi_end
-                    ${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi_end
+                    ${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi_end &
                 fi
             fi            
         done
