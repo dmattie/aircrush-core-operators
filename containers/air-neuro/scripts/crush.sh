@@ -218,40 +218,41 @@ fi
 #  ROI x ROI measurement extraction #
 #####################################
 
+${SCRIPTPATH}/lib/crush/crush.py -datasetdir $DATASETDIR -subject $SUBJECT -session $SESSION -pipeline $PIPELINE
 
- rois=$( cat ${SCRIPTPATH}/../assets/segmentMap.csv |grep -v "^#"|cut -d\, -f 1|tr "\n" ';' )    
-    IFS=";" read -ra roiarray <<< "$rois"
+#  rois=$( cat ${SCRIPTPATH}/../assets/segmentMap.csv |grep -v "^#"|cut -d\, -f 1|tr "\n" ';' )    
+#     IFS=";" read -ra roiarray <<< "$rois"
 
     
-    for roi in "${roiarray[@]}"
-    do
-        for roi2 in "${roiarray[@]}"
-        do
-            if [[ $roi != $roi2 ]];then
-                if [[ -f $TARGET/crush_qball.trk ]];then
-                  CRUSHTRACT="$TARGET/crush_qball.trk"
-                else 
-                  CRUSHTRACT="$TARGET/crush_dti.trk"
-                fi
-                if [[ ! -f $TARGET/crush/$roi/calcs-$roi-$roi2-roi.json ]];then     
-                    currdate=$( date )       
-                    echo "Started at ${currdate}: ${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi"
-                    sem -j+0 ${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi &
-                    #${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi &
-                fi
-                if [[ ! -f $TARGET/crush/$roi/calcs-$roi-$roi2-roi_end.json ]];then
-                    currdate=$( date )       
-                    echo "Started at ${currdate}: ${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi_end"
-                    sem -j+0 ${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi_end &
-                    #${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi_end &
-                fi
-            fi            
-        done
-        echo "Measuring $roi against all other ROIs ======================="
-        sem --wait
-        #wait
+#     for roi in "${roiarray[@]}"
+#     do
+#         for roi2 in "${roiarray[@]}"
+#         do
+#             if [[ $roi != $roi2 ]];then
+#                 if [[ -f $TARGET/crush_qball.trk ]];then
+#                   CRUSHTRACT="$TARGET/crush_qball.trk"
+#                 else 
+#                   CRUSHTRACT="$TARGET/crush_dti.trk"
+#                 fi
+#                 if [[ ! -f $TARGET/crush/$roi/calcs-$roi-$roi2-roi.json ]];then     
+#                     currdate=$( date )       
+#                     echo "Started at ${currdate}: ${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi"
+#                     sem -j+0 ${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi &
+#                     #${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi &
+#                 fi
+#                 if [[ ! -f $TARGET/crush/$roi/calcs-$roi-$roi2-roi_end.json ]];then
+#                     currdate=$( date )       
+#                     echo "Started at ${currdate}: ${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi_end"
+#                     sem -j+0 ${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi_end &
+#                     #${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi_end &
+#                 fi
+#             fi            
+#         done
+#         echo "Measuring $roi against all other ROIs ======================="
+#         sem --wait
+#         #wait
       
-    done
+#     done
 
 #python $CRUSH_PATH/crush.py -samples $SUBJECTS_DIR -patient sub-$patientID -recrush -fixmissing #-gradienttable ~/projects/def-dmattie/crush/plugins/levman/hcp_gradient_table_from_data_dictionary_3T.csv
 #pwd
