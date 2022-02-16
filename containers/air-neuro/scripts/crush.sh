@@ -218,7 +218,7 @@ fi
 #  ROI x ROI measurement extraction #
 #####################################
 
-${SCRIPTPATH}/lib/crush/crush.py -datasetdir $DATASETDIR -subject $SUBJECT -session $SESSION -pipeline $PIPELINE
+python3 ${SCRIPTPATH}/lib/crush/crush.py -datasetdir $DATASETDIR -subject $SUBJECT -session $SESSION -pipeline $PIPELINE
 
 #  rois=$( cat ${SCRIPTPATH}/../assets/segmentMap.csv |grep -v "^#"|cut -d\, -f 1|tr "\n" ';' )    
 #     IFS=";" read -ra roiarray <<< "$rois"
