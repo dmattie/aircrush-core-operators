@@ -43,7 +43,7 @@ def process(**kwargs):#segment,counterpart,method):
                     crushtract=f"{target}/crush_qball.trk"
                 else:
                     crushtract=f"{target}/crush_dti.trk"
-                for method in ['roi','roi2']:
+                for method in ['roi','roi_end']:
                     if not os.path.isfile(f"{target}/crush/{roi1}/calcs-{roi1}-{roi2}-roi.json"):
                         t = [roi1,roi2,method,target,pipeline,crushtract]
                         tasks.append(t)
