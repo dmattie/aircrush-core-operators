@@ -61,10 +61,10 @@ while true; do
   esac
 done
 
-if [ -z ${SLURM_TASKS+x} ];then
+if [ -z ${SLURM_NTASKS+x} ];then
     PARALLELISM=1
 else
-    PARALLELISM=$SLURM_TASKS
+    PARALLELISM=$SLURM_NTASKS
 fi
 echo "Using up to $PARALLELISM cores"
 
