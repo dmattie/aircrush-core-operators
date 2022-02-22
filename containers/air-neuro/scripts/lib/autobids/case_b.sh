@@ -66,7 +66,17 @@ function case_b_process_mprage {
     nii=$(find $sessdir -name *.nii -print -quit 2>/dev/null | head -1)
     newsub=$(echo $SUBJECT | tr -cd '[:alnum:]')
     mkdir -p $DATASETDIR/rawdata/sub-${newsub}/ses-${session}/anat
-    cp --no-clobber $1 $DATASETDIR/rawdata/sub-${newsub}/ses-${session}/anat/sub-${newsub}_ses-${session}_T1_$image.nii
+    dcm2niix $sessdir
+
+    niifile=$( ls $sessdir/*.nii |head -1)
+    if [[ -f $niifile ]];then
+    cp --no-clobber $niifile $DATASETDIR/rawdata/sub-${newsub}/ses-${session}/anat/sub-${newsub}_ses-${session}_T1w.nii
+    fi
+    
+    jsonfile=$( ls $sessdir/*.json |head -1)
+    if [[ -f$jsonfile ]];then
+    cp --no-clobber $jsonfile $DATASETDIR/rawdata/sub-${newsub}/ses-${session}/anat/sub-${newsub}_ses-${session}_T1w.nii
+    fi
 }
 function case_b_noxml_process_mprage {
     sessdir=$( dirname $1 )
@@ -74,7 +84,19 @@ function case_b_noxml_process_mprage {
     session=$( echo $1 |rev|cut -d\_ -f2 |rev)
     newsub=$(echo $SUBJECT | tr -cd '[:alnum:]')    
     mkdir -p $DATASETDIR/rawdata/sub-${newsub}/ses-${session}/anat
-    cp --no-clobber $1 $DATASETDIR/rawdata/sub-${newsub}/ses-${session}/anat/sub-${newsub}_ses-${session}_T1_$image.nii
+    dcm2niix $sessdir
+
+        
+    niifile=$( ls $sessdir/*.nii |head -1)
+    if [[ -f $niifile ]];then
+    cp --no-clobber $niifile $DATASETDIR/rawdata/sub-${newsub}/ses-${session}/anat/sub-${newsub}_ses-${session}_T1w.nii
+    fi
+    
+    jsonfile=$( ls $sessdir/*.json |head -1)
+    if [[ -f$jsonfile ]];then
+    cp --no-clobber $jsonfile $DATASETDIR/rawdata/sub-${newsub}/ses-${session}/anat/sub-${newsub}_ses-${session}_T1w.nii
+    fi
+    
 }
 function case_b_process_dti {
     sessdir=$( dirname $1 )
@@ -83,22 +105,33 @@ function case_b_process_dti {
     newsub=$(echo $SUBJECT | tr -cd '[:alnum:]')
     target="$DATASETDIR/rawdata/sub-${newsub}/ses-${session}/dwi/"
     mkdir -p $target
-    rsync -r $sessdir/ $target
 
-    if [ -f $target/*.json ];then 
-        rm $d/*.json
-    fi
-    if [ -f $target/*.nii ];then
-        rm $d/*.nii
-    fi
-    if [ -f $target/*.bvec ];then
-        rm $d/*.bvec
-    fi
-    if [ -f $target/*.bval ];then
-        rm $d/*.bval
-    fi
+    dcm2niix $sessdir
+    
+    # if [ -f $target/*.json ];then 
+    #     rm $target/*.json
+    # fi
+    # if [ -f $target/*.nii ];then
+    #     rm $target/*.nii
+    # fi
+    # if [ -f $target/*.bvec ];then
+    #     rm $d/*.bvec
+    # fi
+    # if [ -f $target/*.bval ];then
+    #     rm $d/*.bval
+    # fi
 
-    dcm2niix $target
+    jsonfile=$( ls $sessdir/*.json |head -1)
+    if [[ -f$jsonfile ]];then cp $jsonfile $target/sub-${newsub}_ses-${session}_dwi.json; fi
+
+    bvecfile=$( ls $sessdir/*.bvec |head -1)
+    if [[ -f$bvecfile ]];then cp $bvecfile $target/sub-${newsub}_ses-${session}_dwi.bvec; fi
+
+    bvalfile=$( ls $sessdir/*.bval |head -1)
+    if [[ -f$bvalfile ]];then cp $bvalfile $target/sub-${newsub}_ses-${session}_dwi.bval; fi
+
+    niifile=$( ls $sessdir/*.nii |head -1)
+    if [[ -f$niifile ]];then cp $niifile $target/sub-${newsub}_ses-${session}_dwi.nii; fi
     
     #cp --no-clobber $1 $DATASETDIR/rawdata/sub-${newsub}/ses-${session}/anat/sub-${newsub}_ses-${session}_T1_$image.nii
 }
