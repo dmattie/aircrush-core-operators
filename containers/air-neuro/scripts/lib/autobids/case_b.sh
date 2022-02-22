@@ -26,6 +26,9 @@ function case_b_autobids {  ##ADNI-ii LOOK-A-LIKE
 
   #There may be an xml file with metadata. Look here first
   for eachdir in $DATASETDIR/source/$SUBJECT/*MPRAGE/**/*.xml; do
+    if [[ ! -f "$eachdir" ]];then
+      continue
+    fi
     case_b_process_mprage $eachdir
     anat_processed=1
   done
@@ -34,6 +37,9 @@ function case_b_autobids {  ##ADNI-ii LOOK-A-LIKE
     #No xml file found, let's try our best:
     for eachdir in $DATASETDIR/source/$SUBJECT/*MPRAGE/**/*_1_*.dcm; do
       #each represents first of a series in dcm set
+      if [[ ! -f "$eachdir" ]];then
+        continue
+      fi
       case_b_noxml_process_mprage $eachdir
     done
   fi
