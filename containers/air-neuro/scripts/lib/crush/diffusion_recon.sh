@@ -148,7 +148,7 @@ function f_diffusion_recon()
     if [[ ! -f $BVALS ]];then
         #Lets find a bids compliant bvals filename supporting multiple runs (we'll take the first one we find)
         shopt -s globstar
-        for eachbval in $SOURCE/dwi/sub-${SUBJECT}_ses-${SESSION}_*run-*_dwi.bval; do
+        for eachbval in $SOURCE/dwi/sub-${SUBJECT}_$SESSIONpath*run-*_dwi.bval; do
             BVALS=$eachbval
             break;
         done

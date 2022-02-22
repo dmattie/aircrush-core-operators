@@ -16,12 +16,12 @@ f_creategradientmatrix()
         fi
     else
         #Todo support for a "bvecs" filename is non compliant and needs to be deprecated.
-        bvecs=$DATASETDIR/rawdata/sub-$SUBJECT/ses-$SESSION/dwi/bvecs
+        bvecs=$DATASETDIR/rawdata/sub-$SUBJECT/$SESSIONpath/dwi/bvecs
         
         if [[ ! -f $bvecs ]];then
             #Lets find a bids compliant bvecs filename supporting multiple runs (we'll take the first one we find)
             shopt -s globstar
-            for eachbvec in $DATASETDIR/rawdata/sub-$SUBJECT/ses-$SESSION/dwi/sub-${SUBJECT}_ses-${SESSION}_*run-*_dwi.bvec; do
+            for eachbvec in $DATASETDIR/rawdata/sub-$SUBJECT/$SESSIONpath/dwi/sub-${SUBJECT}_$SESSIONpath_*run-*_dwi.bvec; do
                 bvecs=$eachbvec
                 break;
             done
