@@ -96,7 +96,7 @@ else
 
     shopt -s globstar  
     
-    for eachnii in ${DATASETDIR}/rawdata/sub-${SUBJECT}${SESSIONpath}dwi/*.nii*;do
+    for eachnii in ${DATASETDIR}/rawdata/sub-${SUBJECT}${SESSIONpath}/dwi/*.nii*;do
         infile=$eachnii
         break;
     done
