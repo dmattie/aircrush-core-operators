@@ -61,6 +61,12 @@ while true; do
   esac
 done
 
+if [ -z ${SLURM_TASKS_PER_NODE+x} ];then
+    PARALLELISM=1
+else
+    PARALLELISM=$SLURM_TASKS_PER_NODE
+fi
+echo "Using up to $PARALLELISM cores"
 
 if [[ $DATASETDIR == "" ]];then
     >&2 echo "ERROR: --datasetdir not specified"
@@ -149,12 +155,17 @@ if [[ $res != 0 ]];then
     exit 1
 fi
 
-for f in $FILES
-do
-   fbase=$(echo $f|cut -f 1 -d '.')
-   echo "flirt -in $f -ref $REFERENCE -omat $fbase.RegTransform4D -out reg2ref.$fbase.nii.gz"
-   flirt -in $f -ref $REFERENCE -omat $fbase.RegTransform4D -out reg2ref.$fbase.nii.gz
-done
+# for f in $FILES
+# do
+#    fbase=$(echo $f|cut -f 1 -d '.')
+#    echo "flirt -in $f -ref $REFERENCE -omat $fbase.RegTransform4D -out reg2ref.$fbase.nii.gz"
+#    flirt -in $f -ref $REFERENCE -omat $fbase.RegTransform4D -out reg2ref.$fbase.nii.gz
+# done
+
+#run flirt in parallel up to $PARALLELSIM times for all vols created by fslsplit
+ls vol*.n* | xargs -n1 -P$PARALLELISM -I%  flirt -in % -ref $REFERENCE -omat $fbase.RegTransform4D -out reg2ref.$fbase.nii.gz
+
+
 fslmerge -a reg2brain.data.nii.gz reg2ref.*
 mkdir -p registration
 mv vol* registration
