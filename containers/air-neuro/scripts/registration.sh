@@ -163,7 +163,7 @@ fi
 # done
 
 #run flirt in parallel up to $PARALLELSIM times for all vols created by fslsplit
-ls vol*.n* | xargs -n1 -P$PARALLELISM -I%  flirt -in % -ref $REFERENCE -omat $fbase.RegTransform4D -out reg2ref.$fbase.nii.gz
+ls vol*.n* | xargs -n1 -P$PARALLELISM -I%  fbase=$(echo $f|cut -f 1 -d '.');flirt -in % -ref $REFERENCE -omat $fbase.RegTransform4D -out reg2ref.$fbase.nii.gz
 
 
 fslmerge -a reg2brain.data.nii.gz reg2ref.*
