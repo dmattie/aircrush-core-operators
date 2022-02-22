@@ -109,19 +109,21 @@ if [[ $PIPELINE == "" ]];then
     exit 1
 fi
 if [[ $SESSION == "" ]];then
-    >&2 echo "ERROR: session not specified"
-    exit 1
+    >&2 echo "WARNING: session not specified"  
+    SESSIONpath=""
+else
+    SESSIONpath="ses-$SESSION"  
 fi
 
 if [[ $GRADIENTMATRIX != "" && ! -f $GRADIENTMATRIX ]];then
     >&2 echo "ERROR: A gradient matrix has been specified but cannot be found ($GRADIENTMATRIX)"
     exit 1
 fi
-  
 
-SOURCE=$DATASETDIR/rawdata/sub-$SUBJECT/ses-$SESSION
-TARGET=$DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/ses-$SESSION
-FREESURFER=$DATASETDIR/derivatives/freesurfer/sub-$SUBJECT/ses-$SESSION
+
+SOURCE=$DATASETDIR/rawdata/sub-$SUBJECT/$SESSIONpath
+TARGET=$DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath
+FREESURFER=$DATASETDIR/derivatives/freesurfer/sub-$SUBJECT/$SESSIONpath
   
 if [[ ! -d $SOURCE ]];then
     >&2 echo "ERROR: Specified source directory doesn't exist: ($SOURCE)"
@@ -221,7 +223,7 @@ fi
 #  ROI x ROI measurement extraction #
 #####################################
 
-python3 ${SCRIPTPATH}/lib/crush/crush.py -datasetdir $DATASETDIR -subject $SUBJECT -session $SESSION -pipeline $PIPELINE -maxcores $MAXCORES
+python3 ${SCRIPTPATH}/lib/crush/crush.py -datasetdir $DATASETDIR -subject $SUBJECT -session "$SESSION" -pipeline $PIPELINE -maxcores $MAXCORES
 
 #track_vis /scratch/dmattie/datacommons/projects/schizconnect/datasets/derivatives/levman/sub-A00036294/ses-20050101/crush_qball.trk -roi /scratch/dmattie/datacommons/projects/schizconnect/datasets/derivatives/levman/sub-A00036294/ses-20050101/parcellations/wmparc0002.nii -roi2 /scratch/dmattie/datacommons/projects/schizconnect/datasets/derivatives/levman/sub-A00036294/ses-20050101/parcellations/wmparc0018.nii -nr -ov /scratch/dmattie/datacommons/projects/schizconnect/datasets/derivatives/levman/sub-A00036294/ses-20050101/crush/0002/0002-0018-roi.nii -disable_log
 

@@ -14,8 +14,13 @@ def process(**kwargs):#segment,counterpart,method):
     subject=kwargs['subject']
     session=kwargs['session']
     pipeline=kwargs['pipeline']
+
+    if session=="":
+        session_path=""
+    else:
+        session_path=f"ses-{session}"
     
-    target=f"{datasetdir}/derivatives/{pipeline}/sub-{subject}/ses-{session}"
+    target=f"{datasetdir}/derivatives/{pipeline}/sub-{subject}/{session_path}"
 
     if not os.path.isdir(datasetdir):
         print(f"datasetdir not found: {datasetdir}")
