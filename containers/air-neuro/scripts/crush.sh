@@ -26,6 +26,7 @@ Help()
    echo "--session SESSION                      Specify session ID to clone"  
    echo "--pipeline PIPELINE_ID                 Specify derivatives directory to store output.  If unspecified, store in crush." 
    echo "--gradientmatrix GRADIENTMATRIX        If a gradient matrix file has been provided, specifiy its location here"
+   echo "--maxcores MAX                         Specify a hard limit on the number of cores used"
    echo "--overwrite                            Overwrite any existing derivative files with a conflicting name"
    echo "--invert_x                             [dti|odf]_tracker switch to invert x vector"
    echo "--invert_y                             [dti|odf]_tracker switch to invert y vector"
@@ -43,7 +44,7 @@ Help()
 ############################################################
 # Get the options
 
-TEMP=`getopt -o h: --long help,datasetdir:,subject:,session:,pipeline:,gradientmatrix:,bmax:,b0:,overwrite,invert_x,invert_y,invert_z,swap_sxy,swap_syz,swap_szx\
+TEMP=`getopt -o h: --long help,datasetdir:,subject:,session:,pipeline:,maxcores:,gradientmatrix:,bmax:,b0:,overwrite,invert_x,invert_y,invert_z,swap_sxy,swap_syz,swap_szx\
              -n 'crush' -- "$@"`
 
 if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
@@ -56,6 +57,7 @@ SUBJECT=""
 SESSION=""
 PIPELINE=""
 GRADIENTMATRIX=""
+MAXCORES=""
 BMAX=""
 BNOT=""
 OVERWRITE=0
@@ -76,6 +78,7 @@ while true; do
     --gradientmatrix ) GRADIENTMATRIX="$2";shift 2;;
     --bmax ) BMAX="$2";shift 2;;
     --BNOT ) BNOT="$2";shift 2;;   
+    --maxcores ) MAXCORES="$2";shift 2;;
     --overwrite ) OVERWRITE=1;shift;; 
     --invert_x ) INVERT_X=" -ix";shift;;     
     --invert_y ) INVERT_Y=" -iy";shift;;     
@@ -218,7 +221,9 @@ fi
 #  ROI x ROI measurement extraction #
 #####################################
 
-python3 ${SCRIPTPATH}/lib/crush/crush.py -datasetdir $DATASETDIR -subject $SUBJECT -session $SESSION -pipeline $PIPELINE
+python3 ${SCRIPTPATH}/lib/crush/crush.py -datasetdir $DATASETDIR -subject $SUBJECT -session $SESSION -pipeline $PIPELINE -maxcores $MAXCORES
+
+#track_vis /scratch/dmattie/datacommons/projects/schizconnect/datasets/derivatives/levman/sub-A00036294/ses-20050101/crush_qball.trk -roi /scratch/dmattie/datacommons/projects/schizconnect/datasets/derivatives/levman/sub-A00036294/ses-20050101/parcellations/wmparc0002.nii -roi2 /scratch/dmattie/datacommons/projects/schizconnect/datasets/derivatives/levman/sub-A00036294/ses-20050101/parcellations/wmparc0018.nii -nr -ov /scratch/dmattie/datacommons/projects/schizconnect/datasets/derivatives/levman/sub-A00036294/ses-20050101/crush/0002/0002-0018-roi.nii -disable_log
 
 #  rois=$( cat ${SCRIPTPATH}/../assets/segmentMap.csv |grep -v "^#"|cut -d\, -f 1|tr "\n" ';' )    
 #     IFS=";" read -ra roiarray <<< "$rois"

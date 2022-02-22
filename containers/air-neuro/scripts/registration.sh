@@ -74,9 +74,10 @@ if [[ $SUBJECT == "" ]];then
     >&2 echo "ERROR: subject not specified"
     exit 1
 fi
+SESSIONpath="/ses-${SESSION}/"
 if [[ $SESSION == "" ]];then
-    >&2 echo "ERROR: session not specified"
-    exit 1
+    >&2 echo "WARNING: No session specified, assuming there isn't one"  
+    SESSIONpath=""  
 fi
 if [[ $PIPELINE == "" ]];then
     >&2 echo "ERROR: pipeline ID not specified"
@@ -85,22 +86,32 @@ fi
 
 if [[ $TIMEPOINT != "" ]];then    
     TIMEPOINT="_${TIMEPOINT}"
-    SOURCE_dwi=${DATASETDIR}/rawdata/sub-${SUBJECT}/ses-${SESSION}/dwi/sub-${SUBJECT}_ses-${SESSION}_dwi${TIMEPOINT}.nii.gz
+    if [[ $SESSION == "" ]];then
+        SOURCE_dwi=${DATASETDIR}/rawdata/sub-${SUBJECT}/dwi/sub-${SUBJECT}${TIMEPOINT}_dwi.nii.gz
+    else
+        SOURCE_dwi=${DATASETDIR}/rawdata/sub-${SUBJECT}/ses-${SESSION}/dwi/sub-${SUBJECT}_ses-${SESSION}${TIMEPOINT}_dwi.nii.gz
+    fi
 else
 
 
     shopt -s globstar  
-
-    for eachnii in ${DATASETDIR}/rawdata/sub-${SUBJECT}/ses-${SESSION}/dwi/*.nii*;do
+    
+    for eachnii in ${DATASETDIR}/rawdata/sub-${SUBJECT}${SESSIONpath}dwi/*.nii*;do
         infile=$eachnii
         break;
     done
+
     SOURCE_dwi=$eachnii
 fi
-
-REFERENCE=${DATASETDIR}/derivatives/freesurfer/sub-${SUBJECT}/ses-${SESSION}/mri/brainmask.nii
-TARGET=${DATASETDIR}/derivatives/$PIPELINE/sub-${SUBJECT}/ses-${SESSION}
-
+if [[ $SESSION == "" ]];then
+    REFERENCE=${DATASETDIR}/derivatives/freesurfer/sub-${SUBJECT}/mri/brainmask.nii
+    REFERENCEmgz=${DATASETDIR}/derivatives/freesurfer/sub-${SUBJECT}/mri/brainmask.mgz
+    TARGET=${DATASETDIR}/derivatives/$PIPELINE/sub-${SUBJECT}
+else
+    REFERENCE=${DATASETDIR}/derivatives/freesurfer/sub-${SUBJECT}/ses-${SESSION}/mri/brainmask.nii
+    REFERENCEmgz=${DATASETDIR}/derivatives/freesurfer/sub-${SUBJECT}/ses-${SESSION}/mri/brainmask.mgz
+    TARGET=${DATASETDIR}/derivatives/$PIPELINE/sub-${SUBJECT}/ses-${SESSION}
+fi
 
 if [[ ! -f $SOURCE_dwi ]];then
     >&2 echo "ERROR: Specified source file doesn't exist: ($SOURCE_dwi)"
@@ -115,9 +126,9 @@ fi
 
 
 #Convert reference to nii from mgz if not done already
-if [[ ! -f ${DATASETDIR}/derivatives/freesurfer/sub-${SUBJECT}/ses-${SESSION}/mri/brainmask.nii && -f ${DATASETDIR}/derivatives/freesurfer/sub-${SUBJECT}/ses-${SESSION}/mri/brainmask.mgz ]];then
+if [[ ! -f ${REFERENCE} && -f ${REFERENCEmgz} ]];then
     #MGZ2Nifti not called yet.  lets convert inline
-    mri_convert -rt nearest -nc -ns 1 ${DATASETDIR}/derivatives/freesurfer/sub-${SUBJECT}/ses-${SESSION}/mri/brainmask.mgz ${DATASETDIR}/derivatives/freesurfer/sub-${SUBJECT}/ses-${SESSION}/mri/brainmask.nii
+    mri_convert -rt nearest -nc -ns 1 $REFERENCEmgz $REFERENCE
 fi
 if [[ ! -f $REFERENCE ]];then
     >&2 echo "ERROR: $SOURCE/mri/wmparc.nii not found.  If an .mgz file was found I would have attempted conversion first."
