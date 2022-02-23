@@ -14,6 +14,8 @@ def process(**kwargs):#segment,counterpart,method):
     subject=kwargs['subject']
     session=kwargs['session']
     pipeline=kwargs['pipeline']
+    maxcores=kwargs['maxcores']
+
 
     if session=="":
         session_path=""
@@ -52,8 +54,11 @@ def process(**kwargs):#segment,counterpart,method):
                     if not os.path.isfile(f"{target}/crush/{roi1}/calcs-{roi1}-{roi2}-roi.json"):
                         t = [roi1,roi2,method,target,pipeline,crushtract]
                         tasks.append(t)
-
-    no_of_procs = cpu_count()     
+    if maxcores:
+        no_of_procs=maxcores
+    else:
+        no_of_procs = cpu_count()     
+        
     pool = Pool(no_of_procs-1)
     print("Multiprocessing %s tasks across %s async procs" %(len(tasks),no_of_procs))
     for t in tasks:
@@ -95,10 +100,11 @@ def main():
     parser.add_argument('-subject',action='store', required=True, help="Specify Subject ID")
     parser.add_argument('-session',action='store', required=True, help="Specify Session ID")    
     parser.add_argument('-pipeline',action='store', required=True, help="The name of the pipeline being processed to tag the data as it is stored")    
+    parser.add_argument('-maxcores',action='store',help='Specify the maximum number of tasks to run concurrently')
    
     args = parser.parse_args()
 
-    process(datasetdir=args.datasetdir,subject=args.subject,session=args.session,pipeline=args.pipeline)
+    process(datasetdir=args.datasetdir,subject=args.subject,session=args.session,pipeline=args.pipeline,maxcores=args.maxcores)
 
 if __name__ == '__main__':
     main()
