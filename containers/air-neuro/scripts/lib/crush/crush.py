@@ -59,7 +59,7 @@ def process(**kwargs):#segment,counterpart,method):
     else:
         no_of_procs = cpu_count()     
         
-    pool = Pool(no_of_procs-1)
+    pool = Pool(int(no_of_procs)-1)
     print("Multiprocessing %s tasks across %s async procs" %(len(tasks),no_of_procs))
     for t in tasks:
         pool.apply_async(getmeasurements,(t,))    
