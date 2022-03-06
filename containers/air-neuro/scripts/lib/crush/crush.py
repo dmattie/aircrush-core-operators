@@ -59,13 +59,16 @@ def process(**kwargs):#segment,counterpart,method):
     else:
         no_of_procs = cpu_count()     
         
-    pool = Pool(int(no_of_procs))
+   # pool = Pool(int(no_of_procs))    
     print("Multiprocessing %s tasks across %s async procs" %(len(tasks),no_of_procs))
-    for t in tasks:
-        print(t)
-        pool.apply_async(getmeasurements,(t,))    
-    pool.close()
-    pool.join()
+
+    with Pool(int(num_of_procs)) as p:
+        p.map(getmeasurements,tasks)
+    # for t in tasks:
+    #     print(t)
+    #     pool.apply_async(getmeasurements,(t,))    
+    # pool.close()
+    # pool.join()
         
 def getmeasurements(parms):
     roi1=parms[0]
