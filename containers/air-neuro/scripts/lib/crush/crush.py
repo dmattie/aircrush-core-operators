@@ -12,7 +12,7 @@ from multiprocessing import Pool,cpu_count
 def process(**kwargs):#segment,counterpart,method):
     datasetdir=kwargs['datasetdir']
     subject=kwargs['subject']
-    session=kwargs['session']
+    session=kwargs['session'] 
     pipeline=kwargs['pipeline']
     maxcores=kwargs['maxcores']
 
@@ -97,7 +97,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="CRUSH client command line utility. Extract measurements.")
     parser.add_argument('-datasetdir',action='store', required=True, help="Path to dataset directory (just above ../[source|rawdata|derivatives]/..)")
-    parser.add_argument('-subject',action='store', required=True, help="Specify Subject ID")
+    parser.add_argument('-subject',action='store', help="Specify Subject ID")
     parser.add_argument('-session',action='store', required=True, help="Specify Session ID")    
     parser.add_argument('-pipeline',action='store', required=True, help="The name of the pipeline being processed to tag the data as it is stored")    
     parser.add_argument('-maxcores',action='store',help='Specify the maximum number of tasks to run concurrently')
