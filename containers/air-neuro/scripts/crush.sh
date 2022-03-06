@@ -212,7 +212,7 @@ res=$?
 
 if [[ ! $res -eq 0 ]];then
     >&2 echo $diffusion_result
-    if [[ ! $res -eq 2 ]]    #2 means files already exist and overwrite not specified  
+    if [[ ! $res -eq 2 ]];then   #2 means files already exist and overwrite not specified  
         >&2 echo "ERROR: Unable to perform Cortical Reconstruction.  Unable to continue."
         exit 1
     fi
