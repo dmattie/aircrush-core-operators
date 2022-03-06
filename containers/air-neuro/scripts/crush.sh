@@ -206,31 +206,35 @@ fi
 # RECON                   #
 ###########################
 
-f_diffusion_recon $INVERT_X $INVERT_Y $INVERT_Z $SWAP_SXY $SWAP_SYZ $SWAP_SZX
+diffusion_result = $( f_diffusion_recon $INVERT_X $INVERT_Y $INVERT_Z $SWAP_SXY $SWAP_SYZ $SWAP_SZX )
 res=$?
 
-if [[ $res != 0 ]];then
-    >&2 echo "ERROR: Unable to perform Cortical Reconstruction.  Unable to continue."
-    exit 1
-fi
 
+if [[ ! $res -eq 0 ]];then
+    >&2 echo $diffusion_result
+    if [[ ! $res -eq 2 ]]    #2 means files already exist and overwrite not specified  
+        >&2 echo "ERROR: Unable to perform Cortical Reconstruction.  Unable to continue."
+        exit 1
+    fi
+fi
 
 ###############################
 # flirt / affine registration #
 ###############################
 
-f_flirt
+flirt_result = $( f_flirt )
 res=$?
 
 if [[ $res != 0 ]];then
     >&2 echo "ERROR: Unable to perform flirt/affine registration.  Unable to continue."
+    >&2 echo $flirt_result
     exit 1
 fi
 
 #####################################
 #  ROI x ROI measurement extraction #
 #####################################
-
+exit 
 python3 ${SCRIPTPATH}/lib/crush/crush.py -datasetdir $DATASETDIR -subject $SUBJECT -session "$SESSION" -pipeline $PIPELINE -maxcores $MAXCORES
 
 #track_vis /scratch/dmattie/datacommons/projects/schizconnect/datasets/derivatives/levman/sub-A00036294/ses-20050101/crush_qball.trk -roi /scratch/dmattie/datacommons/projects/schizconnect/datasets/derivatives/levman/sub-A00036294/ses-20050101/parcellations/wmparc0002.nii -roi2 /scratch/dmattie/datacommons/projects/schizconnect/datasets/derivatives/levman/sub-A00036294/ses-20050101/parcellations/wmparc0018.nii -nr -ov /scratch/dmattie/datacommons/projects/schizconnect/datasets/derivatives/levman/sub-A00036294/ses-20050101/crush/0002/0002-0018-roi.nii -disable_log

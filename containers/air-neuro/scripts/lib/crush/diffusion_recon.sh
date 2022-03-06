@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 SCRIPT=$( realpath $0 )
@@ -46,14 +45,13 @@ function f_dti_recon()
   highb=$3
   b0=$4
   shift;shift;shift;shift;
-  echo "f_dti_recon extras:{$@}"
+  #echo "f_dti_recon extras:{$@}"
 
   cd $TARGET
 
   if [[ -f $TARGET/dti_recon_out_fa.nii 
      && -f $TARGET/dti_recon_out_adc.nii
-     && -f $TARGET/dti_recon_out_dwi.nii ]];then
-    echo "Previous dti_recon_out output appears to exist. Skipping dti_recon"
+     && -f $TARGET/dti_recon_out_dwi.nii ]];then    
     return 2
   fi
 
