@@ -62,6 +62,7 @@ def process(**kwargs):#segment,counterpart,method):
     pool = Pool(int(no_of_procs))
     print("Multiprocessing %s tasks across %s async procs" %(len(tasks),no_of_procs))
     for t in tasks:
+        print(t)
         pool.apply_async(getmeasurements,(t,))    
     pool.close()
     pool.join()
