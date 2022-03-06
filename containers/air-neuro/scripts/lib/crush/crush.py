@@ -79,7 +79,7 @@ def getmeasurements(parms):
     tract=parms[5]
 
     if not os.path.isdir(f"{target}/crush/{roi1}"):
-        os.mkdir(f"{target}/crush/{roi1}")
+        os.makedirs(f"{target}/crush/{roi1}")
     scripthome=f"{os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))}"
 
     trackvis=[f"{scripthome}/get_tract_measurements.py",
