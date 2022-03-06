@@ -88,7 +88,7 @@ def getmeasurements(parms):
     "-method",method,
     "-tract",tract,
     "-pipeline",pipeline]
-    print(trackvis)
+    
 
     with open(f"{target}/crush/{roi1}/{roi1}-{roi2}-{method}.log", "w") as track_vis_out:
         proc = subprocess.Popen(trackvis, stdout=track_vis_out)
