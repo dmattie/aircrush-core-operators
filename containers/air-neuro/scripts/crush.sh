@@ -117,8 +117,8 @@ fi
 
 if [[ $GRADIENTMATRIX != "" && ! -f $GRADIENTMATRIX ]];then
     >&2 echo "ERROR: A gradient matrix has been specified but cannot be found ($GRADIENTMATRIX)"
-    exit 1
-fi
+    exit 1    
+fi  
 
 
 SOURCE=$DATASETDIR/rawdata/sub-$SUBJECT/$SESSIONpath
@@ -148,22 +148,28 @@ if [[ $OVERWRITE -eq 1 ]];then
 fi
 
 mkdir -p $TARGET
-if [[ -f $TARGET/gradientmatrix_dti.txt ]];then
-    echo "Existing gradientmatrix for dti imaging model detected.  Skipping (re-)creation."    
-else 
-    echo "Calculating reconstruction matrix from gradient table"
-    f_creategradientmatrix $TARGET/gradientmatrix_dti.txt dti
+
+if [[ $GRADIENTMATRIX != "" ]];then
+    cp $GRADIENTMATRIX $TARGET/gradientmatrix_dti.txt
+    cp $GRADIENTMATRIX $TARGET/gradientmatrix_qball.txt
+else
+
+    if [[ -f $TARGET/gradientmatrix_dti.txt ]];then
+        echo "Existing gradientmatrix for dti imaging model detected.  Skipping (re-)creation."    
+    else 
+        echo "Calculating reconstruction matrix from gradient table"
+        f_creategradientmatrix $TARGET/gradientmatrix_dti.txt dti
+    fi
+
+
+    if [[ -f $TARGET/gradientmatrix_qball.txt ]];then
+        echo "Existing gradientmatrix for qball imaging model detected.  Skipping (re-)creation."    
+    else 
+        echo "Calculating reconstruction matrix from gradient table"
+        f_creategradientmatrix $TARGET/gradientmatrix_qball.txt qball
+    fi
+
 fi
-
-
-if [[ -f $TARGET/gradientmatrix_qball.txt ]];then
-    echo "Existing gradientmatrix for qball imaging model detected.  Skipping (re-)creation."    
-else 
-    echo "Calculating reconstruction matrix from gradient table"
-    f_creategradientmatrix $TARGET/gradientmatrix_qball.txt qball
-fi
-
-
 
 
 res=$?
@@ -235,7 +241,11 @@ fi
 #  ROI x ROI measurement extraction #
 #####################################
 
-python3 ${SCRIPTPATH}/lib/crush/crush.py -datasetdir $DATASETDIR -subject $SUBJECT -session "$SESSION" -pipeline $PIPELINE -maxcores $MAXCORES
+python3 ${SCRIPTPATH}/lib/crush/crush.py -datasetdir $DATASETDIR \
+ -subject $SUBJECT \
+ -session "$SESSION" \
+ -pipeline $PIPELINE \
+ -maxcores $MAXCORES
 
 #track_vis /scratch/dmattie/datacommons/projects/schizconnect/datasets/derivatives/levman/sub-A00036294/ses-20050101/crush_qball.trk -roi /scratch/dmattie/datacommons/projects/schizconnect/datasets/derivatives/levman/sub-A00036294/ses-20050101/parcellations/wmparc0002.nii -roi2 /scratch/dmattie/datacommons/projects/schizconnect/datasets/derivatives/levman/sub-A00036294/ses-20050101/parcellations/wmparc0018.nii -nr -ov /scratch/dmattie/datacommons/projects/schizconnect/datasets/derivatives/levman/sub-A00036294/ses-20050101/crush/0002/0002-0018-roi.nii -disable_log
 
