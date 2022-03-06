@@ -206,7 +206,7 @@ fi
 # RECON                   #
 ###########################
 
-diffusion_result = $( f_diffusion_recon $INVERT_X $INVERT_Y $INVERT_Z $SWAP_SXY $SWAP_SYZ $SWAP_SZX )
+diffusion_result=$( f_diffusion_recon $INVERT_X $INVERT_Y $INVERT_Z $SWAP_SXY $SWAP_SYZ $SWAP_SZX )
 res=$?
 
 
@@ -222,7 +222,7 @@ fi
 # flirt / affine registration #
 ###############################
 
-flirt_result = $( f_flirt )
+flirt_result=$( f_flirt )
 res=$?
 
 if [[ $res != 0 ]];then
