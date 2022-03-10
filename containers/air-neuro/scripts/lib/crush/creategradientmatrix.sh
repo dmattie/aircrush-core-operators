@@ -21,7 +21,7 @@ f_creategradientmatrix()
         if [[ ! -f $bvecs ]];then
             #Lets find a bids compliant bvecs filename supporting multiple runs (we'll take the first one we find)
             shopt -s globstar
-            for eachbvec in $DATASETDIR/rawdata/sub-$SUBJECT/$SESSIONpath/dwi/sub-${SUBJECT}_$SESSIONpath_*run-*_dwi.bvec; do
+            for eachbvec in $DATASETDIR/rawdata/sub-$SUBJECT/$SESSIONpath/dwi/sub-${SUBJECT}_$SESSIONpath*_dwi.bvec; do
                 bvecs=$eachbvec
                 break;
             done
