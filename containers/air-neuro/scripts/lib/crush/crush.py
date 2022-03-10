@@ -17,7 +17,7 @@ def process(**kwargs):#segment,counterpart,method):
     maxcores=kwargs['maxcores']
 
 
-    if session==None:
+    if session==None or session=="":
         session_path=""
     else:
         session_path=f"ses-{session}"
