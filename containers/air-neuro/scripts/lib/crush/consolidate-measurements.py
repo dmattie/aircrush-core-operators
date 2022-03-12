@@ -17,7 +17,14 @@ def process(**kwargs):#segment,counterpart,method):
         if not os.path.isdir(datasetdir):
             print(f"datasetdir not found: {datasetdir}")
             sys.exit(1)
-        print(f"{datasetdir}/derivatives/{pipeline}/sub-{subject}/ses-{session}/crush")
+
+
+        if session==None or session=="":
+            session_path=""
+        else:
+            session_path=f"ses-{session}"
+        
+        print(f"{datasetdir}/derivatives/{pipeline}/sub-{subject}/{session_path}/crush")
 
         pattern = re.compile("(.*)\/(\d+)-(\d+)-(\w+)-(\w+)")
         target = open(out,"a")
@@ -42,7 +49,7 @@ def main():
         description="CRUSH client command line utility. Consolidate extracted measurements.  Clean up temp files.")
     parser.add_argument('-datasetdir',action='store', required=True, help="Path to dataset directory (just above ../[source|rawdata|derivatives]/..)")
     parser.add_argument('-subject',action='store', required=True, help="Specify Subject ID")
-    parser.add_argument('-session',action='store', required=True, help="Specify Session ID")    
+    parser.add_argument('-session',action='store', help="Specify Session ID")    
     parser.add_argument('-pipeline',action='store', required=True, help="The name of the pipeline being processed to tag the data as it is stored")    
     parser.add_argument('-tidy',action='store_true', help="If specified, tar temp files into a single file" )
     parser.add_argument('-clean',action='store_true', help="If specified, remove intermediate files (.nii, .txt, .json)" )
