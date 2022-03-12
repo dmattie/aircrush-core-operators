@@ -29,7 +29,7 @@ def process(**kwargs):#segment,counterpart,method):
         pattern = re.compile("(.*)\/(\d+)-(\d+)-(\w+)-(\w+)")
         target = open(out,"a")
 
-        for dir in os.walk(f"{datasetdir}/derivatives/{pipeline}/sub-{subject}/ses-{session}/crush"):
+        for dir in os.walk(f"{datasetdir}/derivatives/{pipeline}/sub-{subject}/{session_path}/crush"):
            for f in dir[2]:
              if os.path.splitext(f"{dir[0]}/{f}")[1] == ".json":
                 try:
