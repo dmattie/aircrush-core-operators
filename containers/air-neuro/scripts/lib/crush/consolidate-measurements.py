@@ -40,6 +40,8 @@ def process(**kwargs):#segment,counterpart,method):
                          target.write(f"{pipeline},{subject},{session},{keyparts[2]},{keyparts[3]},{keyparts[4]},{keyparts[5]},{data[k]}\n")
                 except Exception as e:
                    print(f"ERROR processing {dir[0]}/{f}\n{e}")
+                   sys.exit(1)
+        
 
 def main():
 

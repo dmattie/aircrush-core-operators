@@ -148,11 +148,11 @@ def process(**kwargs):#segment,counterpart,method):
         nii = f"{tractographypath}/crush/{segment}/{segment}-{counterpart}-{method}.nii" 
         datafile = f"{tractographypath}/crush/{segment}/{segment}-{counterpart}-{method}.nii.txt" 
                 
-        # if os.path.isfile(nii):
-        #     os.unlink(nii) 
+        if os.path.isfile(nii):
+            os.unlink(nii) 
         
-        # if os.path.isfile(datafile):
-        #     os.unlink(datafile)
+        if os.path.isfile(datafile):
+            os.unlink(datafile)
                 
         
         return json.dumps(calcs)   # dict doesn't appear to be threadsafe, need to stringify
