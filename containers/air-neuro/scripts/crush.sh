@@ -96,7 +96,7 @@ if [[ $DATASETDIR == "" ]];then
     exit 1
 fi
 if [[ ! -d $DATASETDIR ]];then
-    >&2 echo "ERROR: dataset directory specified not found ($datasetdir)"
+    >&2 echo "ERROR: dataset directory specified not found ($DATASETDIR)"
     exit 1
 fi
 if [[ $SUBJECT == "" ]];then
@@ -256,52 +256,13 @@ fi
 
 
 
-python3 ${SCRIPTPATH}/lib/crush/consolidate-measurements.py
+python3 ${SCRIPTPATH}/lib/crush/consolidate-measurements.py \
 -datasetdir $DATASETS \
 -subject $SUBJECT \
 -session "$SESSION" \
 -pipeline $PIPELINE \
 -out $DATASETS/derivatives/$PIPELINE/sub-$SUBJECT/$sessionPath/crush.txt
 
-tar -czf --remove-files $DATASETS/derivatives/$PIPELINE/sub-$SUBJECT/$sessionPath/crush.tar $DATASETS/derivatives/$PIPELINE/sub-$SUBJECT/$sessionPath/crush;rm -r  $DATASETS/derivatives/$PIPELINE/sub-$SUBJECT/$sessionPath/crush
-
-#track_vis /scratch/dmattie/datacommons/projects/schizconnect/datasets/derivatives/levman/sub-A00036294/ses-20050101/crush_qball.trk -roi /scratch/dmattie/datacommons/projects/schizconnect/datasets/derivatives/levman/sub-A00036294/ses-20050101/parcellations/wmparc0002.nii -roi2 /scratch/dmattie/datacommons/projects/schizconnect/datasets/derivatives/levman/sub-A00036294/ses-20050101/parcellations/wmparc0018.nii -nr -ov /scratch/dmattie/datacommons/projects/schizconnect/datasets/derivatives/levman/sub-A00036294/ses-20050101/crush/0002/0002-0018-roi.nii -disable_log
-
-#  rois=$( cat ${SCRIPTPATH}/../assets/segmentMap.csv |grep -v "^#"|cut -d\, -f 1|tr "\n" ';' )    
-#     IFS=";" read -ra roiarray <<< "$rois"
-
-    
-#     for roi in "${roiarray[@]}"
-#     do
-#         for roi2 in "${roiarray[@]}"
-#         do
-#             if [[ $roi != $roi2 ]];then
-#                 if [[ -f $TARGET/crush_qball.trk ]];then
-#                   CRUSHTRACT="$TARGET/crush_qball.trk"
-#                 else 
-#                   CRUSHTRACT="$TARGET/crush_dti.trk"
-#                 fi
-#                 if [[ ! -f $TARGET/crush/$roi/calcs-$roi-$roi2-roi.json ]];then     
-#                     currdate=$( date )       
-#                     echo "Started at ${currdate}: ${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi"
-#                     sem -j+0 ${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi &
-#                     #${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi &
-#                 fi
-#                 if [[ ! -f $TARGET/crush/$roi/calcs-$roi-$roi2-roi_end.json ]];then
-#                     currdate=$( date )       
-#                     echo "Started at ${currdate}: ${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi_end"
-#                     sem -j+0 ${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi_end &
-#                     #${SCRIPTPATH}/lib/crush/get_tract_measurements.py -tract $CRUSHTRACT -pipeline levman -roi_start $roi -roi_end $roi2 -method roi_end &
-#                 fi
-#             fi            
-#         done
-#         echo "Measuring $roi against all other ROIs ======================="
-#         sem --wait
-#         #wait
-      
-#     done
-
-#python $CRUSH_PATH/crush.py -samples $SUBJECTS_DIR -patient sub-$patientID -recrush -fixmissing #-gradienttable ~/projects/def-dmattie/crush/plugins/levman/hcp_gradient_table_from_data_dictionary_3T.csv
-#pwd
-
-#if [ -f "$SUBJECTS_DIR/sub-$patientID/ses-$sessionID/Tractography/crush/tracts.txt" ]; then
+if [[ $? -eq 0 ]];then
+   tar -czf --remove-files $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$sessionPath/crush.tar $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$sessionPath/crush;rm -r  $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$sessionPath/crush
+fi
