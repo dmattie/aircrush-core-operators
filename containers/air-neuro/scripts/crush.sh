@@ -257,11 +257,11 @@ fi
 
 
 python3 ${SCRIPTPATH}/lib/crush/consolidate-measurements.py \
--datasetdir $DATASETS \
+-datasetdir $DATASETDIR \
 -subject $SUBJECT \
 -session "$SESSION" \
 -pipeline $PIPELINE \
--out $DATASETS/derivatives/$PIPELINE/sub-$SUBJECT/$sessionPath/crush.txt
+-out $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$sessionPath/crush.txt
 
 if [[ $? -eq 0 ]];then
    tar -czf --remove-files $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$sessionPath/crush.tar $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$sessionPath/crush;rm -r  $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$sessionPath/crush
