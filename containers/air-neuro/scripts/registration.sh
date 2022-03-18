@@ -178,8 +178,8 @@ ls vol*.n* | xargs -n1 -I@ -P$PARALLELISM bash -c "$(declare -f flirt_ref) ; fli
 
 fslmerge -a reg2brain.data.nii.gz reg2ref.*
 mkdir -p registration
-mv vol* registration
-mv reg2ref* registration
+mv vol* registration;tar -rf registration/all-volumes.tar vol* --remove-files
+mv reg2ref* registration;tar -rf registration/reg2ref.tar reg2ref* --remove-files
 
 if [[ ! -f "reg2brain.data.nii.gz" ]];then
     >&2 echo "ERROR: failed to complete image registration.  Expected to see a file reg2brain.data.nii.gz produced, but didn't"
