@@ -96,6 +96,7 @@ if [[ ! -f $SOURCE/mri/wmparc.nii ]];then
 fi
 
 cd $TARGET/parcellations
+rm --force wmparc*.nii
 if [[ -f wmparc-parcellated.tar ]];then
     rm wmparc-parcellated.tar
 fi
