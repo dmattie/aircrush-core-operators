@@ -241,6 +241,11 @@ fi
 #  ROI x ROI measurement extraction #
 #####################################
 
+if [[ -f $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/parcellations/wmparc-parcellated.tar ]];then
+   cd $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/parcellations
+   tar -xf wmparc-parcellated.tar
+fi
+
 if [[ $MAXCORES == "" ]];then
     python3 ${SCRIPTPATH}/lib/crush/crush.py -datasetdir $DATASETDIR \
     -subject $SUBJECT \
@@ -254,6 +259,10 @@ else
     -maxcores $MAXCORES
 fi
 
+if [[ -f $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/parcellations/wmparc-parcellated.tar ]];then
+   cd $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/parcellations
+   rm *.nii
+fi
 
 
 python3 ${SCRIPTPATH}/lib/crush/consolidate-measurements.py \
@@ -263,6 +272,6 @@ python3 ${SCRIPTPATH}/lib/crush/consolidate-measurements.py \
 -pipeline $PIPELINE \
 -out $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$sessionPath/crush.txt
 
-if [[ $? -eq 0 ]];then
-   tar -czf --remove-files $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$sessionPath/crush.tar $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$sessionPath/crush;rm -r  $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$sessionPath/crush
+if [[ $? -eq 0  && ! -f $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/crush.tar ]];then
+   tar -cf --remove-files $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/crush.tar $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/crush;rm -r  $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/crush
 fi
