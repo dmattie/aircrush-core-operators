@@ -25,6 +25,7 @@ Help()
    echo "--pipeline PIPELINE                    Specify the derivative pipeline ID where the registered image and transformation matrix will be stored"
    echo "--timepoint TIMEPOINT                  [Optional] Specify which sequence/timepoint to use for" 
    echo "                                       image if multiple captured during the same exam. Default is 1."
+   echo "--overwrite                            Overwrite any existing derivative files with a conflicting name"
    echo
 }
 
@@ -34,7 +35,7 @@ Help()
 # Get the options
 
 
-TEMP=`getopt -o h: --long help,datasetdir:,subject:,session:,pipeline:,timepoint:, \
+TEMP=`getopt -o h: --long help,datasetdir:,subject:,session:,pipeline:,overwrite,timepoint:, \
              -n 'registration' -- "$@"`
 
 if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
@@ -47,6 +48,7 @@ SUBJECT=""
 SESSION=""
 PIPELINE=""
 TIMEPOINT=""
+OVERWRITE=0
 
 while true; do
   case "$1" in
@@ -56,6 +58,7 @@ while true; do
     --session ) SESSION="$2";shift 2;;
     --pipeline ) PIPELINE="$2";shift 2;;
     --timepoint ) TIMEPOINT="$2";shift 2;;
+    --overwrite ) OVERWRITE=1;shift;;     
     -- ) shift; break ;;
     * ) break ;;
   esac
@@ -130,6 +133,22 @@ if [[ ! -d $TARGET ]];then
     exit 1
 fi
 
+
+if [[ $OVERWRITE -eq 1 ]];then
+    rm --force $TARGET/registration 
+    rm --force $TARGET/reg2brain.data.nii.gz   
+fi
+
+if [[ -f $TARGET/reg2brain.data.nii.gz ]];then
+    echo "Existing registration detected ($TARGET/reg2brain.data.nii.gz) and --overwrite not specified.  Skipping registration."
+    exit 0
+fi
+
+# Clean up any pre-existing residue
+
+rm --force $TARGET/vol*.nii.gz
+rm --force $TARGET/reg2ref.vol*.nii.gz
+rm --force $TARGET/vol*.RegTransform4D
 
 #Convert reference to nii from mgz if not done already
 if [[ ! -f ${REFERENCE} && -f ${REFERENCEmgz} ]];then
