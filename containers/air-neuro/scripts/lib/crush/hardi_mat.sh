@@ -19,7 +19,7 @@ f_hardi_mat()
     # done
     if [[ ! -f $ref ]];then
         echo "FALSE"
-        >&2 echo "ERROR: Diffusion file not found matching search pattern : ($SOURCE/dwi/sub-*.nii*)"
+        >&2 echo "ERROR: Diffusion file not found matching search pattern : ($ref)"
         exit 1
     fi
     
