@@ -273,7 +273,7 @@ python3 ${SCRIPTPATH}/lib/crush/consolidate-measurements.py \
 -out $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$sessionPath/crush.txt
 
 if [[ $? -eq 0  ]];then
-    tar -rf $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/crush.tar $DATASETDIR/ derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/crush --remove-files 
+    tar -rf $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/crush.tar $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/crush --remove-files 
     if [[ $? -eq 0 ]];then
         rm -r  $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/crush
     fi
