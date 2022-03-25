@@ -103,14 +103,15 @@ if [[ $TIMEPOINT != "" ]];then
 else
 
 
-    shopt -s globstar  
-    
-    for eachnii in ${DATASETDIR}/rawdata/sub-${SUBJECT}${SESSIONpath}/dwi/*.nii*;do
-        infile=$eachnii
-        break;
-    done
+shopt -s globstar  
 
-    SOURCE_dwi=$eachnii
+for eachnii in ${DATASETDIR}/rawdata/sub-${SUBJECT}${SESSIONpath}/dwi/*.nii*;do
+    infile=$eachnii
+    break;
+done
+
+SOURCE_dwi=$eachnii
+
 fi
 if [[ $SESSION == "" ]];then
     REFERENCE=${DATASETDIR}/derivatives/freesurfer/sub-${SUBJECT}/mri/brainmask.nii
@@ -135,12 +136,15 @@ fi
 
 
 if [[ $OVERWRITE -eq 1 ]];then
-    rm --force $TARGET/registration 
-    rm --force $TARGET/reg2brain.data.nii.gz   
+    rm --force $TARGET/registration/*
+    rm --force $TARGET/reg2brain.data.nii.gz  
+    rmdir --force $TARGET/registration 
 fi
 
 if [[ -f $TARGET/reg2brain.data.nii.gz ]];then
-    echo "Existing registration detected ($TARGET/reg2brain.data.nii.gz) and --overwrite not specified.  Skipping registration."
+    echo "Existing registration detected ($TARGET/reg2brain.data.nii.gz) and --overwrite not specified.  Cleaning up any residual files and Skipping registration."
+    rm --force $TARGET/registration/*
+    rmdir --force $TARGET/registration 
     exit 0
 fi
 
