@@ -161,7 +161,7 @@ function f_diffusion_recon()
 
     if [[ $BMAX == "" ]];then
         #Look at bvals file and find largest integer
-        BMAX_VAL=`cat $BVALS|tr ' ' '\n'|sort -u|grep -v '^0'|grep -v -e '^$'|sort -nr|head -1`
+        BMAX_VAL=`cat $BVALS|tr '\t' '\n'|tr ' ' '\n'|sort -u|grep -v '^0'|grep -v -e '^$'|sort -nr|head -1`
         BMAX="-b $BMAX_VAL"
         echo "Using high b value of $BMAX_VAL as per dwi/bvals file"
     else
@@ -171,7 +171,7 @@ function f_diffusion_recon()
         
     fi   
 
-    num_high_b_vals=`cat $BVALS|tr ' ' '\n'|sort -u|grep -v '^0'|grep -v -e '^$'|wc -l`
+    num_high_b_vals=`cat $BVALS|tr '\t' '\n'|tr ' ' '\n'|sort -u|grep -v '^0'|grep -v -e '^$'|wc -l`
     if [[ $num_high_b_vals == '1' ]];then
         # ODF Recon can be used     
         echo "Performing ODF Reconstruction"      
