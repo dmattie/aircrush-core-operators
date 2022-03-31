@@ -34,6 +34,7 @@ Help()
    echo "--swap_sxy                             [dti|odf]_tracker switch to swap x and y vectors while tracking"
    echo "--swap_syz                             [dti|odf]_tracker switch to swap y and z vectors while tracking"
    echo "--swap_szx                             [dti|odf]_tracker switch to swap x and z vectors while tracking"
+   echo "--verbose                              Print out all commands executed"
    
    echo
 }
@@ -44,7 +45,7 @@ Help()
 ############################################################
 # Get the options
 
-TEMP=`getopt -o h: --long help,datasetdir:,subject:,session:,pipeline:,maxcores:,gradientmatrix:,bmax:,b0:,overwrite,invert_x,invert_y,invert_z,swap_sxy,swap_syz,swap_szx\
+TEMP=`getopt -o h: --long help,datasetdir:,subject:,session:,pipeline:,maxcores:,gradientmatrix:,bmax:,b0:,overwrite,invert_x,invert_y,invert_z,swap_sxy,swap_syz,swap_szx,verbose\
              -n 'crush' -- "$@"`
 
 if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
@@ -67,6 +68,7 @@ INVERT_Z=""
 SWAP_SXY=""
 SWAP_SYZ=""
 SWAP_SZX=""
+VERBOSE="N"
 
 while true; do
   case "$1" in
@@ -85,12 +87,16 @@ while true; do
     --invert_z ) INVERT_Z=" -iz";shift;;             
     --swap_sxy ) SWAP_SXY=" -sxy";shift;;         
     --swap_syz ) SWAP_SYZ=" -syz";shift;;         
-    --swap_szx ) SWAP_SZX=" -szx";shift;;                 
+    --swap_szx ) SWAP_SZX=" -szx";shift;; 
+    --verbose ) VERBOSE="Y";shift;;                
     -- ) shift; break ;;
     * ) break ;;
   esac
 done
 
+if [[ $VERBOSE == "Y" ]];then
+    set -x
+fi
 if [[ $DATASETDIR == "" ]];then
     >&2 echo "ERROR: --datasetdir not specified"
     exit 1
