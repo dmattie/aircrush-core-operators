@@ -8,14 +8,14 @@ From: ubuntu:20.04
 
 %environment
     export LC_ALL=C
-    export PATH=/usr/local:/usr/local/scripts:$PATH
+    export PATH=/usr/local:/usr/local/scripts:/usr/local/df-analyze:$PATH
 
 %post
     apt-get update && apt-get install -y netcat
     NOW=`date`
     echo "export NOW=\"${NOW}\"" >> $SINGULARITY_ENVIRONMENT
    
-    
+    apt-get install -y curl
     apt-get install -y software-properties-common
     add-apt-repository universe
 
@@ -23,9 +23,14 @@ From: ubuntu:20.04
     apt-get install -y python3-pip
     pip3 install --upgrade pip
 
-    curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+    curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
 
     chmod -R a+rx /usr/local/scripts
+    cd /usr/local
+    git clone https://github.com/stfxecutables/df-analyze.git
+    cd df-analyze
+    poetry install
+    poetry shell
     
 %runscript    
     echo "Arguments received: first: $1    all:$*"
@@ -41,8 +46,8 @@ From: ubuntu:20.04
 ###############
 %apphelp df-analyze
     https://github.com/stfxecutables/df-analyze/blob/master/README.md
-%apprun crush
-    SCRIPT_HOME=/usr/local/scripts
+%apprun df-analyze
+    SCRIPT_HOME=/usr/local/df-analyze
     
-    $SCRIPT_HOME/df-analyze.sh $*
+    python3 $SCRIPT_HOME/df-analyze.py $*
     
