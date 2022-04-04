@@ -1,0 +1,48 @@
+BootStrap: docker
+From: ubuntu:20.04
+#From: ubuntu:18.04
+
+%files
+
+    scripts /usr/local
+
+%environment
+    export LC_ALL=C
+    export PATH=/usr/local:/usr/local/scripts:$PATH
+
+%post
+    apt-get update && apt-get install -y netcat
+    NOW=`date`
+    echo "export NOW=\"${NOW}\"" >> $SINGULARITY_ENVIRONMENT
+   
+    
+    apt-get install -y software-properties-common
+    add-apt-repository universe
+
+    apt-get install -y python3
+    apt-get install -y python3-pip
+    pip3 install --upgrade pip
+
+    curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+
+    chmod -R a+rx /usr/local/scripts
+    
+%runscript    
+    echo "Arguments received: first: $1    all:$*"
+    /bin/bash $*
+
+
+%labels
+    Container Author: dmattie
+
+
+###############
+# df-analyze
+###############
+%apphelp df-analyze
+    https://github.com/stfxecutables/df-analyze/blob/master/README.md
+%apprun crush
+    SCRIPT_HOME=/usr/local/scripts
+    
+    $SCRIPT_HOME/df-analyze.sh $*
+    
