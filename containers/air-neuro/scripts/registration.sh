@@ -160,7 +160,7 @@ if [[ ! -f ${REFERENCE} && -f ${REFERENCEmgz} ]];then
     mri_convert -rt nearest -nc -ns 1 $REFERENCEmgz $REFERENCE
 fi
 if [[ ! -f $REFERENCE ]];then
-    >&2 echo "ERROR: $SOURCE/mri/wmparc.nii not found.  If an .mgz file was found I would have attempted conversion first."
+    >&2 echo "ERROR: Reference ($REFERENCE) not found.  If an .mgz file was found I would have attempted conversion first."
     exit 1
 fi
 
