@@ -53,7 +53,7 @@ function f_dti_recon()
      && -f $TARGET/dti_recon_out_adc.nii
      && -f $TARGET/dti_recon_out_dwi.nii ]];then   
      echo "Previous dti_recon output detected.  Skipping dti_recon" 
-     if [[ ! -f $TARGET/crush_dti.trk]];then 
+     if [[ ! -f $TARGET/crush_dti.trk ]];then 
        echo "No tract file detected.  Tracking $TARGET/crush_dti.trk"
           dti_tracker "dti_recon_out" "crush_dti.trk" -m dti_recon_out_dwi.nii -it "nii" "$@"   
           return $?
