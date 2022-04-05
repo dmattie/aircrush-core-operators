@@ -8,7 +8,7 @@ From: ubuntu:20.04
 
 %environment
     export LC_ALL=C
-    export PATH=/usr/local:/usr/local/scripts:/usr/local/df-analyze:$PATH
+    export PATH=/usr/local:/usr/local/scripts:/usr/local/df-analyze:$PATH:$HOME/.poetry/bin
 
 %post
     apt-get update && apt-get install -y netcat

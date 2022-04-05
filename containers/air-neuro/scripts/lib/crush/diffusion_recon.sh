@@ -51,7 +51,13 @@ function f_dti_recon()
 
   if [[ -f $TARGET/dti_recon_out_fa.nii 
      && -f $TARGET/dti_recon_out_adc.nii
-     && -f $TARGET/dti_recon_out_dwi.nii ]];then    
+     && -f $TARGET/dti_recon_out_dwi.nii ]];then   
+     echo "Previous dti_recon output detected.  Skipping dti_recon" 
+     if [[ ! -f $TARGET/crush_dti.trk]];then 
+       echo "No tract file detected.  Tracking $TARGET/crush_dti.trk"
+          dti_tracker "dti_recon_out" "crush_dti.trk" -m dti_recon_out_dwi.nii -it "nii" "$@"   
+          return $?
+     fi
     return 2
   fi
 
@@ -90,7 +96,7 @@ function f_odf_recon()
   if [[ -f $TARGET/recon_out_odf.nii && -f $TARGET/recon_out_max.nii && -f $TARGET/recon_out_b0.nii && -f $TARGET/recon_out_dwi.nii ]];then
     echo "Previous odf_recon output detected. Skipping odf_recon"
     if [[ ! -f $TARGET/crush_qball.trk ]];then
-        echo "No track file detected.  Tracking $TARGET/crush_qball.trk"
+        echo "No tract file detected.  Tracking $TARGET/crush_qball.trk"
         echo odf_tracker "recon_out" "crush_qball.trk" -m recon_out_dwi.nii -it "nii" "$@"        
         odf_tracker "recon_out" "crush_qball.trk" -m recon_out_dwi.nii -at 35 -it "nii" "$@"        
         return $?
