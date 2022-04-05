@@ -191,8 +191,9 @@ fi
 function flirt_ref() {
   fbase=$(echo $1|cut -f 1 -d '.')
   REFERENCE=$2
+  bet2 $1 bet_$1 -f 0.2
   echo $1
-  flirt -in $1 -ref $REFERENCE -omat $fbase.RegTransform4D -out reg2ref.$fbase.nii.gz
+  flirt -in bet_$1 -ref $REFERENCE -omat $fbase.RegTransform4D -out reg2ref.$fbase.nii.gz
 }
 #echo {1..10} | xargs -n 1 | xargs -I@ -P4 bash -c "$(declare -f flirt_ref) ; flirt_ref @ ; echo @ "
 
@@ -206,8 +207,9 @@ if [[ ! -f "reg2brain.data.nii.gz" ]];then
     exit 1
 else
     #Discard residue
-    rm vol*
-    rm reg2ref*
+    # rm vol*
+    # rm bet_vol*
+    # rm reg2ref*
     # mkdir -p registration
     # rm --force registration/all-volumes.tar
     # rm --force registration/reg2ref.tar
