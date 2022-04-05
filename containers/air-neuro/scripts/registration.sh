@@ -25,6 +25,7 @@ Help()
    echo "--pipeline PIPELINE                    Specify the derivative pipeline ID where the registered image and transformation matrix will be stored"
    echo "--timepoint TIMEPOINT                  [Optional] Specify which sequence/timepoint to use for" 
    echo "                                       image if multiple captured during the same exam. Default is 1."
+   echo "--bet2                                 Apply automatic skull stripping (default settings)"
    echo "--overwrite                            Overwrite any existing derivative files with a conflicting name"
    echo
 }
@@ -35,7 +36,7 @@ Help()
 # Get the options
 
 
-TEMP=`getopt -o h: --long help,datasetdir:,subject:,session:,pipeline:,overwrite,timepoint:, \
+TEMP=`getopt -o h: --long help,datasetdir:,subject:,session:,pipeline:,overwrite,bet2,timepoint:, \
              -n 'registration' -- "$@"`
 
 if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
@@ -49,6 +50,7 @@ SESSION=""
 PIPELINE=""
 TIMEPOINT=""
 OVERWRITE=0
+BET2=0
 
 while true; do
   case "$1" in
@@ -59,6 +61,7 @@ while true; do
     --pipeline ) PIPELINE="$2";shift 2;;
     --timepoint ) TIMEPOINT="$2";shift 2;;
     --overwrite ) OVERWRITE=1;shift;;     
+    --bet2 ) BET2=1;shift;;   
     -- ) shift; break ;;
     * ) break ;;
   esac
@@ -191,10 +194,14 @@ fi
 function flirt_ref() {
   fbase=$(echo $1|cut -f 1 -d '.')
   REFERENCE=$2
-  #bet2 $1 bet_$1 -f 0.2
   echo $1
-  #flirt -in bet_$1 -ref $REFERENCE -omat $fbase.RegTransform4D -out reg2ref.$fbase.nii.gz
-  flirt -in $1 -ref $REFERENCE -omat $fbase.RegTransform4D -out reg2ref.$fbase.nii.gz
+  if [[ $BET2 -eq 0 ]];then
+    flirt -in $1 -ref $REFERENCE -omat $fbase.RegTransform4D -out reg2ref.$fbase.nii.gz
+  else
+    bet2 $1 bet_$1 -f 0.2
+    flirt -in bet_$1 -ref $REFERENCE -omat $fbase.RegTransform4D -out reg2ref.$fbase.nii.gz
+  fi
+
 }
 #echo {1..10} | xargs -n 1 | xargs -I@ -P4 bash -c "$(declare -f flirt_ref) ; flirt_ref @ ; echo @ "
 
@@ -208,9 +215,9 @@ if [[ ! -f "reg2brain.data.nii.gz" ]];then
     exit 1
 else
     #Discard residue
-    # rm vol*
-    # rm bet_vol*
-    # rm reg2ref*
+    rm --force vol*
+    rm --force bet_vol*
+    rm --force reg2ref*
     # mkdir -p registration
     # rm --force registration/all-volumes.tar
     # rm --force registration/reg2ref.tar
