@@ -118,7 +118,11 @@ fi
 if [[ $? -eq 0 ]];then
  rsync -a $WORKINGDIR/derivatives/$PIPELINE/$FILENAME $DATACOMMONS/$PROJECT/datasets/derivatives/$PIPELINE/
  if [[ $? -eq 0 ]];then
-    rm $WORKINGDIR/derivatives/$PIPELINE/$FILENAME
+    cd $WORKINGDIR/derivatives/$PIPELINE/
+    rm $FILENAME
+    if [[ $? -eq 0 ]];then        
+        rm -r sub-$SUBJECT/$SESSIONPATH
+    fi
  fi
 fi
 #rsync -r $SOURCE $TARGET
