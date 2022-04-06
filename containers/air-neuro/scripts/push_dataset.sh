@@ -109,14 +109,17 @@ elif [[ -f $WORKINGDIR/derivatives/$PIPELINE/$FILENAME && -d $SOURCE ]];then
     echo "Tar exists and so does dir.  removing dir and sending tar  ($WORKINGDIR/derivatives/$PIPELINE/$FILENAME)"
 elif [[ ! -f $WORKINGDIR/derivatives/$PIPELINE/$FILENAME && -d $SOURCE ]];then
     echo "Creating tar ($WORKINGDIR/derivatives/$PIPELINE/$FILENAME) and removing dir ($SOURCE)"
-    tar -cf $WORKINGDIR/derivatives/$PIPELINE/$FILENAME $SOURCE
-
+    tar -cf $FILENAME sub-$SUBJECT/$SESSIONPATH
+    
 elif [[  ! -f $WORKINGDIR/derivatives/$PIPELINE/$FILENAME && ! -d $SOURCE ]];then
     echo "No tar found ($WORKINGDIR/derivatives/$PIPELINE/$FILENAME) and dir doesn't exist ($SOURCE)"
 fi
 
 if [[ $? -eq 0 ]];then
- rsync $WORKINGDIR/derivatives/$PIPELINE/$FILENAME $TARGET
+ rsync -a --mkpath $WORKINGDIR/derivatives/$PIPELINE/$FILENAME $DATACOMMONS/$PROJECT/datasets/derivatives/$PIPELINE/
+ if [[ $? -eq 0 ]];then
+    rm $WORKINGDIR/derivatives/$PIPELINE/$FILENAME
+ fi
 fi
 #rsync -r $SOURCE $TARGET
 #echo "rsync ran for $SECONDS seconds"
