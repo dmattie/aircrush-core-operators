@@ -59,6 +59,9 @@ def main():
     
     args = parser.parse_args()
 
+    if os.path.isfile(args.out):
+        os.unlink(args.out)
+
     process(datasetdir=args.datasetdir,subject=args.subject,session=args.session,pipeline=args.pipeline,tidy=args.tidy,clean=args.clean,out=args.out)
 
 if __name__ == '__main__':
