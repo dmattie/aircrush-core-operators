@@ -4,7 +4,7 @@
 # rsync -r $1/ $2
 
 #set -e #Exit when a command fails
-#set -x #echo each command before it runs
+set -x #echo each command before it runs
 
 SCRIPT=$( realpath $0 )
 SCRIPTPATH=$( dirname $SCRIPT )
@@ -96,14 +96,27 @@ fi
 SOURCE=$WORKINGDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONPATH
 TARGET=$DATACOMMONS/$PROJECT/datasets/derivatives/$PIPELINE
 
+if [[ -d $WORKINGDIR/derivatives/$PIPELINE ]];then
+    cd $WORKINGDIR/derivatives/$PIPELINE
+else
+    >&2 echo "ERROR: Derivatives directory not found ($WORKINGDIR/derivatives/$PIPELINE)"
+    exit 1
+fi
+
 if [[ -f $WORKINGDIR/derivatives/$PIPELINE/$FILENAME && ! -d $SOURCE ]];then
     echo "Tar exists and dir doesn't.  sending tar  ($WORKINGDIR/derivatives/$PIPELINE/$FILENAME)"
 elif [[ -f $WORKINGDIR/derivatives/$PIPELINE/$FILENAME && -d $SOURCE ]];then
     echo "Tar exists and so does dir.  removing dir and sending tar  ($WORKINGDIR/derivatives/$PIPELINE/$FILENAME)"
 elif [[ ! -f $WORKINGDIR/derivatives/$PIPELINE/$FILENAME && -d $SOURCE ]];then
     echo "Creating tar ($WORKINGDIR/derivatives/$PIPELINE/$FILENAME) and removing dir ($SOURCE)"
+    tar -cf $WORKINGDIR/derivatives/$PIPELINE/$FILENAME $SOURCE
+
 elif [[  ! -f $WORKINGDIR/derivatives/$PIPELINE/$FILENAME && ! -d $SOURCE ]];then
     echo "No tar found ($WORKINGDIR/derivatives/$PIPELINE/$FILENAME) and dir doesn't exist ($SOURCE)"
+fi
+
+if [[ $? -eq 0 ]];then
+ rsync $WORKINGDIR/derivatives/$PIPELINE/$FILENAME $TARGET
 fi
 #rsync -r $SOURCE $TARGET
 #echo "rsync ran for $SECONDS seconds"
