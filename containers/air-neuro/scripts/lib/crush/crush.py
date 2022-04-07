@@ -15,6 +15,7 @@ def process(**kwargs):#segment,counterpart,method):
     session=kwargs['session'] 
     pipeline=kwargs['pipeline']
     maxcores=kwargs['maxcores']
+    overlay=kwargs['overlay']
 
 
     if session==None or session=="":
@@ -23,6 +24,10 @@ def process(**kwargs):#segment,counterpart,method):
         session_path=f"ses-{session}"
     
     target=f"{datasetdir}/derivatives/{pipeline}/sub-{subject}/{session_path}"
+    if overlay:
+        crush_dir="/crush"
+    else:
+        crush_dir=f"{target}/crush"
 
     if not os.path.isdir(datasetdir):
         print(f"datasetdir not found: {datasetdir}")
@@ -51,8 +56,8 @@ def process(**kwargs):#segment,counterpart,method):
                 else:
                     crushtract=f"{target}/crush_dti.trk"
                 for method in ['roi','roi_end']:
-                    if not os.path.isfile(f"{target}/crush/{roi1}/calcs-{roi1}-{roi2}-roi.json"):
-                        t = [roi1,roi2,method,target,pipeline,crushtract]
+                    if not os.path.isfile(f"{crush_dir}/{roi1}/calcs-{roi1}-{roi2}-roi.json"):
+                        t = [roi1,roi2,method,target,pipeline,crushtract,crush_dir]
                         tasks.append(t)
     if maxcores:
         no_of_procs=maxcores
@@ -77,9 +82,10 @@ def getmeasurements(parms):
     target=parms[3]
     pipeline=parms[4]
     tract=parms[5]
+    crush_dir=parms[6] #For a singularity file overlay
 
-    if not os.path.isdir(f"{target}/crush/{roi1}"):
-        os.makedirs(f"{target}/crush/{roi1}",exist_ok=True)
+    if not os.path.isdir(f"{crush_dir}/{roi1}"):
+        os.makedirs(f"{crush_dir}/{roi1}",exist_ok=True)
     scripthome=f"{os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))}"
 
     trackvis=[f"{scripthome}/get_tract_measurements.py",
@@ -87,10 +93,11 @@ def getmeasurements(parms):
     "-roi_end",roi2,
     "-method",method,
     "-tract",tract,
-    "-pipeline",pipeline]
+    "-pipeline",pipeline,
+    "-crush_dir",crush_dir]
     print(".",end='')
 
-    with open(f"{target}/crush/{roi1}/{roi1}-{roi2}-{method}.log", "w") as track_vis_out:
+    with open(f"{crush_dir}/{roi1}/{roi1}-{roi2}-{method}.log", "w") as track_vis_out:
         proc = subprocess.Popen(trackvis, stdout=track_vis_out)
         proc.communicate() 
 
@@ -106,10 +113,11 @@ def main():
     parser.add_argument('-session',action='store', help="Specify Session ID")    
     parser.add_argument('-pipeline',action='store', required=True, help="The name of the pipeline being processed to tag the data as it is stored")    
     parser.add_argument('-maxcores',action='store',help='Specify the maximum number of tasks to run concurrently')
+    parser.add_argument('-overlay',action='store',help='Specify the location of the working directory')
    
     args = parser.parse_args()
 
-    process(datasetdir=args.datasetdir,subject=args.subject,session=args.session,pipeline=args.pipeline,maxcores=args.maxcores)
+    process(datasetdir=args.datasetdir,subject=args.subject,session=args.session,pipeline=args.pipeline,maxcores=args.maxcores,overlay=args.overlay)
 
 if __name__ == '__main__':
     main()

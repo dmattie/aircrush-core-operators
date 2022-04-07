@@ -14,7 +14,7 @@ def process(**kwargs):#segment,counterpart,method):
         method=kwargs['method']
         tractographypath=os.path.dirname(kwargs['tract_file'])
         tract=kwargs['tract_file']
-        pipelineId=kwargs['pipeline']
+        crush_dir=['crush_dir']
         calcs={}
         #track_vis ./DTI35_postReg_Threshold5.trk -roi_end ./wmparc3001.nii.gz -roi_end2 ./wmparc3002.nii.gz -nr
         
@@ -25,26 +25,26 @@ def process(**kwargs):#segment,counterpart,method):
 
         if os.path.isfile(wmparcStart) and os.path.isfile(wmparcEnd):
 
-            trackvis = ["track_vis",tract,f"-{method}",wmparcStart,f"-{method}2",wmparcEnd,"-nr", "-ov",f"{tractographypath}/crush/{segment}/{segment}-{counterpart}-{method}.nii","-disable_log"]
+            trackvis = ["track_vis",tract,f"-{method}",wmparcStart,f"-{method}2",wmparcEnd,"-nr", "-ov",f"{crush_dir}/{segment}/{segment}-{counterpart}-{method}.nii","-disable_log"]
             
-            if not os.path.isdir(f"{tractographypath}/crush/"):
-                os.mkdir(f"{tractographypath}/crush/")
+            if not os.path.isdir(f"{crush_dir}/"):
+                os.mkdir(f"{crush_dir}/")
 
 
 
-            if not os.path.isfile(f"{tractographypath}/crush/{segment}/{segment}-{counterpart}-{method}.nii"):
-                if not os.path.isdir(f"{tractographypath}/crush/{segment}"):
-                    os.mkdir(f"{tractographypath}/crush/{segment}")
+            if not os.path.isfile(f"{crush_dir}/{segment}/{segment}-{counterpart}-{method}.nii"):
+                if not os.path.isdir(f"{crush_dir}/{segment}"):
+                    os.mkdir(f"{crush_dir}/{segment}")
                 try:
 
-                    with open(f"{tractographypath}/crush/{segment}/{segment}-{counterpart}-{method}.nii.txt", "w") as track_vis_out:
+                    with open(f"{crush_dir}/{segment}/{segment}-{counterpart}-{method}.nii.txt", "w") as track_vis_out:
                         proc = subprocess.Popen(trackvis, stdout=track_vis_out)
                         proc.communicate() 
                         
                 except Exception as e:
                     print(f"Trackvis failed::{e}")                            
 
-            with open (f"{tractographypath}/crush/{segment}/{segment}-{counterpart}-{method}.nii.txt", "r") as myfile:                        
+            with open (f"{crush_dir}/{segment}/{segment}-{counterpart}-{method}.nii.txt", "r") as myfile:                        
                 data=myfile.read()                                   
 
             
@@ -103,23 +103,23 @@ def process(**kwargs):#segment,counterpart,method):
 
             
             #FA Mean
-            meanFA=nonZeroMean(f"{tractographypath}/dti_recon_out_fa.nii" ,f"{tractographypath}/crush/{segment}/{segment}-{counterpart}-{method}.nii")                             
+            meanFA=nonZeroMean(f"{tractographypath}/dti_recon_out_fa.nii" ,f"{crush_dir}/{segment}/{segment}-{counterpart}-{method}.nii")                             
             calcs[f"{pipelineId}/{segment}-{counterpart}-{method}-meanFA"]=meanFA
             
             #FA Std Dev
-            stddevFA=nonZeroStdDev(f"{tractographypath}/dti_recon_out_fa.nii",f"{tractographypath}/crush/{segment}/{segment}-{counterpart}-{method}.nii" )         
+            stddevFA=nonZeroStdDev(f"{tractographypath}/dti_recon_out_fa.nii",f"{crush_dir}/{segment}/{segment}-{counterpart}-{method}.nii" )         
             calcs[f"{pipelineId}/{segment}-{counterpart}-{method}-stddevFA"]=stddevFA            
             
             #ADC Mean
-            meanADC=nonZeroMean(f"{tractographypath}/dti_recon_out_adc.nii",f"{tractographypath}/crush/{segment}/{segment}-{counterpart}-{method}.nii" )         
+            meanADC=nonZeroMean(f"{tractographypath}/dti_recon_out_adc.nii",f"{crush_dir}/{segment}/{segment}-{counterpart}-{method}.nii" )         
             calcs[f"{pipelineId}/{segment}-{counterpart}-{method}-meanADC"]=meanADC
             
             #ADC Std Dev
-            stddevADC=nonZeroStdDev(f"{tractographypath}/dti_recon_out_adc.nii",f"{tractographypath}/crush/{segment}/{segment}-{counterpart}-{method}.nii" )       
+            stddevADC=nonZeroStdDev(f"{tractographypath}/dti_recon_out_adc.nii",f"{crush_dir}/{segment}/{segment}-{counterpart}-{method}.nii" )       
             calcs[f"{pipelineId}/{segment}-{counterpart}-{method}-stddevADC"]=stddevADC
             
             #Volume                
-            volume=volume_in_voxels(f"{tractographypath}/dti_recon_out_adc.nii",f"{tractographypath}/crush/{segment}/{segment}-{counterpart}-{method}.nii" )                                                      
+            volume=volume_in_voxels(f"{tractographypath}/dti_recon_out_adc.nii",f"{crush_dir}/{segment}/{segment}-{counterpart}-{method}.nii" )                                                      
             calcs[f"{pipelineId}/{segment}-{counterpart}-{method}-voxelvolume"]=volume
             
             
@@ -134,10 +134,10 @@ def process(**kwargs):#segment,counterpart,method):
 
         try:
 
-            if not os.path.isdir(f"{tractographypath}/crush/{segment}" ):
-                os.mkdir(f"{tractographypath}/crush/{segment}" )
+            if not os.path.isdir(f"{crush_dir}/{segment}" ):
+                os.mkdir(f"{crush_dir}/{segment}" )
 
-            calcsJson = f"{tractographypath}/crush/{segment}/calcs-{segment}-{counterpart}-{method}.json" 
+            calcsJson = f"{crush_dir}/{segment}/calcs-{segment}-{counterpart}-{method}.json" 
             
             with open(calcsJson, "w") as calcs_file:
                 json.dump(calcs,calcs_file)
@@ -145,8 +145,8 @@ def process(**kwargs):#segment,counterpart,method):
         except Exception as e:
             raise Exception(f"dump failed::{e}")  
 
-        nii = f"{tractographypath}/crush/{segment}/{segment}-{counterpart}-{method}.nii" 
-        datafile = f"{tractographypath}/crush/{segment}/{segment}-{counterpart}-{method}.nii.txt" 
+        nii = f"{crush_dir}/{segment}/{segment}-{counterpart}-{method}.nii" 
+        datafile = f"{crush_dir}/{segment}/{segment}-{counterpart}-{method}.nii.txt" 
                 
         if os.path.isfile(nii):
             os.unlink(nii) 
@@ -238,10 +238,11 @@ def main():
     parser.add_argument('-roi_end',action='store', help="ROI file (.nii) at the end of the tract")
     parser.add_argument('-method',action='store', help="{roi|roi_end} Look at any tracts that touch the specified ROIs (roi) or just those tracts that terminate in the ROI (roi_end)")
     parser.add_argument('-tract',action='store', help="Path to the tract file")
-    parser.add_argument('-pipeline',action='store', help="The name of the pipeline being processed to tag the data as it is stored")    
+    parser.add_argument('-pipeline',action='store', help="The name of the pipeline being processed to tag the data as it is stored")  
+    parser.add_argument('-crush_dir',action='store', help="The working directory to use for creating crush temporary files, typically for use with Apptainer overlays")          
     args = parser.parse_args()
 
-    process(roi_start=args.roi_start,roi_end=args.roi_end,method=args.method,tract_file=args.tract,pipeline=args.pipeline)
+    process(roi_start=args.roi_start,roi_end=args.roi_end,method=args.method,tract_file=args.tract,pipeline=args.pipeline,crush_dir=args.crush_dir)
 
 if __name__ == '__main__':
     main()

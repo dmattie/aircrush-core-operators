@@ -252,17 +252,32 @@ if [[ -f $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/parcellatio
    tar -xf wmparc-parcellated.tar
 fi
 
+if [[ -z "${APPTAINER_NAME}" ]]; then
+  mkdir -p /crush
+  if [[ $? -eq 0 ]];then
+    OVERLAY_PATH="/crush" 
+    echo "You appear to have an overlay file. Crush will work in $OVERLAY_PATH"
+  else    
+    OVERLAY_PATH=""
+    echo "No overlay file detected.  It is strongly encouraged to use an overlay file to improve performance and avoid disk quotas.  See APPTAINER overlays."
+  fi  
+else
+  OVERLAY_PATH=""
+fi
+
 if [[ $MAXCORES == "" ]];then
     python3 ${SCRIPTPATH}/lib/crush/crush.py -datasetdir $DATASETDIR \
     -subject $SUBJECT \
     -session "$SESSION" \
-    -pipeline $PIPELINE
+    -pipeline $PIPELINE \
+    -overlay "$OVERLAY_PATH"
 else
     python3 ${SCRIPTPATH}/lib/crush/crush.py -datasetdir $DATASETDIR \
     -subject $SUBJECT \
     -session "$SESSION" \
     -pipeline $PIPELINE \
-    -maxcores $MAXCORES
+    -maxcores $MAXCORES \
+    -overlay "$OVERLAY_PATH"
 fi
 
 if [[ -f $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/parcellations/wmparc-parcellated.tar ]];then

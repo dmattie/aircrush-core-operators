@@ -22,7 +22,8 @@ function f_flirt()
         echo "flirt:unable to find reference brainmask.nii[$FREESURFER/mri/brainmask.nii]."     
         return 1   
     fi
-    /usr/bin/time -v flirt -in $TARGET/reg2brain.data.nii.gz -ref $FREESURFER/mri/brainmask.nii -omat $TARGET/RegTransform4D
+    #/usr/bin/time -v flirt -in $TARGET/reg2brain.data.nii.gz -ref $FREESURFER/mri/brainmask.nii -omat $TARGET/RegTransform4D
+    flirt -in $TARGET/reg2brain.data.nii.gz -ref $FREESURFER/mri/brainmask.nii -omat $TARGET/RegTransform4D
     ret=$?
     if [[ $ret -ne 0 ]];then
         >&2 echo "ERROR: flirt failed with error. see above."

@@ -30,6 +30,7 @@ From: ubuntu:20.04
     apt-get install -y tar
     apt-get install -y dialog
     apt-get install -y parallel
+    apt-get install -y time
     
     DEBIAN_FRONTEND=noninteractive apt-get install -y appmenu-gtk2-module
 
