@@ -3,7 +3,7 @@
 
 #set -e #Exit when a command fails
 set +x #echo each command before it runs
-
+echo "Crushing..."
 SCRIPT=$( realpath $0 )
 SCRIPTPATH=$( dirname $SCRIPT )
 source "${SCRIPTPATH}/lib/helper.sh"
@@ -96,7 +96,7 @@ while true; do
     * ) break ;;
   esac
 done
-
+echo "Checking subspace..."
 if [[ $VERBOSE == "Y" ]];then
     set -x
 fi
@@ -139,7 +139,7 @@ if [[ ! -d $SOURCE ]];then
     exit 1
 fi
 
-
+echo "Cleaning house..."
 if [[ $OVERWRITE -eq 1 ]];then
     rm $TARGET/hardi_mat*.dat 2> /dev/null #Clear hardi_mat output    
     rm $TARGET/recon_out* 2> /dev/null # clear dti_recon output    
@@ -179,13 +179,13 @@ else
     fi
 
 fi
-
+echo "Gradients..."
 
 res=$?
 if [[ $res -ne 0 ]];then
     >&2 echo "ERROR: Unable to establish a gradient matrix.  Unable to continue."
 fi
-
+echo "Hardi..."
 ###########################
 # HARDI_MAT               #
 ###########################
@@ -220,7 +220,7 @@ fi
 ###########################
 # RECON                   #
 ###########################
-
+echo "Recon..."
 diffusion_result=$( f_diffusion_recon $INVERT_X $INVERT_Y $INVERT_Z $SWAP_SXY $SWAP_SYZ $SWAP_SZX )
 res=$?
 
@@ -236,7 +236,7 @@ fi
 ###############################
 # flirt / affine registration #
 ###############################
-
+echo "flirt..."
 flirt_result=$( f_flirt )
 res=$?
 
@@ -254,7 +254,7 @@ if [[ -f $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/parcellatio
    cd $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/parcellations
    tar -xf wmparc-parcellated.tar
 fi
-
+echo "Checking overlay..."
 if [[ -z "${APPTAINER_NAME}" ]]; then
   mkdir -p /crush
   if [[ $? -eq 0 ]];then
@@ -267,6 +267,7 @@ if [[ -z "${APPTAINER_NAME}" ]]; then
 else
   OVERLAY_PATH=""
 fi
+echo "Crushing..."
 
 if [[ $MAXCORES == "" ]];then
     python3 ${SCRIPTPATH}/lib/crush/crush.py -datasetdir $DATASETDIR \
@@ -288,7 +289,7 @@ if [[ -f $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/parcellatio
    rm *.nii
 fi
 
-
+echo "Consolidating..."
 python3 ${SCRIPTPATH}/lib/crush/consolidate-measurements.py \
 -datasetdir $DATASETDIR \
 -subject $SUBJECT \
