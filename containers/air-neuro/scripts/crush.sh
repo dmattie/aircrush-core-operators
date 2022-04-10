@@ -28,6 +28,7 @@ Help()
    echo "--gradientmatrix GRADIENTMATRIX        If a gradient matrix file has been provided, specifiy its location here"
    echo "--maxcores MAX                         Specify a hard limit on the number of cores used"
    echo "--overwrite                            Overwrite any existing derivative files with a conflicting name"
+   echo "--overlay                              Path to optional singularity overlay file"
    echo "--invert_x                             [dti|odf]_tracker switch to invert x vector"
    echo "--invert_y                             [dti|odf]_tracker switch to invert y vector"
    echo "--invert_z                             [dti|odf]_tracker switch to invert x,y, or z component(s) of vector"
@@ -45,7 +46,7 @@ Help()
 ############################################################
 # Get the options
 
-TEMP=`getopt -o h: --long help,datasetdir:,subject:,session:,pipeline:,maxcores:,gradientmatrix:,bmax:,b0:,overwrite,invert_x,invert_y,invert_z,swap_sxy,swap_syz,swap_szx,verbose\
+TEMP=`getopt -o h: --long help,datasetdir:,subject:,session:,pipeline:,maxcores:,gradientmatrix:,bmax:,b0:,overwrite,invert_x,invert_y,invert_z,swap_sxy,swap_syz,swap_szx,verbose,overlay:\
              -n 'crush' -- "$@"`
 
 if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
@@ -69,6 +70,7 @@ SWAP_SXY=""
 SWAP_SYZ=""
 SWAP_SZX=""
 VERBOSE="N"
+OVERLAY=""
 
 while true; do
   case "$1" in
@@ -82,6 +84,7 @@ while true; do
     --BNOT ) BNOT="$2";shift 2;;   
     --maxcores ) MAXCORES="$2";shift 2;;
     --overwrite ) OVERWRITE=1;shift;; 
+    --overlay ) OVERLAY="$2";shift 2;;    
     --invert_x ) INVERT_X=" -ix";shift;;     
     --invert_y ) INVERT_Y=" -iy";shift;;     
     --invert_z ) INVERT_Z=" -iz";shift;;             

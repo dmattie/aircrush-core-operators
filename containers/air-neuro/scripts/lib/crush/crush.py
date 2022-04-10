@@ -15,8 +15,6 @@ def process(**kwargs):#segment,counterpart,method):
     session=kwargs['session'] 
     pipeline=kwargs['pipeline']
     maxcores=kwargs['maxcores']
-    overlay=kwargs['overlay']
-
 
     if session==None or session=="":
         session_path=""
@@ -24,8 +22,14 @@ def process(**kwargs):#segment,counterpart,method):
         session_path=f"ses-{session}"
     
     target=f"{datasetdir}/derivatives/{pipeline}/sub-{subject}/{session_path}"
-    if overlay:
-        crush_dir="/crush"
+
+    if "overlay" in kwargs:
+        overlay=kwargs['overlay']
+        if overlay and overlay!="":
+            crush_dir=overlay
+            print("Apptainer overlay detected, files will be stored there instead.")
+        else:
+            crush_dir=f"{target}/crush"
     else:
         crush_dir=f"{target}/crush"
 
