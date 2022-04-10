@@ -2,7 +2,7 @@
 
 
 #set -e #Exit when a command fails
-#set -x #echo each command before it runs
+set -x #echo each command before it runs
 
 SCRIPT=$( realpath $0 )
 SCRIPTPATH=$( dirname $SCRIPT )
