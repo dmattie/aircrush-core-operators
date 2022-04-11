@@ -166,7 +166,7 @@ else
     if [[ -f $TARGET/gradientmatrix_dti.txt ]];then
         echo "Existing gradientmatrix for dti imaging model detected.  Skipping (re-)creation."    
     else 
-        echo "Calculating reconstruction matrix from gradient table"
+        echo "Calculating reconstruction matrix from gradient table::dti"
         f_creategradientmatrix $TARGET/gradientmatrix_dti.txt dti
     fi
 
@@ -174,7 +174,7 @@ else
     if [[ -f $TARGET/gradientmatrix_qball.txt ]];then
         echo "Existing gradientmatrix for qball imaging model detected.  Skipping (re-)creation."    
     else 
-        echo "Calculating reconstruction matrix from gradient table"
+        echo "Calculating reconstruction matrix from gradient table::qball"
         f_creategradientmatrix $TARGET/gradientmatrix_qball.txt qball
     fi
 
