@@ -26,13 +26,19 @@ transposed_csv = df_csv.T
 if args.imaging_model=='qball':
     #According to Ruopeng Wang, the gradient table should have b0 rows removed when performing hardi/q-ball reconstruction
     print("Removing b0 rows from gradient table.")
+    
     transposed_csv[
         (transposed_csv.iloc[:,0]!=0) |  # Col 0 > 0
         (transposed_csv.iloc[:,1]!=0) | # Col 1 > 0
         (transposed_csv.iloc[:,2]!=0)    # Col 2 > 0
     ].to_csv(args.out,header=False,index=False)
+
 else:
     print(args.imaging_model)
     transposed_csv.to_csv(args.out,header=False,index=False)
+
+f = open(f"{args.out}.directions", "a")
+f.write(transposed_csv.shape[0])
+f.close()
 
         

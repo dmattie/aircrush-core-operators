@@ -110,7 +110,8 @@ function f_odf_recon()
     return 1
   fi
 
-  measurementpoints=`cat $TARGET/gradientmatrix_qball.txt|wc -l`
+  #measurementpoints=`cat $TARGET/gradientmatrix_qball.txt|wc -l`
+  measurementpoints=`cat $TARGET/gradientmatrix_qball.txt.directions`
 
   #NUMBER_OF_DIRECTIONS=$((nframes+0))
   NUMBER_OF_DIRECTIONS=$((measurementpoints+0))
