@@ -34,6 +34,7 @@ From: ubuntu:18.04
     pip3 install asyncssh
     pip3 install requests-toolbelt
     pip3 install iniconfig
+    pip3 install humanfriendly
 
     git clone https://github.com/dmattie/aircrush-core-operators.git /opt/aircrush
     
