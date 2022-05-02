@@ -33,7 +33,11 @@ From: ubuntu:20.04
     pip3 --version
     pip3 install requests
     pip3 install setuptools
-    pip3 install asyncssh
+    #Asyncssh using dev version for now until resolution
+    pip3 install git+https://github.com/ronf/asyncssh@develop
+    # pip3 install asyncssh
+    # https://github.com/ronf/asyncssh/issues/473
+
     pip3 install requests-toolbelt
     pip3 install iniconfig
     pip3 install humanfriendly
