@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+from pickle import FALSE
 from aircrushcore.cms import compute_node, compute_node_collection, session_collection, task_instance_collection
 from aircrushcore.controller.configuration import AircrushConfig
 from aircrushcore.dag import Workload
@@ -16,6 +17,7 @@ import ast
 import subprocess
 import argparse
 import socket
+from humanfriendly import format_size, parse_size
 
 aircrush=None
 crush_host=None
@@ -230,7 +232,37 @@ def push_data(stage,project,subject,session,**kwargs):
             ret,out = getstatusoutput(rsync_cmd)
             if ret!=0:
                 raise Exception(f"Failed to copy session directory: {out}")
-            
+def test_prereqs(cmdArray,parms,**kwargs):
+
+    project=kwargs['project'] if 'project' in kwargs else ""       
+    subject=kwargs['subject'] if 'subject' in kwargs else ""
+    session=kwargs['session'] if 'session' in kwargs else ""
+    workingdir=kwargs['workingdir'] if 'workingdir' in kwargs else ""
+    datacommons=kwargs['datacommons'] if 'datacommons' in kwargs else ""
+    pipeline=kwargs['pipeline'] if 'pipeline' in kwargs else ""
+    
+    if "prereq-diskspace" in parms:
+        prereq_diskspace=parms["prereq-diskspace"]
+        if aircrush.config.has_option('COMPUTE','available_disk'):
+            diskspace_cmd=aircrush.config['COMPUTE']['available_disk']
+            shell_cmd=[diskspace_cmd]                  
+            ret,out = getstatusoutput(shell_cmd)
+            if ret!=0:
+                raise Exception(f"Failed to assess available diskspace. Attempted:{diskspace_cmd}, Result: {out}")
+                return FALSE
+            else:
+                requirement=parse_size(prereq_diskspace)
+                found=parse_size(out)
+                if found<requirement:
+                    print(f"[WARNING]: Prerequisite not met: Insufficient disk space to run this operation, {diskspace_cmd} required")
+
+        else:
+            print(f"[WARNING]: A diskspace prerequisite of {prereq_diskspace} has been specified but the compute node has not been configured to assess available diskspace.  Create an entry in ~/.crush.ini in the COMPUTE section called available_disk with a one line bash command to derive available disk space")
+    return FALSE
+
+
+        
+ 
 def parameter_expansion(cmdArray,parms_to_add,**kwargs):
     project=None
     subject=None
@@ -538,131 +570,152 @@ def doSomething():
     w=Workload(aircrush) #The list of things to do
     
     todo = w.get_next_task(node_uuid=nuid) #Do whatever the big brain tells us to do next
-    if(todo):  #Todo is a TaskInstance        
-        print("----------Got one-------------")  
-        task_col =  TaskCollection(cms_host=crush_host)
-        task = task_col.get_one(uuid=todo.field_task)    
-        #execute(operator=task.field_operator,params=task.field_parameters)
-            #Invocation INFO
-        messages=[]
-        now = datetime.datetime.now()
-            
-        try:
-            #updateStatus(todo,"running","","")
-            messages.append(f"Invoking operator: {task.field_operator} =====================")        
-            messages.append(f"Current date and time: {str(now)}")        
+    if(todo):  #Todo is a TaskInstance    
 
-            session_col = SessionCollection(cms_host=crush_host)
-            session = session_col.get_one(todo.field_associated_participant_ses)
-            pipeline = task.pipeline()
+        workingdir=aircrush.config['COMPUTE']['working_directory']   
+        datacommons=aircrush.config['COMMONS']['commons_path']     
 
-            subject=None
-            project=None
-
-            if not session == None:
-                subject = session.subject()
-                if not subject == None:
-                    project = subject.project()
-                    
-            if project == None:
-                print(f"ERROR: Assigned session {session.title} is orphaned or the project is unpublished")
-                return
+        while (todo): 
+            print("----------Got one-------------")  
+            task_col =  TaskCollection(cms_host=crush_host)
+            task = task_col.get_one(uuid=todo.field_task)    
+            #execute(operator=task.field_operator,params=task.field_parameters)
+                #Invocation INFO
+            messages=[]
+            now = datetime.datetime.now()
                 
-            container = pullContainer(task.field_singularity_container)
-            workingdir=aircrush.config['COMPUTE']['working_directory']   
-            datacommons=aircrush.config['COMMONS']['commons_path']    
-
-            bindings=""
-            if args.bind:
-                mounts=args.bind.split() 
-                for mount in mounts:            
-                    bindings=bindings+f"-B {mount} "
-                    
-            cmdArray=["singularity","run","--app",task.field_operator,bindings,container]              
             try:
-                parms = ast.literal_eval(task.field_parameters) 
-            except:
-                msg=f"Parameters for task {task.field_operator} are malformed. Expected valid JSON string:{task.field_parameters}"
-                print(msg)
-                
-                sys.exit(1)            
-            # pullSession(project,subject,session)
+                #updateStatus(todo,"running","","")
+                messages.append(f"Invoking operator: {task.field_operator} =====================")        
+                messages.append(f"Current date and time: {str(now)}")        
 
-            # pulldata
-            print(f"Pulling any necessary data for operation") 
+                session_col = SessionCollection(cms_host=crush_host)
+                session = session_col.get_one(todo.field_associated_participant_ses)
+                pipeline = task.pipeline()
 
-            #pull_data("source",project,subject,session)
-            pull_data("rawdata",project,subject,session)
-            #pull_data("derivatives",project,subject,session)
-            #            
-            # for k in parms:
-            #     if parms[k]=="source":
-            #         pull_data("source",project,subject,session)
-            #     if parms[k]=="rawdata":
-            #         pull_data("rawdata",project,subject,session)
-            #     if parms[k=="#erivatives":
-            #         pull_data("derivatives",project,subject,session)
-            print("Performing Parameter Keyword Expansion")
-            cmdArray = parameter_expansion(cmdArray,parms,
-                datacommons=datacommons,
-                workingdir=workingdir,
-                project=project,
-                subject=subject,
-                session=session,
-                pipeline=pipeline)                        
-            #messages.append(f"cmdArray:{cmdArray}")            
-            print("Creating SLURM job")
-            jobfiles = createJob(cmdArray,parms,
-                datacommons=datacommons,
-                workingdir=workingdir,
-                project=project,
-                subject=subject,
-                session=session,
-                taskinstance_uid=todo.uuid)    
-  
-            sbatch_cmd=["sbatch",jobfiles['jobfile']]
-            print(sbatch_cmd)
-            ret = subprocess.run(sbatch_cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE, universal_newlines=True,shell=True)            
+                subject=None
+                project=None
+
+                if not session == None:
+                    subject = session.subject()
+                    if not subject == None:
+                        project = subject.project()
+                        
+                if project == None:
+                    print(f"ERROR: Assigned session {session.title} is orphaned or the project is unpublished")
+                    return
+                    
+                container = pullContainer(task.field_singularity_container)
+               
+
+                bindings=""
+                if args.bind:
+                    mounts=args.bind.split() 
+                    for mount in mounts:            
+                        bindings=bindings+f"-B {mount} "
+                        
+                cmdArray=["singularity","run","--app",task.field_operator,bindings,container]              
+                try:
+                    parms = ast.literal_eval(task.field_parameters) 
+                except:
+                    msg=f"Parameters for task {task.field_operator} are malformed. Expected valid JSON string:{task.field_parameters}"
+                    print(msg)
+                    
+                    sys.exit(1)    
+
+                ###### Let's check for any prerequisites before we start
+                ###### E.g. if there is a large disk requirement and that has been set as a hint, check if disk is available first
+                messages.append(f"Checking prerequisites: {task.field_operator} =====================")    
+                if not test_prereqs(parms,
+                    datacommons=datacommons,
+                    workingdir=workingdir,
+                    project=project,
+                    subject=subject,
+                    session=session,
+                    pipeline=pipeline):
+                        continue          
+                # pullSession(project,subject,session)
+
+                # pulldata
+                print(f"Pulling any necessary data for operation") 
+
+                #pull_data("source",project,subject,session)
+                pull_data("rawdata",project,subject,session)
+                pull_data("derivatives",project,subject,session)
+                #            
+                # for k in parms:
+                #     if parms[k]=="source":
+                #         pull_data("source",project,subject,session)
+                #     if parms[k]=="rawdata":
+                #         pull_data("rawdata",project,subject,session)
+                #     if parms[k=="#erivatives":
+                #         pull_data("derivatives",project,subject,session)
+                print("Performing Parameter Keyword Expansion")
+                cmdArray = parameter_expansion(cmdArray,parms,
+                    datacommons=datacommons,
+                    workingdir=workingdir,
+                    project=project,
+                    subject=subject,
+                    session=session,
+                    pipeline=pipeline)  
+
+                                 
+                #messages.append(f"cmdArray:{cmdArray}")            
+                print("Creating SLURM job")
+                jobfiles = createJob(cmdArray,parms,
+                    datacommons=datacommons,
+                    workingdir=workingdir,
+                    project=project,
+                    subject=subject,
+                    session=session,
+                    taskinstance_uid=todo.uuid)    
+    
+                sbatch_cmd=["sbatch",jobfiles['jobfile']]
+                print(sbatch_cmd)
+                ret = subprocess.run(sbatch_cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE, universal_newlines=True,shell=True)            
 
 
-            if ret.returncode==0:
-                jobid=get_slurm_id(ret.stdout)
-                print(f"SLURM assingned job id:{jobid}")
-                if jobid!=0:
-                    todo.field_jobid=jobid
-                    todo.field_seff=""
-                    todo.field_errorfile=jobfiles['stderr']
-                    todo.field_logfile=jobfiles['stdout']
+                if ret.returncode==0:
+                    jobid=get_slurm_id(ret.stdout)
+                    print(f"SLURM assingned job id:{jobid}")
+                    if jobid!=0:
+                        todo.field_jobid=jobid
+                        todo.field_seff=""
+                        todo.field_errorfile=jobfiles['stderr']
+                        todo.field_logfile=jobfiles['stdout']
 
-                    if os.path.isfile(jobfiles['jobfile']):
-                        sbatch_contents_handle = open(jobfiles['jobfile'],'r')
-                        sbatch_contents = sbatch_contents_handle.read()
-                        messages.append(sbatch_contents)
+                        if os.path.isfile(jobfiles['jobfile']):
+                            sbatch_contents_handle = open(jobfiles['jobfile'],'r')
+                            sbatch_contents = sbatch_contents_handle.read()
+                            messages.append(sbatch_contents)
 
-                    updateStatus(todo,"running",'<br/>\n'.join(messages),ret.stderr)
+                        updateStatus(todo,"running",'<br/>\n'.join(messages),ret.stderr)
+                    else:
+                        messages.append(f"\nERROR: SLURM ID returned was unexpectedly 0.")  
+                        updateStatus(todo,"failed",'<br/>\n'.join(messages),ret.stderr)
                 else:
-                    messages.append(f"\nERROR: SLURM ID returned was unexpectedly 0.")  
                     updateStatus(todo,"failed",'<br/>\n'.join(messages),ret.stderr)
-            else:
-                updateStatus(todo,"failed",'<br/>\n'.join(messages),ret.stderr)
-        except Exception as e:
-            print(e)
-            print("An error has accurred.  Unable to proceed.  See previous messages.")
-            if hasattr(e, 'message'):
-                new_errors=e.message
-            else:
-                new_errors=str(e)
-            messages.append(f"Current date and time: {str(now)}")  
-            updateStatus(todo,"failed",'<br/>\n'.join(messages),new_errors)
-        
+            except Exception as e:
+                print(e)
+                print("An error has accurred.  Unable to proceed.  See previous messages.")
+                if hasattr(e, 'message'):
+                    new_errors=e.message
+                else:
+                    new_errors=str(e)
+                messages.append(f"Current date and time: {str(now)}")  
+                updateStatus(todo,"failed",'<br/>\n'.join(messages),new_errors)
+            
+            #Get the next thing to do
+            todo = w.get_next_task(node_uuid=nuid) #Do whatever the big brain tells us to do next
+            
 
 
-       # op = invoke_operator(id=todo.uuid,cms_host=crush_host)
+        # op = invoke_operator(id=todo.uuid,cms_host=crush_host)
 
 
-        #op_class = getOperatorClassDefinition(todo.field_task) #use the task UUID to determine which operator to use    
-        #op = op_class(id=todo.uuid,cms_host=crush_host) #instantiate it based on task instance    
-       # op.execute(aircrush)  #Let's do this!
+            #op_class = getOperatorClassDefinition(todo.field_task) #use the task UUID to determine which operator to use    
+            #op = op_class(id=todo.uuid,cms_host=crush_host) #instantiate it based on task instance    
+        # op.execute(aircrush)  #Let's do this!
     else:
         print("Nothing to do.")
 

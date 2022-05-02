@@ -96,11 +96,14 @@ if [[ ! -f $SOURCE/mri/wmparc.nii ]];then
 fi
 
 cd $TARGET/parcellations
+rm --force wmparc*.nii
+if [[ -f wmparc-parcellated.tar ]];then
+    rm wmparc-parcellated.tar
+fi
 #Iterate segment map, get a list of ROIs and split wmparc into individual components, one per ROI
 cat "${SCRIPTPATH}/../assets/segmentMap.csv"|grep -v "#"|cut -d, -f1 | while read -r line; do
-    mri_extract_label $SOURCE/mri/wmparc.nii $line wmparc$line.nii
+    mri_extract_label $SOURCE/mri/wmparc.nii $line wmparc$line.nii;tar -rf wmparc-parcellated.tar wmparc$line.nii --remove-files
 done
-
 
 parcels=$(cat "${SCRIPTPATH}/../assets/segmentMap.csv"|grep -v "#"|cut -d, -f1|wc -l)
 echo "$parcels rois expected to be produced"
