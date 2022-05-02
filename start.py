@@ -605,8 +605,12 @@ def doSomething():
                 if project == None:
                     print(f"ERROR: Assigned session {session.title} is orphaned or the project is unpublished")
                     return
-                    
-                container = pullContainer(task.field_singularity_container)
+                try:    
+                    container = pullContainer(task.field_singularity_container)
+                except Exception as e:
+                    print(e)
+                    return
+
                
 
                 bindings=""
