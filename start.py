@@ -249,13 +249,15 @@ def test_prereqs(parms,**kwargs):
             shell_cmd=[diskspace_cmd]                  
             ret,out = getstatusoutput(shell_cmd)
             if ret!=0:
-                raise Exception(f"Failed to assess available diskspace. Attempted:{diskspace_cmd}, Result: {out}")
+                print(f"Failed to assess available diskspace. Attempted:{diskspace_cmd}, Result: {out}")
+                #raise Exception(f"Failed to assess available diskspace. Attempted:{diskspace_cmd}, Result: {out}")
                 return FALSE
             else:
                 requirement=parse_size(prereq_diskspace)
                 found=parse_size(out)
                 if found<requirement:
                     print(f"[WARNING]: Prerequisite not met: Insufficient disk space to run this operation, {diskspace_cmd} required")
+                    return FALSE
 
         else:
             print(f"[WARNING]: A diskspace prerequisite of {prereq_diskspace} has been specified but the compute node has not been configured to assess available diskspace.  Create an entry in ~/.crush.ini in the COMPUTE section called available_disk with a one line bash command to derive available disk space")
@@ -630,14 +632,20 @@ def doSomething():
 
                 ###### Let's check for any prerequisites before we start
                 ###### E.g. if there is a large disk requirement and that has been set as a hint, check if disk is available first
-                messages.append(f"Checking prerequisites: {task.field_operator} =====================")    
-                if not test_prereqs(parms,
-                    datacommons=datacommons,
-                    workingdir=workingdir,
-                    project=project,
-                    subject=subject,
-                    session=session,
-                    pipeline=pipeline):
+                messages.append(f"Checking prerequisites: {task.field_operator} =====================")   
+                try:
+                    prereq_res = test_prereqs(parms,
+                        datacommons=datacommons,
+                        workingdir=workingdir,
+                        project=project,
+                        subject=subject,
+                        session=session,
+                        pipeline=pipeline)
+                except Exception as e:
+                    print(e)
+                    return
+
+                if not prereq_res:
                         continue          
                 # pullSession(project,subject,session)
 
