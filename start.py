@@ -233,7 +233,7 @@ def push_data(stage,project,subject,session,**kwargs):
             ret,out = getstatusoutput(rsync_cmd)
             if ret!=0:
                 raise Exception(f"Failed to copy session directory: {out}")
-def test_prereqs(cmdArray,parms,**kwargs):
+def test_prereqs(parms,**kwargs):
 
     project=kwargs['project'] if 'project' in kwargs else ""       
     subject=kwargs['subject'] if 'subject' in kwargs else ""
