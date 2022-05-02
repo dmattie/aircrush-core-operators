@@ -12,18 +12,20 @@ From: ubuntu:20.04
 
 %post
     
-    apt-get update && apt-get install -y netcat
+    apt-get update && apt-get install -y netcat    
+
     NOW=`date`
     echo "export NOW=\"${NOW}\"" >> $SINGULARITY_ENVIRONMENT
 
     apt-get install -y software-properties-common
+    add-apt-repository ppa:deadsnakes/ppa
     add-apt-repository universe
 
     apt-get install -y wget
     apt-get install -y unzip
     apt-get install -y rsync
     apt-get install -y tar     
-    apt-get install -y python3
+    apt-get install -y python3.9
     apt-get install -y python3-pip 
     pip3 install --upgrade pip
     apt-get install -y git
