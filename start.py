@@ -182,6 +182,7 @@ def getstatusoutput(command):
     return (process.returncode, out)
 
 def push_data(stage,project,subject,session,**kwargs):
+    print(f"\tPushing up {project.title}/{subject.title}/{session.title} ")
     if stage=="source":
         print("ERROR: Source data is read-only.  It cannot be pushed back to the data commons")
         return
@@ -746,6 +747,7 @@ def cascade_status_to_subject(node_uuid):
     node_col=ComputeNodeCollection(cms_host=crush_host);
     node=node_col.get_one(uuid=node_uuid)
     attached_sessions=node.allocated_sessions()
+    print(f"({len(attached_sessions)}) sessions allocated to this compute node.")
     subjects_of_attached_sessions={}
     for session_uuid in attached_sessions:
 
@@ -785,6 +787,7 @@ def cascade_status_to_subject(node_uuid):
 
         subjects_of_attached_sessions[subject.uuid]=subject
         project=subject.project()
+        print(f"Synchronizing {project.title}:{subject.title}/{session.title}")
 
         if subject == None or project == None:
             print(f"Session {session.title} is orphaned, please conduct a health check.\n\tSubject:{subject}\n\tProject:{project}  Skipping")
