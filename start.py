@@ -922,7 +922,7 @@ def purge():
 def main():
 
     global aircrush,crush_host,args
-    
+    print("Welcome to Aircrush!")
     parser = argparse.ArgumentParser(
         description="CRUSH client command line utility. Start all tasks with this command")
     parser.add_argument('-sync',action='store_true',
@@ -940,11 +940,12 @@ def main():
         help="Update the status of running jobs, do not invoke more work")
     args = parser.parse_args()
 
-    
+    print("Validating configuration")
     aircrush=ini_settings()
     if not validate_config():
         print ("Configuration incomplete")
         exit(1)
+
 
     try:
         crush_host=Host(
