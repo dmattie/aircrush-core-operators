@@ -74,7 +74,7 @@ def getMyComputeNodeUUID():
 
     n = ComputeNode(metadata=metadata)
     nuid=n.upsert()
-    
+    print(f"ComputeNode:{n.title}\n\tHost:{n.field_host}\n\tAircrush:{aircrush}")
     return nuid,n.isReady()
 
 
@@ -570,7 +570,7 @@ def validate_config():
     return passed
 
 def doSomething():
-    
+    print("Looking for something to do...")
     #nuid = "4d065840-dd33-44dc-be97-623e7d743bce" #dmattie on narval
     nuid,isready = getMyComputeNodeUUID()
 
@@ -578,7 +578,7 @@ def doSomething():
         print("This worker node is not ready to do more.")
         return
     print(f"isready:{isready}")
-    return
+    
    # check_running_jobs(nuid)
     cascade_status_to_subject(nuid)
 
@@ -886,7 +886,9 @@ def derive_parent_status(failed,running,completed,notstarted):
     return "notstarted"
 
 def doSync():
+    
     dc=DataCommons(aircrush)
+    print(f"Syncing with Data Commons {dc.commons_path}")
     dc.initialize()
     dc.SyncWithCMS()
 
