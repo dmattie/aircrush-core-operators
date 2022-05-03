@@ -43,6 +43,7 @@ def getMyComputeNodeUUID():
 
     cluster=aircrush.config['COMPUTE']['cluster']
     account=aircrush.config['COMPUTE']['account']
+    
     working_dir=aircrush.config['COMPUTE']['working_directory'] #os.environ.get("SCRATCH")
     username=getpass.getuser()
 
@@ -760,7 +761,12 @@ def cascade_status_to_subject(node_uuid):
     node_col=ComputeNodeCollection(cms_host=crush_host);
     node=node_col.get_one(uuid=node_uuid)
     attached_sessions=node.allocated_sessions()
-    print(f"({len(attached_sessions)}) sessions allocated to this compute node.")
+    if aircrush.config.has_option('COMPUTE','concurrency_limit'):
+        concurrency_limit = aircrush.config['COMPUTE']['concurrency_limit']
+    else:
+        concurrency_limit=1000
+        
+    print(f"({len(attached_sessions)}/{concurrency_limit}) sessions allocated to this compute node.")
     subjects_of_attached_sessions={}
     for session_uuid in attached_sessions:
 
