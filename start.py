@@ -577,7 +577,8 @@ def doSomething():
     if not isready:
         print("This worker node is not ready to do more.")
         return
-    
+    print(f"isready:{isready}")
+    return
    # check_running_jobs(nuid)
     cascade_status_to_subject(nuid)
 
