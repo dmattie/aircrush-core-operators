@@ -251,17 +251,17 @@ def test_prereqs(parms,**kwargs):
             if ret!=0:
                 print(f"Failed to assess available diskspace. Attempted:{diskspace_cmd}, Result: {out}")
                 #raise Exception(f"Failed to assess available diskspace. Attempted:{diskspace_cmd}, Result: {out}")
-                return FALSE
+                return False
             else:
                 requirement=parse_size(prereq_diskspace)
                 found=parse_size(out)
                 if found<requirement:
                     print(f"[WARNING]: Prerequisite not met: Insufficient disk space to run this operation, {diskspace_cmd} required")
-                    return FALSE
+                    return False
 
         else:
             print(f"[WARNING]: A diskspace prerequisite of {prereq_diskspace} has been specified but the compute node has not been configured to assess available diskspace.  Create an entry in ~/.crush.ini in the COMPUTE section called available_disk with a one line bash command to derive available disk space")
-    return FALSE
+    return False
 
 
         
@@ -640,13 +640,13 @@ def doSomething():
                         project=project,
                         subject=subject,
                         session=session,
-                        pipeline=pipeline)
-                    print(f"Prereq tests returned [{prereq_res}]")
+                        pipeline=pipeline)                 
                 except Exception as e:
                     print(e)
                     return
 
-                if not prereq_res:
+                if prereq_res == False:
+                        messages.append(f"Prerequisites not met")                           
                         continue          
                 # pullSession(project,subject,session)
 
