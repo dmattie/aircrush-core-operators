@@ -27,6 +27,12 @@ def ready():
     #Sense readiness to do something
     return True
 
+def print_and_overwrite(text):
+    # use to clear current line and write again
+    '''Remember to add print() after the last print that you want to overwrite.'''
+    clear_output(wait=True)
+    print(text, end='\r')
+       
 def getOperatorClassDefinition(task_uuid:str):
     
     #This function uses the task uuid to load the associated operator module 
@@ -578,13 +584,15 @@ def doSomething():
 
         workingdir=aircrush.config['COMPUTE']['working_directory']   
         datacommons=aircrush.config['COMMONS']['commons_path']     
-
+        task_counter=1
+        task_counter_limit=50
         while (todo): 
-            print("----------Got one-------------")  
+            #print("----------Got one-------------")  
             task_col =  TaskCollection(cms_host=crush_host)
             task = task_col.get_one(uuid=todo.field_task)    
-            #execute(operator=task.field_operator,params=task.field_parameters)
-                #Invocation INFO
+
+
+
             messages=[]
             now = datetime.datetime.now()
                 
@@ -607,13 +615,7 @@ def doSomething():
                         
                 if project == None:
                     print(f"ERROR: Assigned session {session.title} is orphaned or the project is unpublished")
-                    return
-                try:    
-                    container = pullContainer(task.field_singularity_container)
-                except Exception as e:
-                    print(e)
-                    return
-
+                    continue
                
 
                 bindings=""
@@ -631,9 +633,10 @@ def doSomething():
                     
                     sys.exit(1)    
 
+
                 ###### Let's check for any prerequisites before we start
                 ###### E.g. if there is a large disk requirement and that has been set as a hint, check if disk is available first
-                messages.append(f"Checking prerequisites: {task.field_operator} =====================")   
+                
                 try:
                     prereq_res = test_prereqs(parms,
                         datacommons=datacommons,
@@ -643,12 +646,25 @@ def doSomething():
                         session=session,
                         pipeline=pipeline)                 
                 except Exception as e:
-                    print(e)
+                    print(e)                    
                     return
 
                 if prereq_res == False:
-                        messages.append(f"Prerequisites not met")                           
-                        continue          
+                        print_and_overwrite(f"{project.title}:{subject.title}/{session.title} Prerequisites not met.  Attempts remaining:{task_counter}/{task_counter_limit}")                           
+                        if task_counter>task_counter_limit:
+                            return
+                        else:
+                            task_counter=task_counter+1
+                        continue   
+                
+                print()
+
+                try:    
+                    container = pullContainer(task.field_singularity_container)
+                except Exception as e:
+                    print(e)
+                    return
+
                 # pullSession(project,subject,session)
 
                 # pulldata
@@ -756,7 +772,7 @@ def updateStatus(task_instance,status:str,detail:str="",new_errors:str=""):
     print(f"Updating job status to CMS:{task_instance.field_jobid} ({task_instance.title}")
     uuid=task_instance.upsert()
     
-    
+
 def cascade_status_to_subject(node_uuid):
     node_col=ComputeNodeCollection(cms_host=crush_host);
     node=node_col.get_one(uuid=node_uuid)
@@ -765,7 +781,7 @@ def cascade_status_to_subject(node_uuid):
         concurrency_limit = aircrush.config['COMPUTE']['concurrency_limit']
     else:
         concurrency_limit=1000
-        
+
     print(f"({len(attached_sessions)}/{concurrency_limit}) sessions allocated to this compute node.")
     subjects_of_attached_sessions={}
     for session_uuid in attached_sessions:
