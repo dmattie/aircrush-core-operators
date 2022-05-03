@@ -641,6 +641,7 @@ def doSomething():
                         subject=subject,
                         session=session,
                         pipeline=pipeline)
+                    print(f"Prereq tests returned [{prereq_res}]")
                 except Exception as e:
                     print(e)
                     return
