@@ -617,7 +617,12 @@ def doSomething():
                     print(f"ERROR: Assigned session {session.title} is orphaned or the project is unpublished")
                     continue
                
-
+                try:    
+                    container = pullContainer(task.field_singularity_container)
+                except Exception as e:
+                    print(e)
+                    return
+                    
                 bindings=""
                 if args.bind:
                     mounts=args.bind.split() 
@@ -658,12 +663,6 @@ def doSomething():
                         continue   
                 
                 print()
-
-                try:    
-                    container = pullContainer(task.field_singularity_container)
-                except Exception as e:
-                    print(e)
-                    return
 
                 # pullSession(project,subject,session)
 
