@@ -49,18 +49,20 @@ def getOperatorClassDefinition(task_uuid:str):
 def getMyComputeNodeUUID():
 
     cluster=aircrush.config['COMPUTE']['cluster']
-    account=aircrush.config['COMPUTE']['account']
-    
-    working_dir=aircrush.config['COMPUTE']['working_directory'] #os.environ.get("SCRATCH")
+    account=aircrush.config['COMPUTE']['account']    
+    working_dir=aircrush.config['COMPUTE']['working_directory'] #os.environ.get("SCRATCH")    
     username=getpass.getuser()
 
+    
+     
     metadata={
         "title":f"{cluster}/{username}",
         "field_host":cluster,
         "field_username":username,
         "field_password":"",
         "field_working_directory":working_dir,        
-        "cms_host":crush_host        
+        "cms_host":crush_host,
+        "aircrush":aircrush   
     }
 
     cn_col = ComputeNodeCollection(cms_host=crush_host)
@@ -73,7 +75,7 @@ def getMyComputeNodeUUID():
     n = ComputeNode(metadata=metadata)
     nuid=n.upsert()
     
-    return nuid
+    return nuid,n.isReady()
 
 
 def pullContainer(uri:str):
@@ -241,35 +243,35 @@ def push_data(stage,project,subject,session,**kwargs):
             ret,out = getstatusoutput(rsync_cmd)
             if ret!=0:
                 raise Exception(f"Failed to copy session directory: {out}")
-def test_prereqs(parms,**kwargs):
+# def test_prereqs(parms,**kwargs):
 
-    project=kwargs['project'] if 'project' in kwargs else ""       
-    subject=kwargs['subject'] if 'subject' in kwargs else ""
-    session=kwargs['session'] if 'session' in kwargs else ""
-    workingdir=kwargs['workingdir'] if 'workingdir' in kwargs else ""
-    datacommons=kwargs['datacommons'] if 'datacommons' in kwargs else ""
-    pipeline=kwargs['pipeline'] if 'pipeline' in kwargs else ""
+#     project=kwargs['project'] if 'project' in kwargs else ""       
+#     subject=kwargs['subject'] if 'subject' in kwargs else ""
+#     session=kwargs['session'] if 'session' in kwargs else ""
+#     workingdir=kwargs['workingdir'] if 'workingdir' in kwargs else ""
+#     datacommons=kwargs['datacommons'] if 'datacommons' in kwargs else ""
+#     pipeline=kwargs['pipeline'] if 'pipeline' in kwargs else ""
     
-    if "prereq-diskspace" in parms:
-        prereq_diskspace=parms["prereq-diskspace"]
-        if aircrush.config.has_option('COMPUTE','available_disk'):
-            diskspace_cmd=aircrush.config['COMPUTE']['available_disk']
-            shell_cmd=[diskspace_cmd]                  
-            ret,out = getstatusoutput(shell_cmd)
-            if ret!=0:
-                print(f"Failed to assess available diskspace. Attempted:{diskspace_cmd}, Result: {out}")
-                #raise Exception(f"Failed to assess available diskspace. Attempted:{diskspace_cmd}, Result: {out}")
-                return False
-            else:
-                requirement=parse_size(prereq_diskspace)
-                found=parse_size(out)
-                if found<requirement:
-                    print(f"[WARNING]: Prerequisite not met: Insufficient disk space to run this operation, {diskspace_cmd} required")
-                    return False
+#     if "prereq-diskspace" in parms:
+#         prereq_diskspace=parms["prereq-diskspace"]
+#         if aircrush.config.has_option('COMPUTE','available_disk'):
+#             diskspace_cmd=aircrush.config['COMPUTE']['available_disk']
+#             shell_cmd=[diskspace_cmd]                  
+#             ret,out = getstatusoutput(shell_cmd)
+#             if ret!=0:
+#                 print(f"Failed to assess available diskspace. Attempted:{diskspace_cmd}, Result: {out}")
+#                 #raise Exception(f"Failed to assess available diskspace. Attempted:{diskspace_cmd}, Result: {out}")
+#                 return False
+#             else:
+#                 requirement=parse_size(prereq_diskspace)
+#                 found=parse_size(out)
+#                 if found<requirement:
+#                     print(f"[WARNING]: Prerequisite not met: Insufficient disk space to run this operation, {diskspace_cmd} required")
+#                     return False
 
-        else:
-            print(f"[WARNING]: A diskspace prerequisite of {prereq_diskspace} has been specified but the compute node has not been configured to assess available diskspace.  Create an entry in ~/.crush.ini in the COMPUTE section called available_disk with a one line bash command to derive available disk space")
-    return False
+#         else:
+#             print(f"[WARNING]: A diskspace prerequisite of {prereq_diskspace} has been specified but the compute node has not been configured to assess available diskspace.  Create an entry in ~/.crush.ini in the COMPUTE section called available_disk with a one line bash command to derive available disk space")
+#     return False
 
 
         
@@ -570,7 +572,11 @@ def validate_config():
 def doSomething():
     
     #nuid = "4d065840-dd33-44dc-be97-623e7d743bce" #dmattie on narval
-    nuid = getMyComputeNodeUUID()
+    nuid,isready = getMyComputeNodeUUID()
+
+    if not isready:
+        print("This worker node is not ready to do more.")
+        return
     
    # check_running_jobs(nuid)
     cascade_status_to_subject(nuid)
@@ -640,21 +646,21 @@ def doSomething():
                     sys.exit(1)    
 
 
-                ###### Let's check for any prerequisites before we start
-                ###### E.g. if there is a large disk requirement and that has been set as a hint, check if disk is available first
+                # ###### Let's check for any prerequisites before we start
+                # ###### E.g. if there is a large disk requirement and that has been set as a hint, check if disk is available first
                 
-                try:
-                    prereq_res = test_prereqs(parms,
-                        datacommons=datacommons,
-                        workingdir=workingdir,
-                        project=project,
-                        subject=subject,
-                        session=session,
-                        pipeline=pipeline)                 
-                except Exception as e:
-                    print(e)                    
-                    return
-
+                # try:
+                #     prereq_res = test_prereqs(parms,
+                #         datacommons=datacommons,
+                #         workingdir=workingdir,
+                #         project=project,
+                #         subject=subject,
+                #         session=session,
+                #         pipeline=pipeline)                 
+                # except Exception as e:
+                #     print(e)                    
+                #     return
+                prereq_res = True
                 if prereq_res == False:
                         print_statusline(f"{project.title}:{subject.title}/{session.title} Prerequisites not met.  Attempts remaining:{task_counter}/{task_counter_limit}")                           
                         if task_counter>task_counter_limit:
