@@ -27,11 +27,12 @@ def ready():
     #Sense readiness to do something
     return True
 
-def print_and_overwrite(text):
-    # use to clear current line and write again
-    '''Remember to add print() after the last print that you want to overwrite.'''
-    clear_output(wait=True)
-    print(text, end='\r')
+def print_statusline(msg: str):
+    last_msg_length = len(print_statusline.last_msg) if hasattr(print_statusline, 'last_msg') else 0
+    print(' ' * last_msg_length, end='\r')
+    print(msg, end='\r')
+    sys.stdout.flush()  # Some say they needed this, I didn't.
+    print_statusline.last_msg = msg
        
 def getOperatorClassDefinition(task_uuid:str):
     
@@ -622,7 +623,7 @@ def doSomething():
                 except Exception as e:
                     print(e)
                     return
-                    
+
                 bindings=""
                 if args.bind:
                     mounts=args.bind.split() 
@@ -655,7 +656,7 @@ def doSomething():
                     return
 
                 if prereq_res == False:
-                        print_and_overwrite(f"{project.title}:{subject.title}/{session.title} Prerequisites not met.  Attempts remaining:{task_counter}/{task_counter_limit}")                           
+                        print_statusline(f"{project.title}:{subject.title}/{session.title} Prerequisites not met.  Attempts remaining:{task_counter}/{task_counter_limit}")                           
                         if task_counter>task_counter_limit:
                             return
                         else:
