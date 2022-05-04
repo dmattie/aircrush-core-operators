@@ -152,7 +152,7 @@ def pull_source_data(project,subject,session):
         
     if not os.path.isdir(source_session_dir):
         raise Exception(f"Subject/session not found on data commons ({source_session_dir})")
-    rsync_cmd=f"rsync -r {source_session_dir} {target_session_dir}"
+    rsync_cmd=f"rsync -r --ignore-missing-args {source_session_dir} {target_session_dir}"
     print(rsync_cmd)
     
     ret = subprocess.getstatusoutput(rsync_cmd)
@@ -178,8 +178,10 @@ def pull_data(stage,project,subject,session):
             data_transfer_node=""
 
         datacommons=aircrush.config['COMMONS']['commons_path']
-  
-        root=f"projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
+        if stage =="derivatives":
+            root=f"projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
+        else:
+            root=f"projects/{project.field_path_to_exam_data}/datasets/{stage}/*/sub-{subject.title}/ses-{session.title}/"
         source_session_dir=f"{data_transfer_node}{datacommons}/{root}"
         target_session_dir=f"{wd}/{root}"
 
@@ -191,7 +193,7 @@ def pull_data(stage,project,subject,session):
         if data_transfer_node=="":
             if not os.path.isdir(source_session_dir):
                 raise Exception(f"Subject/session not found on data commons ({source_session_dir})")
-        rsync_cmd=["rsync","-r",f"{source_session_dir}",f"{target_session_dir}"]            
+        rsync_cmd=["rsync","-rvvhP","--ignore-missing-args", f"{source_session_dir}",f"{target_session_dir}"]            
         ret,out = getstatusoutput(rsync_cmd)
         if ret!=0:
             raise Exception(f"Failed to copy session directory: {out}")
@@ -236,7 +238,7 @@ def push_data(stage,project,subject,session,**kwargs):
                     target_session_dir=f"{data_transfer_node}{datacommons}/{root}"
                     print(f"Cloning ({source_session_dir}) back to data commons ({target_session_dir})")        
                     print(f"DTN:[{data_transfer_node}]") 
-                    rsync_cmd=["rsync","-r",f"{source_session_dir}",f"{target_session_dir}"]                  
+                    rsync_cmd=["rsync","-r","--ignore-missing-args", f"{source_session_dir}",f"{target_session_dir}"]                  
                     ret,out = getstatusoutput(rsync_cmd)
                     if ret!=0:
                         raise Exception(f"Failed to copy session directory: {out}")
@@ -251,7 +253,7 @@ def push_data(stage,project,subject,session,**kwargs):
             target_session_dir=f"{data_transfer_node}{datacommons}/{root}"
             print(f"Cloning ({source_session_dir}) back to data commons ({target_session_dir})")        
             print(f"DTN:[{data_transfer_node}]") 
-            rsync_cmd=["rsync","-r",f"{source_session_dir}",f"{target_session_dir}"]                  
+            rsync_cmd=["rsync","-r","--ignore-missing-args", f"{source_session_dir}",f"{target_session_dir}"]                  
             ret,out = getstatusoutput(rsync_cmd)
             if ret!=0:
                 raise Exception(f"Failed to copy session directory: {out}")
