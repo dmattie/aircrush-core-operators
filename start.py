@@ -65,6 +65,7 @@ def getMyComputeNodeUUID():
         "aircrush":aircrush   
     }
 
+    #Look for known match in cms and create if not there
     cn_col = ComputeNodeCollection(cms_host=crush_host)
     matching_cn = cn_col.get(filter=f"&filter[field_username][value]={username}&filter[field_host][value]={cluster}")
 
@@ -73,10 +74,14 @@ def getMyComputeNodeUUID():
         break
 
     n = ComputeNode(metadata=metadata)
+    print(f"Before Upsert:{n.aircrush}")
     nuid=n.upsert()
+    print(f"After Upsert:{n.aircrush}")
+
+    #Is this node ready for work?
     readystate=n.isReady()
-    print(f"ComputeNode:{n.title}\n\tHost:{n.field_host}\n\tAircrush:{aircrush}")
-    return nuid,readystate
+    print(f"ComputeNode:{n.title}\n\tHost:{n.field_host}\n\tAircrush:{aircrush}\n\tReadystate:{readystate}")
+    return nuid,False#readystate
 
 
 def pullContainer(uri:str):
