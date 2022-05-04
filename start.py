@@ -575,9 +575,9 @@ def validate_config():
     if not aircrush.config.has_option('COMMONS','commons_path'):
         print("Configuration settings incomplete, expected [COMMONS] commons_path")
         passed=False   
-    if not aircrush.config.has_option('COMMONS','staging_path'):
-        print("Configuration settings incomplete, expected [COMMONS] staging_path")
-        passed=False                   
+    # if not aircrush.config.has_option('COMMONS','staging_path'):
+    #     print("Configuration settings incomplete, expected [COMMONS] staging_path")
+    #     passed=False                   
     
     return passed
 
