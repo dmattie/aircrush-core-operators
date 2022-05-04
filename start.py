@@ -179,9 +179,10 @@ def pull_data(stage,project,subject,session):
 
         datacommons=aircrush.config['COMMONS']['commons_path']
         if stage =="derivatives":
-            root=f"projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
+            root=f"projects/{project.field_path_to_exam_data}/datasets/{stage}/*/sub-{subject.title}/ses-{session.title}/"
         else:
             root=f"projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
+
         source_session_dir=f"{data_transfer_node}{datacommons}/{root}"
         target_session_dir=f"{wd}/{root}"
 
@@ -759,7 +760,8 @@ def doSomething():
                 updateStatus(todo,"failed",'<br/>\n'.join(messages),new_errors)
             
             #Get the next thing to do
-            todo = w.get_next_task(node_uuid=nuid) #Do whatever the big brain tells us to do next
+            #todo = w.get_next_task(node_uuid=nuid) #Do whatever the big brain tells us to do next
+            todo=None
             
 
 
