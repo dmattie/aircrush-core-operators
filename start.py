@@ -23,6 +23,16 @@ aircrush=None
 crush_host=None
 args=None
 
+HEADER = '\033[95m'
+OKBLUE = '\033[94m'
+OKCYAN = '\033[96m'
+OKGREEN = '\033[92m'
+WARNING = '\033[93m'
+FAIL = '\033[91m'
+ENDC = '\033[0m'
+BOLD = '\033[1m'
+UNDERLINE = '\033[4m'
+
 def ready():
     #Sense readiness to do something
     return True
@@ -578,15 +588,16 @@ def doSomething():
 
     if not isready:
         print("This worker node is not ready to do more.")
-        return
-    print(f"isready:{isready}")
+        return    
     
-   # check_running_jobs(nuid)
+    print(f"{HEADER}Updating sessions allocated to this worker{ENDC}")
     cascade_status_to_subject(nuid)
 
     if args.statusonly:
         return
 
+    
+    print(f"{HEADER}Looking for new tasks{ENDC}")
     w=Workload(aircrush) #The list of things to do
     
     todo = w.get_next_task(node_uuid=nuid) #Do whatever the big brain tells us to do next
@@ -789,8 +800,7 @@ def cascade_status_to_subject(node_uuid):
     if aircrush.config.has_option('COMPUTE','concurrency_limit'):
         concurrency_limit = aircrush.config['COMPUTE']['concurrency_limit']
     else:
-        concurrency_limit=1000
-
+        concurrency_limit=1000    
     print(f"({len(attached_sessions)}/{concurrency_limit}) sessions allocated to this compute node.")
     
     subjects_of_attached_sessions={}
