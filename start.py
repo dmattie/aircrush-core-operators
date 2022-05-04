@@ -77,7 +77,7 @@ def getMyComputeNodeUUID():
     
     #Is this node ready for work?
     readystate=n.isReady()    
-    return nuid,False#readystate
+    return nuid,readystate
 
 
 def pullContainer(uri:str):
@@ -572,7 +572,7 @@ def validate_config():
     return passed
 
 def doSomething():
-    print("Looking for something to do...")
+    
     #nuid = "4d065840-dd33-44dc-be97-623e7d743bce" #dmattie on narval
     nuid,isready = getMyComputeNodeUUID()
 
