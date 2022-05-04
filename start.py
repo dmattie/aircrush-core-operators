@@ -74,8 +74,9 @@ def getMyComputeNodeUUID():
 
     n = ComputeNode(metadata=metadata)
     nuid=n.upsert()
+    readystate=n.isReady()
     print(f"ComputeNode:{n.title}\n\tHost:{n.field_host}\n\tAircrush:{aircrush}")
-    return nuid,n.isReady()
+    return nuid,readystate
 
 
 def pullContainer(uri:str):
@@ -790,6 +791,7 @@ def cascade_status_to_subject(node_uuid):
         concurrency_limit=1000
 
     print(f"({len(attached_sessions)}/{concurrency_limit}) sessions allocated to this compute node.")
+    
     subjects_of_attached_sessions={}
     for session_uuid in attached_sessions:
 
