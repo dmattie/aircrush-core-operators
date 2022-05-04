@@ -172,7 +172,7 @@ def pull_data(stage,project,subject,session):
             if not data_transfer_node=="":                
                 if not data_transfer_node[-1]==":":  #Add a colon to the end for rsync syntax if necessary
                     data_transfer_node=f"{data_transfer_node}:"
-                print(f"The data commons is found on another cluster {data_transfer_node} User must have setup unattended rsync using ssh-keygen for this process to be scheduled.")
+                print(f"{WARNING}The data commons is found on data transfer node {data_transfer_node} User must have setup unattended rsync using ssh-keygen for this process to be scheduled.  If this node is local, remove the data_transfer_node option from crush.ini{ENDC}")
                 
         else:
             data_transfer_node=""
@@ -218,7 +218,7 @@ def push_data(stage,project,subject,session,**kwargs):
             if not data_transfer_node=="":                
                 if not data_transfer_node[-1]==":":  #Add a colon to the end for rsync syntax if necessary
                     data_transfer_node=f"{data_transfer_node}:"
-                print(f"The data commons is found on another cluster {data_transfer_node} User must have setup unattended rsync using ssh-keygen for this process to be scheduled.")
+                print(f"{WARNING}The data commons is found on data transfer node {data_transfer_node}. User must have setup unattended rsync using ssh-keygen for this process to be scheduled.  If this node is local, remove the data_transfer_node option from crush.ini.{ENDC}")
                 
         else:
             data_transfer_node=""
@@ -597,7 +597,7 @@ def doSomething():
         return
 
     
-    print(f"{HEADER}Looking for new tasks{ENDC}")
+    print(f"{HEADER}Allocating new tasks{ENDC}")
     w=Workload(aircrush) #The list of things to do
     
     todo = w.get_next_task(node_uuid=nuid) #Do whatever the big brain tells us to do next
