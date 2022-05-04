@@ -53,7 +53,9 @@ def getMyComputeNodeUUID():
     working_dir=aircrush.config['COMPUTE']['working_directory'] #os.environ.get("SCRATCH")    
     username=getpass.getuser()
 
-    
+    print(f"getMyComputeNode aircrush={aircrush}")
+    print(f"getMyComputeNode aircrush.config={aircrush.config}")
+    print(f"getMyComputeNode aircrush.config cluster={aircrush.config['COMPUTE']['cluster']}")
      
     metadata={
         "title":f"{cluster}/{username}",
