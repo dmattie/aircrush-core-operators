@@ -66,6 +66,7 @@ def getMyComputeNodeUUID():
         "cms_host":crush_host,
         "aircrush":aircrush   
     }
+    print(f"Metadata:{metadata}")
 
     #Look for known match in cms and create if not there
     cn_col = ComputeNodeCollection(cms_host=crush_host)
