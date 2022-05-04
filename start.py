@@ -53,10 +53,7 @@ def getMyComputeNodeUUID():
     working_dir=aircrush.config['COMPUTE']['working_directory'] #os.environ.get("SCRATCH")    
     username=getpass.getuser()
 
-    print(f"getMyComputeNode aircrush={aircrush}")
-    print(f"getMyComputeNode aircrush.config={aircrush.config}")
-    print(f"getMyComputeNode aircrush.config cluster={aircrush.config['COMPUTE']['cluster']}")
-     
+
     metadata={
         "title":f"{cluster}/{username}",
         "field_host":cluster,
@@ -66,7 +63,6 @@ def getMyComputeNodeUUID():
         "cms_host":crush_host,
         "aircrush":aircrush   
     }
-    print(f"Metadata:{metadata}")
 
     #Look for known match in cms and create if not there
     cn_col = ComputeNodeCollection(cms_host=crush_host)
@@ -76,14 +72,11 @@ def getMyComputeNodeUUID():
         metadata['uuid']=match
         break
 
-    n = ComputeNode(metadata=metadata)
-    print(f"Before Upsert:{n.aircrush}")
+    n = ComputeNode(metadata=metadata)    
     nuid=n.upsert()
-    print(f"After Upsert:{n.aircrush}")
-
+    
     #Is this node ready for work?
-    readystate=n.isReady()
-    print(f"ComputeNode:{n.title}\n\tHost:{n.field_host}\n\tAircrush:{aircrush}\n\tReadystate:{readystate}")
+    readystate=n.isReady()    
     return nuid,False#readystate
 
 
