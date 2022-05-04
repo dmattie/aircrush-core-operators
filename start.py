@@ -181,7 +181,7 @@ def pull_data(stage,project,subject,session):
         if stage =="derivatives":
             root=f"projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
         else:
-            root=f"projects/{project.field_path_to_exam_data}/datasets/{stage}/*/sub-{subject.title}/ses-{session.title}/"
+            root=f"projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
         source_session_dir=f"{data_transfer_node}{datacommons}/{root}"
         target_session_dir=f"{wd}/{root}"
 
