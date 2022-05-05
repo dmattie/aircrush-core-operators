@@ -219,7 +219,7 @@ def _get_derivatives(**kwargs):
 
     if result==[]:
         error=ssh.stderr.readlines()    
-        raise Exception(f"Failed to find derivatives: {ssh}")
+        raise Exception(f"Failed to find derivatives: {error}")
     else:
         derivatives=result#result.splitlines()
 
