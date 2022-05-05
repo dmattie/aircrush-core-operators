@@ -254,7 +254,7 @@ def _rsync_get(**kwargs):
         if not os.path.isdir(source):
             raise Exception(f"Subject/session not found on data commons ({source})")
     else:
-        source=f"{data_transfer_node}:{source}"
+        source=f"{data_transfer_node}{source}"
 
     rsync_cmd=["rsync","-rvvhP","--ignore-missing-args", f"{source}",f"{target}"]      
     print(rsync_cmd)      
