@@ -790,7 +790,13 @@ def doSomething():
     
                 sbatch_cmd=["sbatch",jobfiles['jobfile']]
                 print(sbatch_cmd)
-                ret = subprocess.run(sbatch_cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE, universal_newlines=True,shell=True)            
+                ret = subprocess.run(sbatch_cmd,                               
+                                capture_output=True,
+                                text=True,
+                                shell=True,                                 
+                                timeout=60)            
+                                #  stdout=subprocess.PIPE,
+                                # stderr=subprocess.PIPE, 
 
 
                 if ret.returncode==0:
