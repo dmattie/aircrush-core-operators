@@ -795,12 +795,12 @@ def doSomething():
                 print(sbatch_cmd)
                 ret = subprocess.run(sbatch_cmd,                               
                                 capture_output=True,
-                                text=True,
-                                shell=True,                                 
-                                timeout=60)            
+                                text=True,                                
+                                timeout=60)      
+                                #shell=True,                                       
                                 #  stdout=subprocess.PIPE,
                                 # stderr=subprocess.PIPE, 
-
+                print("sbatch returned")
 
                 if ret.returncode==0:
                     jobid=get_slurm_id(ret.stdout)
