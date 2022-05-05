@@ -492,7 +492,6 @@ def createJob(cmdArray,parms_to_add,**kwargs):
     sbatch_account = aircrush.config['COMPUTE']['account']
     sbatch_cpus_per_task = parms_to_add['sbatch-cpus-per-task'] if 'sbatch-cpus-per-task' in parms_to_add else ""
     sbatch_mem_per_cpu = parms_to_add['sbatch-mem-per-cpu'] if 'sbatch-mem-per-cpu' in parms_to_add else ""
-        
 
     if not os.path.exists(f"{workingdir}/jobs/{project}/{subject}"):
         os.makedirs(f"{workingdir}/jobs/{project}/{subject}")
@@ -716,6 +715,10 @@ def doSomething():
                     mounts=args.bind.split() 
                     for mount in mounts:            
                         bindings=bindings+f"-B {mount} "
+                else:
+                    if aircrush.config.has_option('COMPUTE','bindings'):        
+                        bindings=aircrush.config['COMPUTE']['bindings']
+
                         
                 cmdArray=["singularity","run","--app",task.field_operator,bindings,container]              
                 try:
