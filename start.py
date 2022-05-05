@@ -170,8 +170,8 @@ def pull_data(stage,project,subject,session):
         if aircrush.config.has_option('COMMONS','data_transfer_node'):            
             data_transfer_node=aircrush.config['COMMONS']['data_transfer_node']
             if not data_transfer_node=="":                
-                if not data_transfer_node[-1]==":":  #Add a colon to the end for rsync syntax if necessary
-                    data_transfer_node=f"{data_transfer_node}:"
+                # if not data_transfer_node[-1]==":":  #Add a colon to the end for rsync syntax if necessary
+                #     data_transfer_node=f"{data_transfer_node}:"
                 print(f"{WARNING}The data commons is found on data transfer node {data_transfer_node} User must have setup unattended rsync using ssh-keygen for this process to be scheduled.  If this node is local, remove the data_transfer_node option from crush.ini{ENDC}")
                 
         else:
@@ -254,7 +254,7 @@ def _rsync_get(**kwargs):
         if not os.path.isdir(source):
             raise Exception(f"Subject/session not found on data commons ({source})")
     else:
-        source=f"{data_transfer_node}{source}"
+        source=f"{data_transfer_node}:{source}"
 
     rsync_cmd=["rsync","-rvvhP","--ignore-missing-args", f"{source}",f"{target}"]      
     print(rsync_cmd)      
