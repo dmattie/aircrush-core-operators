@@ -179,25 +179,89 @@ def pull_data(stage,project,subject,session):
 
         datacommons=aircrush.config['COMMONS']['commons_path']
         if stage =="derivatives":
-            root=f"projects/{project.field_path_to_exam_data}/datasets/{stage}/*/sub-{subject.title}/ses-{session.title}/"
+            #Look on the data commons for any derivative sub-folder containing this subject/session
+            
+            derivatives=_get_derivatives(data_transfer_node=data_transfer_node,
+                                        project=project.field_path_to_exam_data,
+                                        datacommons=datacommons,
+                                        subject=subject.title,
+                                        session=session.title)
+
+            root=f"/projects/{project.field_path_to_exam_data}/datasets/{stage}"
+            for derivative in derivatives:
+                source=f"{datacommons}/projects/{project.field_path_to_exam_data}/datasets/{stage}/{derivative}"
+                target=f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage}/{derivative}"                
+                _rsync_get(data_transfer_node=data_transfer_node,
+                            source=source,                            
+                            target=target)
         else:
-            root=f"projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
+            source=f"{datacommons}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
+            target=f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
+            _rsync_get(data_transfer_node=data_transfer_node,
+                            source=source,
+                            target=target)
 
-        source_session_dir=f"{data_transfer_node}{datacommons}/{root}"
-        target_session_dir=f"{wd}/{root}"
 
-        print(f"Cloning ({source_session_dir}) to local working directory ({target_session_dir})")
-        os.makedirs(target_session_dir,exist_ok=True)     
+def _get_derivatives(**kwargs):
+    data_transfer_node=kwargs['data_transfer_node'] if 'data_transfer_node' in kwargs else None 
+    project=kwargs['project'] if 'project' in kwargs else None 
+    datacommons=kwargs['datacommons'] if 'datacommons' in kwargs else None 
+    subject=kwargs['subject'] if 'subject' in kwargs else None
+    session=kwargs['session'] if 'session' in kwargs else None
 
-        print(f"DTN:[{data_transfer_node}]")    
+    COMMAND=f"find {datacommons}/projects/{project}/datasets/derivatives -maxdepth 2"
+    print(f"ssh {data_transfer_node} {COMMAND}")
+    ssh = subprocess.Popen(["ssh", data_transfer_node, COMMAND],
+                       shell=False,
+                       stdout=subprocess.PIPE,
+                       stderr=subprocess.PIPE)
+    result = ssh.stdout.readlines()
 
-        if data_transfer_node=="":
-            if not os.path.isdir(source_session_dir):
-                raise Exception(f"Subject/session not found on data commons ({source_session_dir})")
-        rsync_cmd=["rsync","-rvvhP","--ignore-missing-args", f"{source_session_dir}",f"{target_session_dir}"]            
-        ret,out = getstatusoutput(rsync_cmd)
-        if ret!=0:
-            raise Exception(f"Failed to copy session directory: {out}")
+    if result==[]:
+        error=ssh.stderr.readlines()    
+        raise Exception(f"Failed to find derivatives: {ssh}")
+    else:
+        derivatives=result#result.splitlines()
+
+    to_check=[]
+    
+    if subject is not None and session is not None:
+        to_check.append(f"/sub-{subject}/ses-{session}") 
+    if subject is not None:
+        to_check.append(f"/sub-{subject}")
+    to_return=[]
+    
+    for derivative in derivatives:
+        #If the end of this derivative matches the subeject/[session] we are looking
+        #for then added it to the to_return list        
+        derivative_str=derivative.decode().strip()
+        for checkme in to_check:
+            if derivative_str[len(derivative_str)-len(checkme):]==checkme:
+                to_return.append(derivative_str[len(f"{datacommons}/projects/{project}/datasets/derivatives"):])
+    return to_return
+
+def _rsync_get(**kwargs):
+    data_transfer_node=kwargs['data_transfer_node'] if 'data_transfer_node' in kwargs else None 
+    source=kwargs['source'] if 'source' in kwargs else None
+    target=kwargs['target'] if 'target' in kwargs else None
+
+    if source is None or target is None or data_transfer_node is None:
+        raise Exception("Insufficient args passed to _rsync_get")
+    
+    os.makedirs(target,exist_ok=True)     
+
+    if data_transfer_node=="":
+        if not os.path.isdir(source):
+            raise Exception(f"Subject/session not found on data commons ({source})")
+    else:
+        source=f"{data_transfer_node}:{source}"
+
+    rsync_cmd=["rsync","-rvvhP","--ignore-missing-args", f"{source}",f"{target}"]      
+    print(rsync_cmd)      
+    ret,out = getstatusoutput(rsync_cmd)
+    if ret!=0:
+        raise Exception(f"Failed to copy session directory: {out}")
+
 
 
 def getstatusoutput(command):
