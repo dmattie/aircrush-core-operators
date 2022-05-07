@@ -262,6 +262,30 @@ def _rsync_get(**kwargs):
     if ret!=0:
         raise Exception(f"Failed to copy session directory: {out}")
 
+def _rsync_put(**kwargs):
+    data_transfer_node=kwargs['data_transfer_node'] if 'data_transfer_node' in kwargs else None 
+    source=kwargs['source'] if 'source' in kwargs else None
+    target=kwargs['target'] if 'target' in kwargs else None
+
+    if source is None or target is None or data_transfer_node is None:
+        raise Exception("Insufficient args passed to _rsync_get")
+    
+
+    if data_transfer_node=="":
+        if not os.path.isdir(target):
+            raise Exception(f"Subject/session not found on data commons ({target})")
+    else:   
+        mkdirs_cmd=["ssh",data_transfer_node, f"mkdir -p {target}"]      
+        print(mkdirs_cmd)      
+        ret,out = getstatusoutput(mkdirs_cmd)
+        if ret!=0:
+            raise Exception(f"Failed to create target directory:({target}).  Received: {out}")
+
+    rsync_cmd=["rsync","-rvvhP","--ignore-missing-args", f"{source}",f"{target}"]      
+    print(rsync_cmd)      
+    ret,out = getstatusoutput(rsync_cmd)
+    if ret!=0:
+        raise Exception(f"Failed to copy session directory: {out}")
 
 
 def getstatusoutput(command):
@@ -296,16 +320,19 @@ def push_data(stage,project,subject,session,**kwargs):
         if stage=="derivatives":
             if "pipelines" in kwargs:
                 pipelines=kwargs['pipelines']
-                for pipeline in pipelines:                    
+                for pipeline in pipelines:   
+
                     root=f"projects/{project.field_path_to_exam_data}/datasets/derivatives/{pipelines[pipeline].field_id}/sub-{subject.title}/ses-{session.title}/"
-                    source_session_dir=f"{wd}/{root}"
-                    target_session_dir=f"{data_transfer_node}{datacommons}/{root}"
-                    print(f"Cloning ({source_session_dir}) back to data commons ({target_session_dir})")        
+                    source=f"{wd}/{root}"
+                    target=f"{datacommons}/{root}"
+
+                    print(f"Cloning ({source}) back to data commons ({target})")        
                     print(f"DTN:[{data_transfer_node}]") 
-                    rsync_cmd=["rsync","-r","--ignore-missing-args", f"{source_session_dir}",f"{target_session_dir}"]                  
-                    ret,out = getstatusoutput(rsync_cmd)
-                    if ret!=0:
-                        raise Exception(f"Failed to copy session directory: {out}")
+                                   
+                    
+                    _rsync_put(data_transfer_node=data_transfer_node,
+                            source=source,                            
+                            target=target)                 
 
             else:
                 raise Exception("WARNING: You attempted to return derivatives to the data commons but did not specify which pipelines.")
