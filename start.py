@@ -325,17 +325,27 @@ def push_data(stage,project,subject,session,**kwargs):
                 pipelines=kwargs['pipelines']
                 for pipeline in pipelines:   
 
-                    root=f"projects/{project.field_path_to_exam_data}/datasets/derivatives/{pipelines[pipeline].field_id}/sub-{subject.title}/ses-{session.title}/"
-                    source=f"{wd}/{root}"
-                    target=f"{datacommons}/{root}"
 
-                    print(f"Cloning ({source}) back to data commons ({target})")        
-                    print(f"DTN:[{data_transfer_node}]") 
-                                   
-                    
-                    _rsync_put(data_transfer_node=data_transfer_node,
-                            source=source,                            
-                            target=target)                 
+                    derivatives=_get_derivatives(data_transfer_node="",#get derivatives in local/(compute node)
+                            project=project.field_path_to_exam_data,
+                            datacommons=wd,
+                            subject=subject.title,
+                            session=session.title)
+
+            
+                    for derivative in derivatives:
+
+                        root=f"projects/{project.field_path_to_exam_data}/datasets/derivatives/{pipelines[pipeline].field_id}/sub-{subject.title}/ses-{session.title}/"
+                        source=f"{wd}/{root}"
+                        target=f"{datacommons}/{root}"
+
+                        print(f"Cloning ({source}) back to data commons ({target})")        
+                        print(f"DTN:[{data_transfer_node}]") 
+                                    
+                        
+                        _rsync_put(data_transfer_node=data_transfer_node,
+                                source=source,                            
+                                target=target)                 
 
             else:
                 raise Exception("WARNING: You attempted to return derivatives to the data commons but did not specify which pipelines.")
@@ -957,7 +967,8 @@ def cascade_status_to_subject(node_uuid):
             continue
         print(f"Synchronizing {project.title}:{subject.title}/{session.title} with status {session.field_status}")
         if session.field_status=='processed':
-            #push_data("rawdata",project,subject,session)            
+            #push_data("rawdata",project,subject,session)      
+            #              
             push_data("derivatives",project,subject,session,pipelines=pipelines)
             session.field_status='completed'
             session.field_responsible_compute_node=None #Free up a slot on compute node for more
