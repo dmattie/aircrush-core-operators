@@ -364,7 +364,7 @@ def push_data(stage,project,subject,session,**kwargs):
                         source=source,                            
                         target=target) 
                 if ret==True:
-                    print(f"\n\tremove source: {source}\n")                
+                    print(f"\n\Derivative committed to data commons: {source}\n")                
 
             # else:
             #     raise Exception("WARNING: You attempted to return derivatives to the data commons but did not specify which pipelines.")
@@ -646,7 +646,7 @@ def check_running_jobs(node_uuid):
                                 log_contents=f"log file has been truncated.  see output log for complete detail\n\n{log_contents[-2000:]}"                            
                             tis[ti].body=log_contents
 
-                        updateStatus(tis[ti],"processed")
+                        updateStatus(tis[ti],"completed")
                     if status=='FAILED':
                         if tis[ti].field_errorfile and os.path.isfile(tis[ti].field_errorfile):
                             logfile = open(tis[ti].field_errorfile,'r')
@@ -975,7 +975,7 @@ def cascade_status_to_subject(node_uuid):
             if tis_for_session[ti].field_pipeline:
                 pipelines[tis_for_session[ti].field_pipeline]=tis_for_session[ti].pipeline()
 
-        #session.field_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted,count_processed)
+        session.field_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted,count_processed)
         subject=session.subject()                        
 
         subjects_of_attached_sessions[subject.uuid]=subject
@@ -985,12 +985,13 @@ def cascade_status_to_subject(node_uuid):
             print(f"Session {session.title} is orphaned, please conduct a health check.\n\tSubject:{subject}\n\tProject:{project}  Skipping")
             continue
         print(f"Synchronizing {project.title}:{subject.title}/{session.title} with status [{session.field_status}]")
-        if session.field_status=='processed':
+        if session.field_status=='processed' or session.field_status=='completed':
             #push_data("rawdata",project,subject,session)      
             #              
             push_data("derivatives",project,subject,session,pipelines=pipelines)
             session.field_status='completed'
-            session.field_responsible_compute_node=None #Free up a slot on compute node for more
+            #session.field_responsible_compute_node=None #Free up a slot on compute node for more
+
         session.upsert()
 
     for subject in subjects_of_attached_sessions:
