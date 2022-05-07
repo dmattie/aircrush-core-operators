@@ -275,11 +275,14 @@ def _rsync_put(**kwargs):
         if not os.path.isdir(target):
             raise Exception(f"Subject/session not found on data commons ({target})")
     else:   
+
         mkdirs_cmd=["ssh",data_transfer_node, f"mkdir -p {target}"]      
         print(mkdirs_cmd)      
         ret,out = getstatusoutput(mkdirs_cmd)
         if ret!=0:
             raise Exception(f"Failed to create target directory:({target}).  Received: {out}")
+
+    target=f"{data_transfer_node}:{target}"
 
     rsync_cmd=["rsync","-rvvhP","--ignore-missing-args", f"{source}",f"{target}"]      
     print(rsync_cmd)      
