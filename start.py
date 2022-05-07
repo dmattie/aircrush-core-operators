@@ -917,7 +917,7 @@ def cascade_status_to_subject(node_uuid):
             if tis_for_session[ti].field_pipeline:
                 pipelines[tis_for_session[ti].field_pipeline]=tis_for_session[ti].pipeline()
 
-        session.field_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted,count_processed)
+        #session.field_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted,count_processed)
         subject=session.subject()                        
 
         subjects_of_attached_sessions[subject.uuid]=subject
