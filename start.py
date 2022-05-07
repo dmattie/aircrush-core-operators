@@ -208,8 +208,11 @@ def _get_derivatives(**kwargs):
     datacommons=kwargs['datacommons'] if 'datacommons' in kwargs else None 
     subject=kwargs['subject'] if 'subject' in kwargs else None
     session=kwargs['session'] if 'session' in kwargs else None
-
-    COMMAND=f"find {datacommons}/projects/{project}/datasets/derivatives -maxdepth 2"
+    if session is None:
+        depth=2
+    else:
+        depth=3
+    COMMAND=f"find {datacommons}/projects/{project}/datasets/derivatives -maxdepth {depth}"
     if data_transfer_node=="": #find local derivatives
         print(f"\tLooking for derivatives: {COMMAND}")
         subprocessCmd = subprocess.Popen([COMMAND],
