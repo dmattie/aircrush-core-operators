@@ -563,16 +563,15 @@ def check_running_jobs(node_uuid):
     reviewed_tis=active_tis
     if active_tis>0:
         print(f"Checking for status on {active_tis} jobs thought to be running on this compute node.")
-    for ti in tis:
-        print(tis[ti])
-        print(tis[ti].field_jobid)
+    for ti in tis:        
         if tis[ti].field_jobid:
             #seff_cmd=f"/usr/bin/local/seff {tis[ti].field_jobid}"
             seff_cmd=['seff',f"{tis[ti].field_jobid}"]
+            print(seff_cmd)
             try:
                 ret = subprocess.run(seff_cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE, universal_newlines=True,shell=True)            
     #            ret = subprocess.call(cmdArray)
-
+                print(ret.returncode)
                 if ret.returncode==0:
                     status=get_seff_completion_state(ret.stdout)
                     print(f"\t{tis[ti].field_jobid} {status}")
