@@ -298,7 +298,7 @@ def push_data(stage,project,subject,session,**kwargs):
                 pipelines=kwargs['pipelines']
                 for pipeline in pipelines:
 
-                    root=f"projects/{project.field_path_to_exam_data}/datasets/{pipeline.field_id}/{stage}/sub-{subject.title}/ses-{session.title}/"
+                    root=f"projects/{project.field_path_to_exam_data}/datasets/derivatives/{pipeline}/sub-{subject.title}/ses-{session.title}/"
                     source_session_dir=f"{wd}/{root}"
                     target_session_dir=f"{data_transfer_node}{datacommons}/{root}"
                     print(f"Cloning ({source_session_dir}) back to data commons ({target_session_dir})")        
@@ -929,6 +929,7 @@ def cascade_status_to_subject(node_uuid):
         print(f"Synchronizing {project.title}:{subject.title}/{session.title} with status {session.field_status}")
         if session.field_status=='processed':
             push_data("rawdata",project,subject,session)
+            print(f"pipelines:{pipelines}")
             push_data("derivatives",project,subject,session,pipelines=pipelines)
             session.field_status='completed'
             session.field_responsible_compute_node=None #Free up a slot on compute node for more
