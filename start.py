@@ -210,12 +210,21 @@ def _get_derivatives(**kwargs):
     session=kwargs['session'] if 'session' in kwargs else None
 
     COMMAND=f"find {datacommons}/projects/{project}/datasets/derivatives -maxdepth 2"
-    print(f"ssh {data_transfer_node} {COMMAND}")
-    ssh = subprocess.Popen(["ssh", data_transfer_node, COMMAND],
-                       shell=False,
-                       stdout=subprocess.PIPE,
-                       stderr=subprocess.PIPE)
-    result = ssh.stdout.readlines()
+    if data_transfer_node=="": #find local derivatives
+        print(f"{COMMAND}")
+        subprocessCmd = subprocess.Popen([COMMAND],
+                        shell=False,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE)
+        result = subprocessCmd.stdout.readlines()
+
+    else:
+        print(f"ssh {data_transfer_node} {COMMAND}")
+        ssh = subprocess.Popen(["ssh", data_transfer_node, COMMAND],
+                        shell=False,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE)
+        result = ssh.stdout.readlines()
 
     if result==[]:
         error=ssh.stderr.readlines()    
