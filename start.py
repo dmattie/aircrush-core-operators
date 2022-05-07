@@ -657,6 +657,7 @@ def doSomething():
         return    
     
     print(f"{HEADER}Updating sessions allocated to this worker{ENDC}")
+    check_running_jobs(nuid)
     cascade_status_to_subject(nuid)
 
     if args.statusonly:
@@ -804,7 +805,7 @@ def doSomething():
 
                 if ret.returncode==0:
                     jobid=get_slurm_id(ret.stdout)
-                    print(f"SLURM assingned job id:{jobid}")
+                    print(f"SLURM assigned job id:{jobid}")
                     if jobid!=0:
                         todo.field_jobid=jobid
                         todo.field_seff=""
