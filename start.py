@@ -608,9 +608,7 @@ def check_running_jobs(node_uuid):
                             else:
                                 tis[ti].field_remaining_retries-=1
                                 tis[ti].field_seff=ret.stdout
-                                updateStatus(tis[ti],"failed")
-                    else:
-                        print("{FAIL}[ERROR]{ENDC} attempt to retrieve status of job {tis[ti].field_jobid} failed\nstdout:{stdout}\nstderr:{stderr}")
+                                updateStatus(tis[ti],"failed")                    
                 reviewed_tis=reviewed_tis-1
             except Exception as e:
                 print(f"{FAIL}[ERROR]{ENDC} Failed to execute seff, {e}")
@@ -931,7 +929,7 @@ def cascade_status_to_subject(node_uuid):
         if subject == None or project == None:
             print(f"Session {session.title} is orphaned, please conduct a health check.\n\tSubject:{subject}\n\tProject:{project}  Skipping")
             continue
-        print(f"Synchronizing {project.title}:{subject.title}/{session.title}")
+        print(f"Synchronizing {project.title}:{subject.title}/{session.title} with status {session.field_status}")
         if session.field_status=='processed':
             push_data("rawdata",project,subject,session)
             push_data("derivatives",project,subject,session,pipelines=pipelines)
