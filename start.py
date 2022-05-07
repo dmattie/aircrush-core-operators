@@ -331,34 +331,35 @@ def push_data(stage,project,subject,session,**kwargs):
         #Test if we are on an HCP node, use sbatch to perform rsync if so
 
         if stage=="derivatives":
-            if "pipelines" in kwargs:
-                pipelines=kwargs['pipelines']
-                for pipeline in pipelines:   
+            print("\tPushing derivatives")
+            # if "pipelines" in kwargs:
+            #     pipelines=kwargs['pipelines']
+            #     for pipeline in pipelines:   
+            #         print(pipeline)
+
+            derivatives=_get_derivatives(data_transfer_node="",#get derivatives in local/(compute node)
+                project=project.field_path_to_exam_data,
+                datacommons=wd,
+                subject=subject.title,
+                session=session.title)
 
 
-                    derivatives=_get_derivatives(data_transfer_node="",#get derivatives in local/(compute node)
-                            project=project.field_path_to_exam_data,
-                            datacommons=wd,
-                            subject=subject.title,
-                            session=session.title)
+            for derivative in derivatives:
 
-            
-                    for derivative in derivatives:
+                root=f"projects/{project.field_path_to_exam_data}/datasets/derivatives/{derivative}/sub-{subject.title}/ses-{session.title}/"
+                source=f"{wd}/{root}"
+                target=f"{datacommons}/{root}"
 
-                        root=f"projects/{project.field_path_to_exam_data}/datasets/derivatives/{derivative}/sub-{subject.title}/ses-{session.title}/"
-                        source=f"{wd}/{root}"
-                        target=f"{datacommons}/{root}"
+                print(f"Cloning ({source}) back to data commons ({target})")        
+                print(f"DTN:[{data_transfer_node}]") 
+                            
+                
+                _rsync_put(data_transfer_node=data_transfer_node,
+                        source=source,                            
+                        target=target)                 
 
-                        print(f"Cloning ({source}) back to data commons ({target})")        
-                        print(f"DTN:[{data_transfer_node}]") 
-                                    
-                        
-                        _rsync_put(data_transfer_node=data_transfer_node,
-                                source=source,                            
-                                target=target)                 
-
-            else:
-                raise Exception("WARNING: You attempted to return derivatives to the data commons but did not specify which pipelines.")
+            # else:
+            #     raise Exception("WARNING: You attempted to return derivatives to the data commons but did not specify which pipelines.")
                 
 
         else:
