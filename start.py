@@ -249,10 +249,9 @@ def _get_derivatives(**kwargs):
         #for then added it to the to_return list        
         derivative_str=derivative.decode().strip()
         for checkme in to_check:
-            print(f"{checkme} IN {derivative_str}")
             if derivative_str[len(derivative_str)-len(checkme):]==checkme:
                 to_return.append(derivative_str[len(f"{datacommons}/projects/{project}/datasets/derivatives"):])
-    print(f"\tFound {len(derivatives)} derivatives")
+    print(f"\tFound {len(to_return)} derivatives")
     return to_return
 
 def _rsync_get(**kwargs):
@@ -352,7 +351,7 @@ def push_data(stage,project,subject,session,**kwargs):
                 print(f"No derivatives found for this session")
             for derivative in derivatives:
 
-                root=f"projects/{project.field_path_to_exam_data}/datasets/derivatives/{derivative}/sub-{subject.title}/ses-{session.title}/"
+                root=f"projects/{project.field_path_to_exam_data}/datasets/derivatives/{derivative}/"
                 source=f"{wd}/{root}"
                 target=f"{datacommons}/{root}"
 
