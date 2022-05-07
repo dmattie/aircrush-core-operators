@@ -893,7 +893,8 @@ def cascade_status_to_subject(node_uuid):
         count_running=0
         count_failed=0
         count_completed=0
-        count_notstarted=0        
+        count_notstarted=0   
+        count_processed=0     
 
         pipelines={}
 
@@ -904,11 +905,7 @@ def cascade_status_to_subject(node_uuid):
                 count_completed+=1
                 continue
             if tis_for_session[ti].field_status=='processed':
-                ############ ATTENTION #############
-                # This increments running ,but is the processed flag.  We don't need the noise in higher levels. processed code limited to task instances
-                # but is basically the same as running until it commits
-                ####################################
-                count_running+=1
+                count_processed+=1
                 continue            
             if tis_for_session[ti].field_status=='running':
                 count_running+=1
@@ -920,7 +917,7 @@ def cascade_status_to_subject(node_uuid):
             if tis_for_session[ti].field_pipeline:
                 pipelines[tis_for_session[ti].field_pipeline]=tis_for_session[ti].pipeline()
 
-        session.field_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted)
+        session.field_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted,count_processed)
         subject=session.subject()                        
 
         subjects_of_attached_sessions[subject.uuid]=subject
@@ -957,10 +954,13 @@ def cascade_status_to_subject(node_uuid):
                 continue
             count_notstarted+=1
 
-        subjects_of_attached_sessions[subject].field_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted)
+        subjects_of_attached_sessions[subject].field_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted,count_processed)
         subjects_of_attached_sessions[subject].upsert()
 
-def derive_parent_status(failed,running,completed,notstarted):
+def derive_parent_status(failed,running,completed,notstarted,processed):
+    if processed > 0 and failed==0 and running==0 and completed==0 and notstarted==0:
+        #All session operations are done for this subject, time to push up to data commons
+        return "processed"
     if running>0:
         if failed>0:
             return "limping"
