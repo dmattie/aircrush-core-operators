@@ -213,7 +213,7 @@ def _get_derivatives(**kwargs):
     if data_transfer_node=="": #find local derivatives
         print(f"{COMMAND}")
         subprocessCmd = subprocess.Popen([COMMAND],
-                        shell=False,
+                        shell=True,
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE)
         result = subprocessCmd.stdout.readlines()
