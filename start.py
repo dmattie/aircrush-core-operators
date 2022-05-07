@@ -290,8 +290,7 @@ def _rsync_put(**kwargs):
             raise Exception(f"Subject/session not found on data commons ({target})")
     else:   
 
-        mkdirs_cmd=["ssh",data_transfer_node, f"mkdir -p {target}"]      
-        print(f"\t{mkdirs_cmd}")      
+        mkdirs_cmd=["ssh",data_transfer_node, f"mkdir -p {target}"]                  
         ret,out = getstatusoutput(mkdirs_cmd)
         if ret!=0:
             raise Exception(f"Failed to create target directory:({target}).  Received: {out}")
@@ -304,9 +303,11 @@ def _rsync_put(**kwargs):
     if ret!=0:
         raise Exception(f"Failed to copy session directory: {out}")
 
+    return True
+
 
 def getstatusoutput(command):
-    print(command)    
+    #print(command)    
     process = subprocess.Popen(command, stdout=subprocess.PIPE)
     out, _ = process.communicate()
     return (process.returncode, out)
@@ -348,20 +349,22 @@ def push_data(stage,project,subject,session,**kwargs):
                 session=session.title)
 
             if len(derivatives)==0:
-                print(f"No derivatives found for this session")
+                print(f"\tNo derivatives found for this session")
             for derivative in derivatives:
 
                 root=f"projects/{project.field_path_to_exam_data}/datasets/derivatives/{derivative}/"
                 source=f"{wd}/{root}"
                 target=f"{datacommons}/{root}"
 
-                print(f"Cloning ({source}) back to data commons ({target})")        
-                print(f"DTN:[{data_transfer_node}]") 
+                print(f"\tCloning source:({source})\n\t            to:({target})")        
+                print(f"\tDTN:[{data_transfer_node}]") 
                             
                 
-                _rsync_put(data_transfer_node=data_transfer_node,
+                ret = _rsync_put(data_transfer_node=data_transfer_node,
                         source=source,                            
-                        target=target)                 
+                        target=target) 
+                if ret==True:
+                    print(f"\n\tremove source: {source}\n")                
 
             # else:
             #     raise Exception("WARNING: You attempted to return derivatives to the data commons but did not specify which pipelines.")
