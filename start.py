@@ -573,7 +573,8 @@ def check_running_jobs(node_uuid):
 
                 if ret.returncode==0:
                     status=get_seff_completion_state(ret.stdout)
-                    if status=='COMPLETED':
+                    print(f"\t{tis[ti].field_jobid} {status}"
+                    if status=='COMPLETED':                        
                         tis[ti].field_seff=ret.stdout
                         if tis[ti].field_logfile and os.path.isfile(tis[ti].field_logfile):
                             logfile = open(tis[ti].field_logfile,'r')
@@ -604,9 +605,11 @@ def check_running_jobs(node_uuid):
                                 tis[ti].field_remaining_retries-=1
                                 tis[ti].field_seff=ret.stdout
                                 updateStatus(tis[ti],"failed")
+                    else:
+                        print("{FAIL}[ERROR]{ENDC} attempt to retrieve status of job {tis[ti].field_jobid} failed\nstdout:{stdout}\nstderr:{stderr}")
                 reviewed_tis=reviewed_tis-1
             except Exception as e:
-                print(f"Failed to execute seff, {e}")
+                print(f"{FAIL}[ERROR]{ENDC} Failed to execute seff, {e}")
     if reviewed_tis > 0:
         print(f"\t{reviewed_tis} jobs not accounted for")
     else:
