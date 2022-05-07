@@ -573,7 +573,7 @@ def check_running_jobs(node_uuid):
 
                 if ret.returncode==0:
                     status=get_seff_completion_state(ret.stdout)
-                    print(f"\t{tis[ti].field_jobid} {status}"
+                    print(f"\t{tis[ti].field_jobid} {status}")
                     if status=='COMPLETED':                        
                         tis[ti].field_seff=ret.stdout
                         if tis[ti].field_logfile and os.path.isfile(tis[ti].field_logfile):
