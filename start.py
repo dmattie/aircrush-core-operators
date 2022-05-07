@@ -569,7 +569,10 @@ def check_running_jobs(node_uuid):
             seff_cmd=['seff',f"{tis[ti].field_jobid}"]
             print(seff_cmd)
             try:
-                ret = subprocess.run(seff_cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE, universal_newlines=True,shell=True)            
+                ret = subprocess.run(seff_cmd,   
+                                capture_output=True,
+                                text=True,                                
+                                timeout=60)
     #            ret = subprocess.call(cmdArray)
                 print(ret.returncode)
                 if ret.returncode==0:
