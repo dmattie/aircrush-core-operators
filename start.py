@@ -958,7 +958,7 @@ def cascade_status_to_subject(node_uuid):
         subjects_of_attached_sessions[subject].upsert()
 
 def derive_parent_status(failed,running,completed,notstarted,processed):
-    print("Determining parent status given the following: failed:{failed}, running:{runnig}, completed:{completed}, not started:{notstarted}, processed:{processed}")
+    print(f"Determining parent status given the following:\n\tfailed:{failed}\n\trunning:{running}\n\tcompleted:{completed}\n\tnot started:{notstarted}\n\yprocessed:{processed}")
     if processed > 0 and failed==0 and running==0 and completed==0 and notstarted==0:
         #All session operations are done for this subject, time to push up to data commons
         return "processed"
