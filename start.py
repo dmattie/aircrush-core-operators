@@ -564,6 +564,8 @@ def check_running_jobs(node_uuid):
     if active_tis>0:
         print(f"Checking for status on {active_tis} jobs thought to be running on this compute node.")
     for ti in tis:
+        print(tis[ti])
+        print(tis[ti].field_jobid)
         if tis[ti].field_jobid:
             #seff_cmd=f"/usr/bin/local/seff {tis[ti].field_jobid}"
             seff_cmd=['seff',f"{tis[ti].field_jobid}"]
