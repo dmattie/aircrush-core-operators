@@ -236,9 +236,9 @@ def _get_derivatives(**kwargs):
     
     if subject is not None and session is not None:
         to_check.append(f"/sub-{subject}/ses-{session}") 
-    if subject is not None:
+    elif subject is not None:
         to_check.append(f"/sub-{subject}")
-    to_return=[]
+    
     
     for derivative in derivatives:
         #If the end of this derivative matches the subeject/[session] we are looking
@@ -344,7 +344,7 @@ def push_data(stage,project,subject,session,**kwargs):
             
                     for derivative in derivatives:
 
-                        root=f"projects/{project.field_path_to_exam_data}/datasets/derivatives/{pipelines[pipeline].field_id}/sub-{subject.title}/ses-{session.title}/"
+                        root=f"projects/{project.field_path_to_exam_data}/datasets/derivatives/{derivative}/sub-{subject.title}/ses-{session.title}/"
                         source=f"{wd}/{root}"
                         target=f"{datacommons}/{root}"
 
