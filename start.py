@@ -211,7 +211,7 @@ def _get_derivatives(**kwargs):
 
     COMMAND=f"find {datacommons}/projects/{project}/datasets/derivatives -maxdepth 2"
     if data_transfer_node=="": #find local derivatives
-        print(f"{COMMAND}")
+        print(f"\tLooking for derivatives: {COMMAND}")
         subprocessCmd = subprocess.Popen([COMMAND],
                         shell=True,
                         stdout=subprocess.PIPE,
@@ -287,7 +287,7 @@ def _rsync_put(**kwargs):
     else:   
 
         mkdirs_cmd=["ssh",data_transfer_node, f"mkdir -p {target}"]      
-        print(mkdirs_cmd)      
+        print(f"\t{mkdirs_cmd}")      
         ret,out = getstatusoutput(mkdirs_cmd)
         if ret!=0:
             raise Exception(f"Failed to create target directory:({target}).  Received: {out}")
@@ -295,7 +295,7 @@ def _rsync_put(**kwargs):
     target=f"{data_transfer_node}:{target}"
 
     rsync_cmd=["rsync","-rvvhP","--ignore-missing-args", f"{source}",f"{target}"]      
-    print(rsync_cmd)      
+    print(f"\t{rsync_cmd}")      
     ret,out = getstatusoutput(rsync_cmd)
     if ret!=0:
         raise Exception(f"Failed to copy session directory: {out}")
@@ -975,7 +975,7 @@ def cascade_status_to_subject(node_uuid):
         if subject == None or project == None:
             print(f"Session {session.title} is orphaned, please conduct a health check.\n\tSubject:{subject}\n\tProject:{project}  Skipping")
             continue
-        print(f"Synchronizing {project.title}:{subject.title}/{session.title} with status {session.field_status}")
+        print(f"Synchronizing {project.title}:{subject.title}/{session.title} with status [{session.field_status}]")
         if session.field_status=='processed':
             #push_data("rawdata",project,subject,session)      
             #              
@@ -1008,7 +1008,7 @@ def cascade_status_to_subject(node_uuid):
         subjects_of_attached_sessions[subject].upsert()
 
 def derive_parent_status(failed,running,completed,notstarted,processed):
-    print(f"Determining parent status given the following:\n\tfailed:{failed}\n\trunning:{running}\n\tcompleted:{completed}\n\tnot started:{notstarted}\n\yprocessed:{processed}")
+    #print(f"\tDetermining parent status given the following session statuses of subject:\n\t\tfailed:{failed}\n\t\trunning:{running}\n\t\tcompleted:{completed}\n\t\tnot started:{notstarted}\n\t\tprocessed:{processed}")
     if processed > 0 and failed==0 and running==0 and completed==0 and notstarted==0:
         #All session operations are done for this subject, time to push up to data commons
         return "processed"
