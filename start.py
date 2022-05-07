@@ -239,6 +239,7 @@ def _get_derivatives(**kwargs):
     elif subject is not None:
         to_check.append(f"/sub-{subject}")
     
+    to_return=[]
     
     for derivative in derivatives:
         #If the end of this derivative matches the subeject/[session] we are looking
