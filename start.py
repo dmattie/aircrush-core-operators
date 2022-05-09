@@ -647,7 +647,20 @@ def check_running_jobs(node_uuid):
                             tis[ti].body=log_contents
 
                         updateStatus(tis[ti],"completed")
-                    if status=='FAILED':
+                    if status=='FAILED' or status=="TIMEOUT":
+                        if status=="TIMEOUT":
+                            if tis[ti].field_multiplier_duration is None:
+                                tis[ti].field_multiplier_duration=1.5
+                            else:
+                                tis[ti].field_multiplier_duration=tis[ti].field_multiplier_duration+0.5
+                        if status=="CANCELLED":
+                            #Check for Out-of-memory
+                            if _ti_oom(ret.stdout)==True:
+                                if tis[ti].field_multiplier_memory is None:
+                                    tis[ti].field_multiplier_memory=1.5
+                                else:
+                                    tis[ti].field_multiplier_memory=tis[ti].field_multiplier_memory+0.5
+                            
                         if tis[ti].field_errorfile and os.path.isfile(tis[ti].field_errorfile):
                             logfile = open(tis[ti].field_errorfile,'r')
                             error_contents = logfile.read()
@@ -660,13 +673,14 @@ def check_running_jobs(node_uuid):
                             tis[ti].field_seff=ret.stdout
                             updateStatus(tis[ti],"failed")
                         else:
-                            if tis[ti]==0:
+                            if tis[ti].field_remaining_retries==0:
                                 tis[ti].field_seff=ret.stdout
                                 updateStatus(tis[ti],"halted","Too many failed retries.  This job will not continue without manual intervention")
                             else:
                                 tis[ti].field_remaining_retries-=1
                                 tis[ti].field_seff=ret.stdout
-                                updateStatus(tis[ti],"failed")                    
+                                updateStatus(tis[ti],"failed")    
+                                 
                 reviewed_tis=reviewed_tis-1
             except Exception as e:
                 print(f"{FAIL}[ERROR]{ENDC} Failed to execute seff, {e}")
@@ -674,6 +688,19 @@ def check_running_jobs(node_uuid):
         print(f"\t{reviewed_tis} jobs not accounted for")
     else:
         print("\tAll running jobs on this node accounted for and updated in CMS")
+def _ti_oom(seff_stdout):
+    lines=seff_stdout
+    for line in lines:
+        tokens=line.split(' ')
+        if len(tokens)>=3 and tokens[0]=="Memory" and tokens[1]=='Efficiency:':
+            mem_percent=tokens[2].replace('%','')
+            try:
+                mem=float(mem_percent)
+                if mem>90:
+                    return True #MAybe cancelled due to OOM - this is faster than parsing logfile
+            except:
+                continue
+    return False
 
 def validate_config():
     passed=True
