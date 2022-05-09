@@ -975,9 +975,9 @@ def cascade_status_to_subject(node_uuid):
             if tis_for_session[ti].field_pipeline:
                 pipelines[tis_for_session[ti].field_pipeline]=tis_for_session[ti].pipeline()
 
-        print(f"\tDetermining session ({session.title}) status given the following task instance statuses:\n\t\tfailed:{count_failed}\n\t\trunning:{count_running}\n\t\tcompleted:{count_completed}\n\t\tnot started:{count_notstarted}\n\t\tprocessed:{count_processed}")
-
-        session.field_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted,count_processed)
+        derived_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted,count_processed)
+        print(f"\Session ({session.title}) status set to {derived_status} given the following task instance statuses:\n\t\tfailed:{count_failed} running:{count_running} completed:{count_completed} not started:{count_notstarted} processed:{count_processed}")
+        session.field_status=derived_status
         subject=session.subject()                        
 
         subjects_of_attached_sessions[subject.uuid]=subject
@@ -1016,8 +1016,10 @@ def cascade_status_to_subject(node_uuid):
                 count_failed+=1
                 continue
             count_notstarted+=1
-        print(f"\tDetermining subject ({subject.title} status given the following session statuses:\n\t\tfailed:{count_failed}\n\t\trunning:{count_running}\n\t\tcompleted:{count_completed}\n\t\tnot started:{count_notstarted}\n\t\tprocessed:{count_processed}")
-        subjects_of_attached_sessions[subject].field_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted,count_processed)
+        
+        derived_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted,count_processed)
+        print(f"\tSubject ({subjects_of_attached_sessions[subject].title}) status set to {derived_status} due to the following session statuses:\n\t\tfailed:{count_failed}, running:{count_running}, completed:{count_completed}, not started:{count_notstarted}, processed:{count_processed}")
+        subjects_of_attached_sessions[subject].field_status=derived_status
         subjects_of_attached_sessions[subject].upsert()
 
 def derive_parent_status(failed,running,completed,notstarted,processed):
