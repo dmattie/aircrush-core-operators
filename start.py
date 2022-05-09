@@ -624,18 +624,15 @@ def check_running_jobs(node_uuid):
     for ti in tis:        
         if tis[ti].field_jobid:
             #seff_cmd=f"/usr/bin/local/seff {tis[ti].field_jobid}"
-            seff_cmd=['seff',f"{tis[ti].field_jobid}"]
-            print(seff_cmd)
+            seff_cmd=['seff',f"{tis[ti].field_jobid}"]           
             try:
                 ret = subprocess.run(seff_cmd,   
                                 capture_output=True,
                                 text=True,                                
                                 timeout=60)
-    #            ret = subprocess.call(cmdArray)
-                print(ret.returncode)
+    #            ret = subprocess.call(cmdArray)                
                 if ret.returncode==0:
-                    status=get_seff_completion_state(ret.stdout)
-                    print(f"\t{tis[ti].field_jobid} {status}")
+                    status=get_seff_completion_state(ret.stdout)                    
                     if status=='COMPLETED':                        
                         tis[ti].field_seff=ret.stdout
                         if tis[ti].field_logfile and os.path.isfile(tis[ti].field_logfile):
@@ -650,9 +647,10 @@ def check_running_jobs(node_uuid):
                     if status=='FAILED' or status=="TIMEOUT":
                         if status=="TIMEOUT":
                             if tis[ti].field_multiplier_duration is None:
-                                tis[ti].field_multiplier_duration=1.5
+                                tis[ti].field_multiplier_duration=1.5                                
                             else:
                                 tis[ti].field_multiplier_duration=tis[ti].field_multiplier_duration+0.5
+                            print("\tAllocated time was exhausted.  Extending to {tis[ti].field_multiplier_duration} times specified wall time.")
                         if status=="CANCELLED":
                             #Check for Out-of-memory
                             if _ti_oom(ret.stdout)==True:
@@ -660,6 +658,7 @@ def check_running_jobs(node_uuid):
                                     tis[ti].field_multiplier_memory=1.5
                                 else:
                                     tis[ti].field_multiplier_memory=tis[ti].field_multiplier_memory+0.5
+                                print("\tAllocated memory was exhausted.  Extending to {tis[ti].field_multiplier_memory} times specified memory allocation.")
                             
                         if tis[ti].field_errorfile and os.path.isfile(tis[ti].field_errorfile):
                             logfile = open(tis[ti].field_errorfile,'r')
@@ -957,7 +956,7 @@ def updateStatus(task_instance,status:str,detail:str="",new_errors:str=""):
     task_instance.field_status=status        
     task_instance.body = detail
     task_instance.field_errorlog = new_errors
-    print(f"Updating job status to CMS:{task_instance.field_jobid} ({task_instance.title}")
+    print(f"Updating job status to CMS:{task_instance.field_jobid} ({task_instance.title} =>{status}")
     uuid=task_instance.upsert()
     
 
@@ -969,7 +968,7 @@ def cascade_status_to_subject(node_uuid):
         concurrency_limit = aircrush.config['COMPUTE']['concurrency_limit']
     else:
         concurrency_limit=1000    
-    print(f"({len(attached_sessions)}/{concurrency_limit}) sessions allocated to this compute node.")
+    print(f"{UNDERLINE}({len(attached_sessions)}/{concurrency_limit}) sessions allocated to this compute node.  Updating status based on task instances...{ENDC}")
     
     subjects_of_attached_sessions={}
     for session_uuid in attached_sessions:
@@ -1023,7 +1022,7 @@ def cascade_status_to_subject(node_uuid):
             #session.field_responsible_compute_node=None #Free up a slot on compute node for more
 
         session.upsert()
-
+    print(f"{UNDERLINE}Updating subject status based on session status...{ENDC}")
     for subject in subjects_of_attached_sessions:
         count_running=0
         count_failed=0
