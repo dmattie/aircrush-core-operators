@@ -536,6 +536,16 @@ def ini_settings():
         conf.close() 
     return AircrushConfig(crush_config)
 
+def getMultipliers(ti_uuid:str):
+    ti_col=TaskInstanceCollection(cms_host=crush_host)
+    if ti_col is not None:
+        ti=ti_col.get_one(ti_uuid)
+        if ti is not None:
+            return ti.field_multiplier_duration, ti.field_multiplier_memory
+    return None,None
+    
+
+
 def createJob(cmdArray,parms_to_add,**kwargs):
     
     taskinstance_uid=kwargs['taskinstance_uid'] if 'taskinstance_uid' in kwargs else None
@@ -550,6 +560,23 @@ def createJob(cmdArray,parms_to_add,**kwargs):
     sbatch_account = aircrush.config['COMPUTE']['account']
     sbatch_cpus_per_task = parms_to_add['sbatch-cpus-per-task'] if 'sbatch-cpus-per-task' in parms_to_add else ""
     sbatch_mem_per_cpu = parms_to_add['sbatch-mem-per-cpu'] if 'sbatch-mem-per-cpu' in parms_to_add else ""
+
+    duration_multiplier,memory_multiplier=getMultipliers(taskinstance_uid)
+    try:        
+        if parse_size(sbatch_mem_per_cpu) != 0:
+            sbatch_mem_per_cpu=parse_size(sbatch_mem_per_cpu) * memory_multiplier
+            sbatch_mem_per_cpu=format_size(sbatch_mem_per_cpu) 
+            print("{OKGREEN}AUTO TUNE{ENDC}: Memory has been automatically incremented after detecting previous OOM errors.  New memory requirement is {sbatch_mem_per_cpu}")           
+    except:
+        pass
+    
+    try:        
+        if parse_size(sbatch_mem_per_cpu) != 0:
+            sbatch_mem_per_cpu=parse_size(sbatch_mem_per_cpu) * memory_multiplier
+            sbatch_mem_per_cpu=format_size(sbatch_mem_per_cpu) 
+            print("{OKGREEN}AUTO TUNE{ENDC}: Duration has been automatically incremented after detecting previous TIMEOUT errors. New Duration is {sbatch_mem_per_cpu}")           
+    except:
+        pass
 
     if not os.path.exists(f"{workingdir}/jobs/{project}/{subject}"):
         os.makedirs(f"{workingdir}/jobs/{project}/{subject}")
