@@ -1022,23 +1022,24 @@ def derive_parent_status(failed,running,completed,notstarted,processed):
     if processed > 0 and failed==0 and running==0 and completed==0 and notstarted==0:
         #All session operations are done for this subject, time to push up to data commons
         return "processed"
+
+    if failed>0:
+        if notstarted+running+processed+completed==0:
+            return "failed"
+        else:
+            return "limping"
+
     if running>0:
         if failed>0:
             return "limping"
         if failed==0:
             return "running"
-    
-    if failed>0:
-        if notstarted==0:
-            return "failed"
-        else:
-            return "limping"
 
     if completed>0:
         if notstarted==0:
             return "completed"
         else:
-            return "running"
+            return "waiting"
 
     return "notstarted"
 
