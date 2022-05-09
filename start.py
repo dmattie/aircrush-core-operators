@@ -952,7 +952,8 @@ def cascade_status_to_subject(node_uuid):
         count_failed=0
         count_completed=0
         count_notstarted=0   
-        count_processed=0     
+        count_processed=0   
+        count_waiting=0  
 
         pipelines={}
 
@@ -975,8 +976,8 @@ def cascade_status_to_subject(node_uuid):
             if tis_for_session[ti].field_pipeline:
                 pipelines[tis_for_session[ti].field_pipeline]=tis_for_session[ti].pipeline()
 
-        derived_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted,count_processed)
-        print(f"\tSession ({session.title}) status set to {derived_status} given the following task instance statuses:\n\t\tfailed:{count_failed} running:{count_running} completed:{count_completed} not started:{count_notstarted} processed:{count_processed}")
+        derived_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted,count_processed,count_waiting)
+        print(f"\tSession ({session.title}) status set to {derived_status} given the following task instance statuses:\n\t\tfailed:{count_failed} running:{count_running} completed:{count_completed} not started:{count_notstarted} processed:{count_processed} waiting:{count_waiting}")
         session.field_status=derived_status
         subject=session.subject()                        
 
@@ -1002,6 +1003,7 @@ def cascade_status_to_subject(node_uuid):
         count_completed=0
         count_notstarted=0
         count_processed=0
+        count_waiting=0
 
         ses_col=SessionCollection(cms_host=crush_host,subject=subject)
         sessions_for_subject=ses_col.get()
@@ -1015,14 +1017,17 @@ def cascade_status_to_subject(node_uuid):
             if sessions_for_subject[sess].field_status=='failed':
                 count_failed+=1
                 continue
+            if sessions_for_subject[sess].field_status=='waiting':
+                count_waiting+=1
+                continue            
             count_notstarted+=1
         
-        derived_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted,count_processed)
-        print(f"Subject ({subjects_of_attached_sessions[subject].title}) status set to {derived_status} due to the following session statuses:\n\t\tfailed:{count_failed}, running:{count_running}, completed:{count_completed}, not started:{count_notstarted}, processed:{count_processed}")
+        derived_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted,count_processed,count_waiting)
+        print(f"Subject ({subjects_of_attached_sessions[subject].title}) status set to {derived_status} due to the following session statuses:\n\t\tfailed:{count_failed}, running:{count_running}, completed:{count_completed}, not started:{count_notstarted}, processed:{count_processed}, waiting: {count_waiting}")
         subjects_of_attached_sessions[subject].field_status=derived_status
         subjects_of_attached_sessions[subject].upsert()
 
-def derive_parent_status(failed,running,completed,notstarted,processed):
+def derive_parent_status(failed,running,completed,notstarted,processed,waiting):
     
     if processed > 0 and failed==0 and running==0 and completed==0 and notstarted==0:
         #All session operations are done for this subject, time to push up to data commons
@@ -1048,6 +1053,8 @@ def derive_parent_status(failed,running,completed,notstarted,processed):
             return "completed"
         else:
             return "waiting"
+    if waiting>0:
+        return "waiting"
 
     return "notstarted"
 
