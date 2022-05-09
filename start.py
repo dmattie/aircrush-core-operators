@@ -682,8 +682,8 @@ def check_running_jobs(node_uuid):
                                 updateStatus(tis[ti],"failed")    
                                  
                 reviewed_tis=reviewed_tis-1
-            except Exception as e:
-                print(f"{FAIL}[ERROR]{ENDC} Failed to execute seff, {e}")
+            except Exception as e:                
+                raise(f"{FAIL}[ERROR]{ENDC} Failed to execute seff, {e}")
     if reviewed_tis > 0:
         print(f"\t{reviewed_tis} jobs not accounted for")
     else:
