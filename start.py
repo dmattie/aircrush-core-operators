@@ -271,7 +271,7 @@ def _rsync_get(**kwargs):
     else:
         source=f"{data_transfer_node}:{source}"
 
-    rsync_cmd=["rsync","-rvvhP","--ignore-missing-args", f"{source}",f"{target}"]      
+    rsync_cmd=["rsync","-ra","--ignore-missing-args", f"{source}",f"{target}"]      
     print(rsync_cmd)      
     ret,out = getstatusoutput(rsync_cmd)
     if ret!=0:
@@ -298,7 +298,7 @@ def _rsync_put(**kwargs):
 
     target=f"{data_transfer_node}:{target}"
 
-    rsync_cmd=["rsync","-rvvhP","--ignore-missing-args", f"{source}",f"{target}"]      
+    rsync_cmd=["rsync","-ra","--ignore-missing-args", f"{source}",f"{target}"]      
     print(f"\t{rsync_cmd}")      
     ret,out = getstatusoutput(rsync_cmd)
     if ret!=0:
