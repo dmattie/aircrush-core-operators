@@ -87,7 +87,7 @@ def getMyComputeNodeUUID():
     nuid=n.upsert()
     
     #Is this node ready for work?    
-    readystate=n.isReady(skip_tests=args.skip_tests)    
+    readystate=n.isReady(skip_tests=args.skiptests)    
     return nuid,readystate
 
 
