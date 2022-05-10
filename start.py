@@ -651,6 +651,7 @@ def check_running_jobs(node_uuid):
         print(f"Checking for status on {active_tis} jobs thought to be running on this compute node.")
     for ti in tis:        
         if tis[ti].field_jobid:
+            print(f"Checking job {tis[ti].field_jobid}...",end='')
             #seff_cmd=f"/usr/bin/local/seff {tis[ti].field_jobid}"
             seff_cmd=['seff',f"{tis[ti].field_jobid}"]           
             try:
@@ -729,9 +730,9 @@ def check_running_jobs(node_uuid):
             except Exception as e:                
                 raise Exception(f"{FAIL}[ERROR]{ENDC} Failed to execute seff, {e}")
     if reviewed_tis > 0:
-        print(f"\t{reviewed_tis} jobs not accounted for")
+        print(f"{reviewed_tis} jobs not accounted for")
     else:
-        print("\tAll running jobs on this node accounted for and updated in CMS")
+        print("All running jobs on this node accounted for and updated in CMS")
 def _ti_oom(seff_stdout):
     lines=seff_stdout
     for line in lines:
@@ -1049,7 +1050,7 @@ def cascade_status_to_subject(node_uuid):
                 pipelines[tis_for_session[ti].field_pipeline]=tis_for_session[ti].pipeline()
 
         derived_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted,count_processed,count_waiting,count_limping)
-        print(f"\tSession ({session.title}) status set to {derived_status} given the following task instance statuses:\n\t\tfailed:{count_failed} running:{count_running} completed:{count_completed} not started:{count_notstarted} processed:{count_processed} waiting:{count_waiting} limping:{count_limping}")
+        print(f"\tSession ({session.title}) status set to {OKCYAN}{derived_status}{ENDC} given the following task instance statuses:\n\t\tfailed:{count_failed} running:{count_running} completed:{count_completed} not started:{count_notstarted} processed:{count_processed} waiting:{count_waiting} limping:{count_limping}")
         session.field_status=derived_status
         subject=session.subject()                        
 
@@ -1099,7 +1100,7 @@ def cascade_status_to_subject(node_uuid):
             count_notstarted+=1
         
         derived_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted,count_processed,count_waiting,count_limping)
-        print(f"Subject ({subjects_of_attached_sessions[subject].title}) status set to {derived_status} due to the following session statuses:\n\t\tfailed:{count_failed}, running:{count_running}, completed:{count_completed}, not started:{count_notstarted}, processed:{count_processed}, waiting: {count_waiting}, limping:{count_limping}")
+        print(f"Subject ({subjects_of_attached_sessions[subject].title}) status set to {OKCYAN}{derived_status}{ENDC} due to the following session statuses:\n\t\tfailed:{count_failed}, running:{count_running}, completed:{count_completed}, not started:{count_notstarted}, processed:{count_processed}, waiting: {count_waiting}, limping:{count_limping}")
         subjects_of_attached_sessions[subject].field_status=derived_status
         subjects_of_attached_sessions[subject].upsert()
 
