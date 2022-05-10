@@ -438,13 +438,14 @@ def parameter_expansion(cmdArray,parms_to_add,**kwargs):
     for k in parms_to_add:   
 
         parm= parms_to_add[k]
-        parm = parm.replace("#workingdir",workingdir)
-        parm = parm.replace("#datacommons",datacommons)
-        parm = parm.replace("#pipeline",pipeline.field_id)
-        parm = parm.replace("#subject",subject.title)
-        parm = parm.replace("#session",session.title)
-        parm = parm.replace('#project',project.field_path_to_exam_data)
-        parm = parm.replace('#datasetdir',f"{workingdir}/projects/{project.field_path_to_exam_data}/datasets/")
+        if parm is not None:
+            parm = parm.replace("#workingdir",workingdir)
+            parm = parm.replace("#datacommons",datacommons)
+            parm = parm.replace("#pipeline",pipeline.field_id)
+            parm = parm.replace("#subject",subject.title)
+            parm = parm.replace("#session",session.title)
+            parm = parm.replace('#project',project.field_path_to_exam_data)
+            parm = parm.replace('#datasetdir',f"{workingdir}/projects/{project.field_path_to_exam_data}/datasets/")
 
         if not k[0:7]=="sbatch-":
             cmdArray.append(f"--{k}")
@@ -549,6 +550,7 @@ def getMultipliers(ti_uuid:str):
 
 def createJob(cmdArray,parms_to_add,**kwargs):
     
+
     taskinstance_uid=kwargs['taskinstance_uid'] if 'taskinstance_uid' in kwargs else None
     project=kwargs['project'].field_path_to_exam_data if 'project' in kwargs else ""        
     subject=kwargs['subject'].title if 'subject' in kwargs else ""        
