@@ -86,8 +86,8 @@ def getMyComputeNodeUUID():
     n = ComputeNode(metadata=metadata)    
     nuid=n.upsert()
     
-    #Is this node ready for work?
-    readystate=n.isReady()    
+    #Is this node ready for work?    
+    readystate=n.isReady(skip_tests=args.skip_tests)    
     return nuid,readystate
 
 
@@ -1172,6 +1172,8 @@ def main():
         help='A comma separated list of directories that should be bound to the singularity container so files are accessible to the container')
     parser.add_argument('-statusonly',action='store_true',
         help="Update the status of running jobs, do not invoke more work")
+    parser.add_argument('-skiptests',action='store_true',
+        help="Skip pre-req tests e.g. (available disk check, concurrency limits), etc.")
     args = parser.parse_args()
 
     print("Validating configuration")
