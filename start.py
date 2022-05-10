@@ -680,7 +680,7 @@ def check_running_jobs(node_uuid):
                                 tis[ti].field_multiplier_duration=tis[ti].field_multiplier_duration+0.5
                             print("\tAllocated time was exhausted.  Extending to {tis[ti].field_multiplier_duration} times specified wall time.")
                         if status=="OUT_OF_MEMORY":
-			    if tis[ti].field_multiplier_memory is None:
+                            if tis[ti].field_multiplier_memory is None:
                                 tis[ti].field_multiplier_memory=1.5
                             else:
                                 tis[ti].field_multiplier_memory=tis[ti].field_multiplier_memory+0.5
