@@ -449,7 +449,8 @@ def parameter_expansion(cmdArray,parms_to_add,**kwargs):
 
         if not k[0:7]=="sbatch-":
             cmdArray.append(f"--{k}")
-            cmdArray.append(parm) 
+            if parm is not None:
+                cmdArray.append(parm) 
    
     return cmdArray
 # def ini_settings():
