@@ -672,19 +672,29 @@ def check_running_jobs(node_uuid):
                             tis[ti].body=log_contents
 
                         updateStatus(tis[ti],"completed")
-                    if status=='FAILED' or status=="TIMEOUT":
+                    elif status=="OUT_OF_MEMORY":
+                        if tis[ti].field_logfile and os.path.isfile(tis[ti].field_logfile):
+                            logfile = open(tis[ti].field_logfile,'r')
+
+                            log_contents = logfile.read()
+                            if len(log_contents)>2000:
+                                log_contents=f"log file has been truncated.  see output log for complete detail\n\n{log_contents[-2000:]}"                            
+                            tis[ti].body=log_contents
+                                                
+                        if tis[ti].field_multiplier_memory is None:
+                            tis[ti].field_multiplier_memory=1.5
+                        else:
+                            tis[ti].field_multiplier_memory=tis[ti].field_multiplier_memory+0.5
+                        print("\tAllocated memory was exhausted.  Extending to {tis[ti].field_multiplier_memory} times specified memory allocation.")  
+                        updateStatus(tis[ti],"failed")  
+
+                    elif status=='FAILED' or status=="TIMEOUT":
                         if status=="TIMEOUT":
                             if tis[ti].field_multiplier_duration is None:
                                 tis[ti].field_multiplier_duration=1.5                                
                             else:
                                 tis[ti].field_multiplier_duration=tis[ti].field_multiplier_duration+0.5
-                            print("\tAllocated time was exhausted.  Extending to {tis[ti].field_multiplier_duration} times specified wall time.")
-                        if status=="OUT_OF_MEMORY":
-                            if tis[ti].field_multiplier_memory is None:
-                                tis[ti].field_multiplier_memory=1.5
-                            else:
-                                tis[ti].field_multiplier_memory=tis[ti].field_multiplier_memory+0.5
-                            print("\tAllocated memory was exhausted.  Extending to {tis[ti].field_multiplier_memory} times specified memory allocation.")
+                            print("\tAllocated time was exhausted.  Extending to {tis[ti].field_multiplier_duration} times specified wall time.")                        
                         if status=="CANCELLED":
                             #Check for Out-of-memory
                             if _ti_oom(ret.stdout)==True:
@@ -713,7 +723,8 @@ def check_running_jobs(node_uuid):
                                 tis[ti].field_remaining_retries-=1
                                 tis[ti].field_seff=ret.stdout
                                 updateStatus(tis[ti],"failed")    
-                                 
+                    else: #UNRECOGNIZED SEFF STATUS
+                        print(f"{WARNING}UNKNOWN SEFF STATUS ({status}){ENDC} Nothing will be done.")                               
                 reviewed_tis=reviewed_tis-1
             except Exception as e:                
                 raise Exception(f"{FAIL}[ERROR]{ENDC} Failed to execute seff, {e}")
