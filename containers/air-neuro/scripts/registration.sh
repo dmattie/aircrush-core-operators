@@ -141,13 +141,17 @@ fi
 if [[ $OVERWRITE -eq 1 ]];then
     rm --force $TARGET/registration/*
     rm --force $TARGET/reg2brain.data.nii.gz  
-    rmdir --force $TARGET/registration 
+    if [[ -d $TARGET/registration ]];then
+        rmdir $TARGET/registration
+    fi
 fi
 
 if [[ -f $TARGET/reg2brain.data.nii.gz ]];then
     echo "Existing registration detected ($TARGET/reg2brain.data.nii.gz) and --overwrite not specified.  Cleaning up any residual files and Skipping registration."
     rm --force $TARGET/registration/*
-    rmdir --force $TARGET/registration 
+    if [[ -d $TARGET/registration ]];then
+        rmdir $TARGET/registration
+    fi        
     exit 0
 fi
 
