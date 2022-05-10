@@ -685,7 +685,7 @@ def check_running_jobs(node_uuid):
                         if tis[ti].field_multiplier_memory is None:
                             tis[ti].field_multiplier_memory=1.5
                         else:
-                            tis[ti].field_multiplier_memory=tis[ti].field_multiplier_memory+0.5
+                            tis[ti].field_multiplier_memory=float(tis[ti].field_multiplier_memory)+0.5
                         print("\tAllocated memory was exhausted.  Extending to {tis[ti].field_multiplier_memory} times specified memory allocation.")  
                         updateStatus(tis[ti],"failed")  
 
