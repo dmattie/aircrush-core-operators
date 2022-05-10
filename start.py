@@ -564,11 +564,13 @@ def createJob(cmdArray,parms_to_add,**kwargs):
 
     duration_multiplier,memory_multiplier=getMultipliers(taskinstance_uid)
     try:        
-        if parse_size(sbatch_mem_per_cpu) != 0:
+        if parse_size(sbatch_mem_per_cpu) != 0 and memory_multiplier is not None:
+            print(f"Attempting resize of memory from {parse_size(sbatch_mem_per_cpu)} ({sbatch_mem_per_cpu}) by {memory_multiplier} times multiplier.")
             sbatch_mem_per_cpu=parse_size(sbatch_mem_per_cpu) * memory_multiplier
             sbatch_mem_per_cpu=format_size(sbatch_mem_per_cpu) 
             print("{OKGREEN}AUTO TUNE{ENDC}: Memory has been automatically incremented after detecting previous OOM errors.  New memory requirement is {sbatch_mem_per_cpu}")           
-    except:
+    except Exception as e:
+        print(f"{WARNING} Failed to adjust memory{ENDC} ({e})")
         pass
     
     try:        
@@ -686,7 +688,7 @@ def check_running_jobs(node_uuid):
                             tis[ti].field_multiplier_memory=1.5
                         else:
                             tis[ti].field_multiplier_memory=float(tis[ti].field_multiplier_memory)+0.5
-                        print("\tAllocated memory was exhausted.  Extending to {tis[ti].field_multiplier_memory} times specified memory allocation.")  
+                        print(f"\tAllocated memory was exhausted.  Extending to {tis[ti].field_multiplier_memory} times specified memory allocation.")  
                         updateStatus(tis[ti],"failed")  
 
                     elif status=='FAILED' or status=="TIMEOUT":
