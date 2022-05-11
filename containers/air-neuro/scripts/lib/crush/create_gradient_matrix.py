@@ -37,7 +37,7 @@ else:
     print(args.imaging_model)
     transposed_csv.to_csv(args.out,header=False,index=False)
 print("Creating number of measurement points datafile")
-f = open(f"{args.out}.directions", "a")
+f = open(f"{args.out}.directions", "w")
 f.write(f"{transposed_csv.shape[0]}")
 f.close()
 print(f"{transposed_csv.shape[0]} measurement points")
