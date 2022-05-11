@@ -1098,7 +1098,7 @@ def cascade_status_to_subject(node_uuid):
         if subject == None or project == None:
             print(f"\tSession {session.title} is orphaned, please conduct a health check.\n\tSubject:{subject}\n\tProject:{project}  Skipping")
             continue
-        print(f"Synchronizing {project.title}:{subject.title}/{session.title} with status [{session.field_status}]:\n\t\tTasks | failed:{count_failed} running:{count_running} completed:{count_completed} not started:{count_notstarted} processed:{count_processed} waiting:{count_waiting} limping:{count_limping}")
+        print(f"Synchronizing {project.title}:{subject.title}/{session.title} with status [{session.field_status}] (failed:{count_failed} running:{count_running} completed:{count_completed} not started:{count_notstarted} processed:{count_processed} waiting:{count_waiting} limping:{count_limping})")
         if session.field_status=='processed' or session.field_status=='completed':
             #push_data("rawdata",project,subject,session)      
             #              
