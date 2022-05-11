@@ -1024,7 +1024,7 @@ def updateStatus(task_instance,status:str,detail:str="",new_errors:str=""):
     uuid=task_instance.upsert()
     
 def _count_session_ti_states(session:Session):
-    states={'completed':0,'processed':0,'running':0,'failed':0,'waiting':0,'limping':0}
+    states={'completed':0,'processed':0,'running':0,'failed':0,'waiting':0,'limping':0,'notstarted':0}
     pipelines={}
     ti_col=TaskInstanceCollection(cms_host=crush_host,session=session.uuid)
     tis_for_session=ti_col.get()
@@ -1040,7 +1040,10 @@ def _count_session_ti_states(session:Session):
         elif tis_for_session[ti].field_status=='waiting':
             states['waiting']+=1
         elif tis_for_session[ti].field_status=='limping':
-            states['limping']+=1                    
+            states['limping']+=1    
+        else:
+            states['notstarted']+=1
+            
         if tis_for_session[ti].field_pipeline:
             pipelines[tis_for_session[ti].field_pipeline]=tis_for_session[ti].pipeline()
     return states,pipelines
