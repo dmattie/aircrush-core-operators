@@ -40,17 +40,17 @@ def set_ti_status(uuid:str, status:str):
     ti_col=TaskInstanceCollection(cms_host=crush_host)
     if ti_col is not None:
         ti=ti_col.get_one(uuid)        
-        ti.field_status=status
-        ti.upsert()
         print(f"{ti.title}\n\tOld Status:{ti.field_status}\n\tNew Status:{status}")
+        ti.field_status=status
+        ti.upsert()        
         print("Update Complete")
 def set_ti_memory_multiplier(uuid:str, val:str):
     ti_col=TaskInstanceCollection(cms_host=crush_host)
     if ti_col is not None:
-        ti=ti_col.get_one(uuid)        
+        ti=ti_col.get_one(uuid)  
+        print(f"{ti.title}\n\tOld Memory Multiplier:{ti.field_memory_multiplier}\n\tNew Memory Multiplier:{val}")      
         ti.field_memory_multiplier=val
-        ti.upsert()
-        print(f"{ti.title}\n\tOld Memory Multiplier:{ti.field_memory_multiplier}\n\tNew Memory Multiplier:{val}")
+        ti.upsert()        
         print("Update Complete")        
 
 if __name__ == '__main__':
