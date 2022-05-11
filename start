@@ -87,6 +87,9 @@ def getMyComputeNodeUUID():
     nuid=n.upsert()
     
     #Is this node ready for work?    
+    if args.statusonly:
+        return nuid,True
+    
     readystate=n.isReady(skip_tests=args.skiptests)    
     return nuid,readystate
 
@@ -792,11 +795,7 @@ def validate_config():
 def doSomething():
     
     #nuid = "4d065840-dd33-44dc-be97-623e7d743bce" #dmattie on narval
-    nuid,isready = getMyComputeNodeUUID()
-
-    if not isready:
-        print("This worker node is not ready to do more.")
-        return    
+    nuid,isready = getMyComputeNodeUUID() 
     
     print(f"{HEADER}Updating sessions allocated to this worker{ENDC}")
     check_running_jobs(nuid)
@@ -805,7 +804,10 @@ def doSomething():
     if args.statusonly:
         return
 
-    
+    if not isready:
+        print("This worker node is not ready to do more.")
+        return   
+
     print(f"{HEADER}Allocating new tasks{ENDC}")
     w=Workload(aircrush) #The list of things to do
     
