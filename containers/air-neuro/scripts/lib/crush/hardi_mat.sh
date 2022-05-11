@@ -31,7 +31,7 @@ f_hardi_mat()
     echo "Calculating reconstruction matrix from gradient table"
 
     if [[ ! -f $matrix ]];then
-        >&2 echo "hardi_mat:gradient atrix file missing[$matrix]."     
+        >&2 echo "hardi_mat:gradient matrix file missing[$matrix]."     
         return 1   
     fi
     if [[ $imaging_model != "dti" && $imaging_model != "qball" ]];then

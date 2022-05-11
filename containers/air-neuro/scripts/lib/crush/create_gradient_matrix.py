@@ -40,5 +40,5 @@ print("Creating number of measurement points datafile")
 f = open(f"{args.out}.directions", "a")
 f.write(f"{transposed_csv.shape[0]}")
 f.close()
-
+print(f"{transposed_csv.shape[0]} measurement points")
         
