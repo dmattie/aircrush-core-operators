@@ -17,9 +17,9 @@ import ast
 import subprocess
 import argparse
 import socket
-from humanfriendly import format_size, parse_size
+from humanfriendly import parse_size
+from util.setup import ini_settings
 from util.conversion import millify
-from util.setup import ini_settings,conversion
 
 aircrush=None
 crush_host=None
