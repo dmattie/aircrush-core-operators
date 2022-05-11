@@ -15,7 +15,7 @@ def remove_exponent(d):
 
 def millify(n, precision=0, drop_nulls=True, prefixes=[]):
     """Humanize number."""
-    millnames = ['', 'k', 'M', 'B', 'T', 'P', 'E', 'Z', 'Y']
+    millnames = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y']
     if prefixes:
         millnames = ['']
         millnames.extend(prefixes)
