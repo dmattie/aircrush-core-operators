@@ -17,7 +17,6 @@ import ast
 import subprocess
 import argparse
 import socket
-from graphviz import pipe_lines
 from humanfriendly import format_size, parse_size
 from util.setup import ini_settings
 
