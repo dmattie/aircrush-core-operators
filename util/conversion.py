@@ -1,3 +1,7 @@
+import math
+import re
+from decimal import Decimal
+
 def millify(n, precision=0, drop_nulls=True, prefixes=[]):
     """Humanize number."""
     millnames = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y']
