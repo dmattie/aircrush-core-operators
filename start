@@ -17,6 +17,7 @@ import ast
 import subprocess
 import argparse
 import socket
+from graphviz import pipe_lines
 from humanfriendly import format_size, parse_size
 from util.setup import ini_settings
 
@@ -902,8 +903,21 @@ def doSomething():
                 print(f"Pulling any necessary data for operation") 
 
                 #pull_data("source",project,subject,session)
-                pull_data("rawdata",project,subject,session)
-                pull_data("derivatives",project,subject,session)
+
+                states,pipelines = _count_session_ti_states(session)
+
+                count_running=states['running']
+                count_failed=states['failed']
+                count_completed=states['completed']
+                count_notstarted=states['notstarted']
+                count_processed=states['processed']
+                count_waiting=states['waiting']
+                count_limping=states['limping']
+
+                if count_completed==0 and count_running==0 and count_processed==0 and count_limping==0:
+                    print("No obvious successful retrieval of this session from the data commons. Fetching now...")
+                    pull_data("rawdata",project,subject,session)
+                    pull_data("derivatives",project,subject,session)
                 #            
                 # for k in parms:
                 #     if parms[k]=="source":
@@ -1010,6 +1024,28 @@ def updateStatus(task_instance,status:str,detail:str="",new_errors:str=""):
     print(f"Updating job status to CMS:{task_instance.field_jobid} ({task_instance.title} =>{status}")
     uuid=task_instance.upsert()
     
+def _count_session_ti_states(session:Session):
+    states={'completed':0,'processed':0,'running':0,'failed':0,'waiting':0,'limping':0}
+    pipelines={}
+    ti_col=TaskInstanceCollection(cms_host=crush_host,session=session.uuid)
+    tis_for_session=ti_col.get()
+    for ti in tis_for_session:
+        if tis_for_session[ti].field_status=='completed':
+            states['completed']+=1
+        elif tis_for_session[ti].field_status=='processed':
+            states['processed']+=1            
+        elif tis_for_session[ti].field_status=='running':
+            states['running']+=1
+        elif tis_for_session[ti].field_status=='failed':
+            states['failed']+=1
+        elif tis_for_session[ti].field_status=='waiting':
+            states['waiting']+=1
+        elif tis_for_session[ti].field_status=='limping':
+            states['limping']+=1                    
+        if tis_for_session[ti].field_pipeline:
+            pipelines[tis_for_session[ti].field_pipeline]=tis_for_session[ti].pipeline()
+    return states,pipelines
+
 
 def cascade_status_to_subject(node_uuid):
     node_col=ComputeNodeCollection(cms_host=crush_host);
@@ -1024,35 +1060,35 @@ def cascade_status_to_subject(node_uuid):
     subjects_of_attached_sessions={}
     for session_uuid in attached_sessions:
 
-        session=attached_sessions[session_uuid]
-        count_running=0
-        count_failed=0
-        count_completed=0
-        count_notstarted=0   
-        count_processed=0   
-        count_waiting=0  
-        count_limping=0
+        session=attached_sessions[session_uuid]        
 
-        pipelines={}
+        states,pipelines = _count_session_ti_states(session)
 
-        ti_col=TaskInstanceCollection(cms_host=crush_host,session=session.uuid)
-        tis_for_session=ti_col.get()
-        for ti in tis_for_session:
-            if tis_for_session[ti].field_status=='completed':
-                count_completed+=1
-                continue
-            if tis_for_session[ti].field_status=='processed':
-                count_processed+=1
-                continue            
-            if tis_for_session[ti].field_status=='running':
-                count_running+=1
-                continue
-            if tis_for_session[ti].field_status=='failed':
-                count_failed+=1
-                continue
-            count_notstarted+=1
-            if tis_for_session[ti].field_pipeline:
-                pipelines[tis_for_session[ti].field_pipeline]=tis_for_session[ti].pipeline()
+        count_running=states['running']
+        count_failed=states['failed']
+        count_completed=states['completed']
+        count_notstarted=states['notstarted']
+        count_processed=states['processed']
+        count_waiting=states['waiting']
+        count_limping=states['limping']
+        # ti_col=TaskInstanceCollection(cms_host=crush_host,session=session.uuid)
+        # tis_for_session=ti_col.get()
+        # for ti in tis_for_session:
+        #     if tis_for_session[ti].field_status=='completed':
+        #         count_completed+=1
+        #         continue
+        #     if tis_for_session[ti].field_status=='processed':
+        #         count_processed+=1
+        #         continue            
+        #     if tis_for_session[ti].field_status=='running':
+        #         count_running+=1
+        #         continue
+        #     if tis_for_session[ti].field_status=='failed':
+        #         count_failed+=1
+        #         continue
+        #     count_notstarted+=1
+        #     if tis_for_session[ti].field_pipeline:
+        #         pipelines[tis_for_session[ti].field_pipeline]=tis_for_session[ti].pipeline()
 
         derived_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted,count_processed,count_waiting,count_limping)
         print(f"\tSession ({session.title}) status set to {OKCYAN}{derived_status}{ENDC} given the following task instance statuses:\n\t\tfailed:{count_failed} running:{count_running} completed:{count_completed} not started:{count_notstarted} processed:{count_processed} waiting:{count_waiting} limping:{count_limping}")
