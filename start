@@ -587,7 +587,7 @@ def createJob(cmdArray,parms_to_add,**kwargs):
             #print(f"memory_multiplier {memory_multiplier} is of type {type(memory_multiplier)}")
             sbatch_mem_per_cpu=parse_size(sbatch_mem_per_cpu) * memory_multiplier            
             sbatch_mem_per_cpu=millify(sbatch_mem_per_cpu) 
-            print("{OKGREEN}AUTO TUNE{ENDC}: Memory has been automatically incremented after detecting previous OOM errors.  New memory requirement is {sbatch_mem_per_cpu}")           
+            print(f"{OKGREEN}AUTO TUNE{ENDC}: Memory has been automatically incremented after detecting previous OOM errors.  New memory requirement is {sbatch_mem_per_cpu}")           
     except Exception as e:
         print(f"{WARNING} Failed to adjust memory{ENDC} ({e})")
         print(f"sbatch_mem_per_cpu:{sbatch_mem_per_cpu}\n sbatch_mem_per_cpu formatted:{millify(sbatch_mem_per_cpu)}")
