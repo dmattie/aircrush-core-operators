@@ -730,7 +730,7 @@ def check_running_jobs(node_uuid):
                                 tis[ti].field_seff=ret.stdout
                                 updateStatus(tis[ti],"failed")  
                     elif status=='RUNNING':
-                        print(f"{OKCYAN}{status}){ENDC} Nothing will be done.")                               
+                        print(f"{OKCYAN}{status}{ENDC} Nothing will be done.")                               
                     else: #UNRECOGNIZED SEFF STATUS
                         print(f"{WARNING}UNKNOWN SEFF STATUS ({status}){ENDC} Nothing will be done.")                               
                 reviewed_tis=reviewed_tis-1
