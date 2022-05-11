@@ -1088,27 +1088,7 @@ def cascade_status_to_subject(node_uuid):
         count_processed=states['processed']
         count_waiting=states['waiting']
         count_limping=states['limping']
-        # ti_col=TaskInstanceCollection(cms_host=crush_host,session=session.uuid)
-        # tis_for_session=ti_col.get()
-        # for ti in tis_for_session:
-        #     if tis_for_session[ti].field_status=='completed':
-        #         count_completed+=1
-        #         continue
-        #     if tis_for_session[ti].field_status=='processed':
-        #         count_processed+=1
-        #         continue            
-        #     if tis_for_session[ti].field_status=='running':
-        #         count_running+=1
-        #         continue
-        #     if tis_for_session[ti].field_status=='failed':
-        #         count_failed+=1
-        #         continue
-        #     count_notstarted+=1
-        #     if tis_for_session[ti].field_pipeline:
-        #         pipelines[tis_for_session[ti].field_pipeline]=tis_for_session[ti].pipeline()
-
-        derived_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted,count_processed,count_waiting,count_limping)
-        print(f"\tSession ({session.title}) status set to {OKCYAN}{derived_status}{ENDC} given the following task instance statuses:\n\t\tfailed:{count_failed} running:{count_running} completed:{count_completed} not started:{count_notstarted} processed:{count_processed} waiting:{count_waiting} limping:{count_limping}")
+        derived_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted,count_processed,count_waiting,count_limping)        
         session.field_status=derived_status
         subject=session.subject()                        
 
@@ -1118,7 +1098,7 @@ def cascade_status_to_subject(node_uuid):
         if subject == None or project == None:
             print(f"\tSession {session.title} is orphaned, please conduct a health check.\n\tSubject:{subject}\n\tProject:{project}  Skipping")
             continue
-        print(f"Synchronizing {project.title}:{subject.title}/{session.title} with status [{session.field_status}]")
+        print(f"Synchronizing {project.title}:{subject.title}/{session.title} with status [{session.field_status}]:\n\t\tTasks | failed:{count_failed} running:{count_running} completed:{count_completed} not started:{count_notstarted} processed:{count_processed} waiting:{count_waiting} limping:{count_limping}")
         if session.field_status=='processed' or session.field_status=='completed':
             #push_data("rawdata",project,subject,session)      
             #              
