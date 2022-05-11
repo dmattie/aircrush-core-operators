@@ -573,6 +573,8 @@ def createJob(cmdArray,parms_to_add,**kwargs):
         if parse_size(sbatch_mem_per_cpu) != 0 and memory_multiplier is not None:
             print(f"Attempting resize of memory from {parse_size(sbatch_mem_per_cpu)} ({sbatch_mem_per_cpu}) by {memory_multiplier} times multiplier.")
             print(f"Resizing {sbatch_mem_per_cpu} by {memory_multiplier}")
+            print(f"parse_size(sbatch_mem_per_cpu) {parse_size(sbatch_mem_per_cpu)} is of type {type(parse_size(sbatch_mem_per_cpu))}")
+            print(f"memory_multiplier {memory_multiplier} is of type {type(memory_multiplier)}")
             sbatch_mem_per_cpu=parse_size(sbatch_mem_per_cpu) * memory_multiplier
             print('x')
             sbatch_mem_per_cpu=format_size(sbatch_mem_per_cpu) 
