@@ -728,7 +728,9 @@ def check_running_jobs(node_uuid):
                             else:
                                 tis[ti].field_remaining_retries-=1
                                 tis[ti].field_seff=ret.stdout
-                                updateStatus(tis[ti],"failed")    
+                                updateStatus(tis[ti],"failed")  
+                    elif status=='RUNNING':
+                        print(f"{OKCYAN}{status}){ENDC} Nothing will be done.")                               
                     else: #UNRECOGNIZED SEFF STATUS
                         print(f"{WARNING}UNKNOWN SEFF STATUS ({status}){ENDC} Nothing will be done.")                               
                 reviewed_tis=reviewed_tis-1
@@ -999,7 +1001,7 @@ def doSomething():
             #op = op_class(id=todo.uuid,cms_host=crush_host) #instantiate it based on task instance    
         # op.execute(aircrush)  #Let's do this!
     else:
-        print("Nothing to do.")
+        print("{WARNING}Nothing to do.{ENDC}")
 
     # if(todo):  #Todo is a TaskInstance        
     #     print("-----------------------")        
@@ -1043,7 +1045,7 @@ def _count_session_ti_states(session:Session):
             states['limping']+=1    
         else:
             states['notstarted']+=1
-            
+
         if tis_for_session[ti].field_pipeline:
             pipelines[tis_for_session[ti].field_pipeline]=tis_for_session[ti].pipeline()
     return states,pipelines
