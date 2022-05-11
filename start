@@ -572,13 +572,17 @@ def createJob(cmdArray,parms_to_add,**kwargs):
     try:        
         if parse_size(sbatch_mem_per_cpu) != 0 and memory_multiplier is not None:
             print(f"Attempting resize of memory from {parse_size(sbatch_mem_per_cpu)} ({sbatch_mem_per_cpu}) by {memory_multiplier} times multiplier.")
+            print(f"Resizing {sbatch_mem_per_cpu} by {memory_multiplier}")
             sbatch_mem_per_cpu=parse_size(sbatch_mem_per_cpu) * memory_multiplier
+            print('x')
             sbatch_mem_per_cpu=format_size(sbatch_mem_per_cpu) 
             print("{OKGREEN}AUTO TUNE{ENDC}: Memory has been automatically incremented after detecting previous OOM errors.  New memory requirement is {sbatch_mem_per_cpu}")           
     except Exception as e:
         print(f"{WARNING} Failed to adjust memory{ENDC} ({e})")
-        pass
-    
+        print(f"sbatch_mem_per_cpu:{sbatch_mem_per_cpu}\n sbatch_mem_per_cpu formatted:{format_size(sbatch_mem_per_cpu)}")
+        raise e
+            
+            
     try:        
         if parse_size(sbatch_mem_per_cpu) != 0:
             sbatch_mem_per_cpu=parse_size(sbatch_mem_per_cpu) * memory_multiplier
