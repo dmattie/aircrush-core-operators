@@ -547,7 +547,7 @@ def getMultipliers(ti_uuid:str):
     if ti_col is not None:
         ti=ti_col.get_one(ti_uuid)
         if ti is not None:
-            return ti.field_multiplier_duration, ti.field_multiplier_memory
+            return float(ti.field_multiplier_duration), float(ti.field_multiplier_memory)
     return None,None
     
 
