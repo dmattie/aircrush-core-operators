@@ -48,8 +48,8 @@ def set_ti_memory_multiplier(uuid:str, val:str):
     ti_col=TaskInstanceCollection(cms_host=crush_host)
     if ti_col is not None:
         ti=ti_col.get_one(uuid)  
-        print(f"{ti.title}\n\tOld Memory Multiplier:{ti.field_memory_multiplier}\n\tNew Memory Multiplier:{val}")      
-        ti.field_memory_multiplier=val
+        print(f"{ti.title}\n\tOld Memory Multiplier:{ti.field_multiplier_memory}\n\tNew Memory Multiplier:{val}")      
+        ti.field_multiplier_memory=val
         ti.upsert()        
         print("Update Complete")        
 
