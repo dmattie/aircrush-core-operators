@@ -35,7 +35,7 @@ f_creategradientmatrix()
 
         ${SCRIPTPATH}/lib/crush/create_gradient_matrix.py -bvec $bvecs -out $matrix -imaging_model $imaging_model
 
-        if [[ ! -f $matrix ]];then
+        if [[ ! -f $matrix || ! $? -eq 0 ]];then
             >&2 echo "Gradient table ($matrix) could not be created from ($bvecs).  Unable to proceed."
             return 1
         fi
