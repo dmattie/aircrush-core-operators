@@ -141,17 +141,17 @@ fi
 
 echo "Cleaning house..."
 if [[ $OVERWRITE -eq 1 ]];then
-    rm $TARGET/hardi_mat*.dat 2> /dev/null #Clear hardi_mat output    
-    rm $TARGET/recon_out* 2> /dev/null # clear dti_recon output    
-    rm $TARGET/tracts.trk  2> /dev/null #clear dti_tracker/odf_tracker output
-    rm $TARGET/odf_tracker.log 2> /dev/null 
-    rm $TARGET/dti_tracker.log 2> /dev/null
-    rm $TARGET/RegTransform4D 2> /dev/null #clear flirt output
-    rm $TARGET/crush.trk 2> /dev/null #Clear track_transform output
-    rm $TARGET/crush_qball.trk 2> /dev/null #Clear track_transform output
-    rm $TARGET/crush_dti.trk 2> /dev/null #Clear track_transform output
-    rm $TARGET/gradientmatrix*.txt 2> /dev/null #Clean up old gradient matrix files
-    rm -r $TARGET/crush 2>/dev/null #Clean up old crush derived results
+    rm --force $TARGET/hardi_mat*.dat #Clear hardi_mat output    
+    rm --force $TARGET/recon_out*  # clear odf_recon output    
+    rm --force $TARGET/dti_recon_out* # clear dti_recon output        
+    rm --force $TARGET/odf_tracker.log  
+    rm --force $TARGET/dti_tracker.log 
+    rm --force $TARGET/RegTransform4D  #clear flirt output
+    rm --force $TARGET/crush.trk  #Clear track_transform output
+    rm --force $TARGET/crush_qball.trk  #Clear track_transform output
+    rm --force $TARGET/crush_dti.trk #Clear track_transform output
+    rm --force $TARGET/gradientmatrix*.txt  #Clean up old gradient matrix files
+    rm -r --force $TARGET/crush  #Clean up old crush derived results
 
     echo "Any previous output have been removed"
 fi

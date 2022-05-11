@@ -1001,7 +1001,7 @@ def doSomething():
             #op = op_class(id=todo.uuid,cms_host=crush_host) #instantiate it based on task instance    
         # op.execute(aircrush)  #Let's do this!
     else:
-        print("{WARNING}Nothing to do.{ENDC}")
+        print(f"{WARNING}Nothing to do.{ENDC}")
 
     # if(todo):  #Todo is a TaskInstance        
     #     print("-----------------------")        
