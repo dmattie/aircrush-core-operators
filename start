@@ -592,8 +592,6 @@ def createJob(cmdArray,parms_to_add,**kwargs):
         print(f"{WARNING} Failed to adjust memory{ENDC} ({e})")
         print(f"sbatch_mem_per_cpu:{sbatch_mem_per_cpu}\n sbatch_mem_per_cpu formatted:{millify(sbatch_mem_per_cpu)}")
         raise e
-            
-    sys.exit()
 
     try:        
         if parse_size(sbatch_mem_per_cpu) != 0:
