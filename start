@@ -561,7 +561,7 @@ def getMultipliers(ti_uuid:str):
     return None,None
     
 def derivative_dir(**kwargs):
-    project=kwargs['project'].field_path_to_exam_data if 'project' in kwargs else ""        
+    project=kwargs['project'] if 'project' in kwargs else ""        
     subject=kwargs['subject'] if 'subject' in kwargs else ""        
     session=kwargs['session'] if 'session' in kwargs else ""
     workingdir=kwargs['workingdir'] if 'workingdir' in kwargs else aircrush.config['COMPUTE']['working_directory']
