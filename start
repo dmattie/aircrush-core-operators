@@ -591,7 +591,9 @@ def create_overlay(**kwargs):
                                 session=session,
                                 pipeline=pipeline)
     overlay_file=f"{derivative}/{task.field_operator}_overlay.img"
-    if hint_overlay != "" and not os.path.isfile(overlay_file):
+    if hint_overlay != "": 
+        if os.path.isfile(overlay_file):
+            return overlay_file
         print("Creating overlay file...",end='',flush=True)
         ret = subprocess.run(f"apptainer overlay create --size {hint_overlay} {overlay_file}",   
                                 capture_output=True,
@@ -605,6 +607,7 @@ def create_overlay(**kwargs):
         else:
             print(f"{FAIL}[ERROR]{ENDC} Failed creating the requested overlay file {overlay_file} of size {hint_overlay} as defined in the task using hint_overlay parameter.")
             raise Exception(ret.stderr)
+        
 
 def createJob(cmdArray,parms_to_add,**kwargs):
     
