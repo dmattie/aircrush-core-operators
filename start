@@ -602,7 +602,7 @@ def create_overlay(**kwargs):
                                 timeout=600) #Overlay should create in under 10 minutes
               
         if ret.returncode==0:
-            print("{OKGREEN}done{ENDC}")
+            print(f"{OKGREEN}done{ENDC}")
             return overlay_file
         else:
             print(f"{FAIL}[ERROR]{ENDC} Failed creating the requested overlay file {overlay_file} of size {hint_overlay} as defined in the task using hint_overlay parameter.")
@@ -611,11 +611,11 @@ def create_overlay(**kwargs):
 
 def createJob(cmdArray,parms_to_add,**kwargs):
     
-
+    task=kwargs['task'] if 'task' in kwargs else None
     taskinstance_uid=kwargs['taskinstance_uid'] if 'taskinstance_uid' in kwargs else None
-    project=kwargs['project'].field_path_to_exam_data if 'project' in kwargs else ""        
-    subject=kwargs['subject'].title if 'subject' in kwargs else ""        
-    session=kwargs['session'].title if 'session' in kwargs else ""
+    project=kwargs['project'] if 'project' in kwargs else ""        
+    subject=kwargs['subject'] if 'subject' in kwargs else ""        
+    session=kwargs['session'] if 'session' in kwargs else ""
     workingdir=kwargs['workingdir'] if 'workingdir' in kwargs else aircrush.config['COMPUTE']['working_directory']
     datacommons=kwargs['datacommons'] if 'datacommons' in kwargs else aircrush.config['COMPUTE']['commons_path']
     pipeline=kwargs['pipeline'] if 'pipeline' in kwargs else ""
@@ -624,13 +624,6 @@ def createJob(cmdArray,parms_to_add,**kwargs):
     sbatch_account = aircrush.config['COMPUTE']['account']
     sbatch_cpus_per_task = parms_to_add['sbatch-cpus-per-task'] if 'sbatch-cpus-per-task' in parms_to_add else ""
     sbatch_mem_per_cpu = parms_to_add['sbatch-mem-per-cpu'] if 'sbatch-mem-per-cpu' in parms_to_add else ""
-
-   # hint_overlay = parms_to_add['hint-overlay'] if 'hint-overlay' in parms_to_add else ""
-
-    # if hint_overlay != "":
-    #     overlay_file = create_overlay(hint_overlay)
-    # else:
-    #     overlay_file = None
 
     duration_multiplier,memory_multiplier=getMultipliers(taskinstance_uid)
     try:        
@@ -652,19 +645,74 @@ def createJob(cmdArray,parms_to_add,**kwargs):
     # except:
     #     pass
 
-    if not os.path.exists(f"{workingdir}/jobs/{project}/{subject}"):
-        os.makedirs(f"{workingdir}/jobs/{project}/{subject}")
+    derivative=derivative_dir(workingdir=workingdir,
+                                project=project,
+                                subject=subject,
+                                session=session,
+                                pipeline=pipeline)
+    os.makedirs(derivative,exist_ok=True)
+    os.makedirs(f"{workingdir}/jobs/{project.field_path_to_exam_data}/{subject.title}",exist_ok=True)
 
     attempt=1
     
-    basefile=f"{workingdir}/jobs/{project}/{subject}/{session}_{taskinstance_uid}_{attempt}"
+    session_dir = f"{session.title}_" if session is not None else ""
+    
+    basefile=f"{workingdir}/jobs/{project.field_path_to_exam_data}/{subject.title}/{session_dir}{taskinstance_uid}_{attempt}"
+
     while os.path.isfile(f"{basefile}.sl"):
         attempt+=1
-        basefile=f"{workingdir}/jobs/{project}/{subject}/{session}_{taskinstance_uid}_{attempt}"
+        basefile=f"{workingdir}/jobs/{project.field_path_to_exam_data}/{subject.title}/{session_dir}{taskinstance_uid}_{attempt}"
 
     jobfile=f"{basefile}.sl"
     stdoutfile=f"{basefile}.out"
     stderrfile=f"{basefile}.err"
+
+    ########
+
+    hint_overlay = parms_to_add['hint-overlay'] if 'hint-overlay' in parms_to_add else ""  
+    if hint_overlay != "":
+        overlay_file=f"{derivative}/{task.field_operator}_overlay.img"
+        overlay_create_cmd="apptainer overlay create --size {hint_overlay} {overlay_file}"
+        overlay_command="--overlay"
+        workdir=f"{derivative}/temp"
+        workdir_command="--workdir"
+        os.makedirs(workdir,exist_ok=True)
+    else:
+        overlay_file=None
+        overlay_create_cmd=None
+        overlay_command=None
+        workdir=None
+        workdir_command=None
+    
+    # overlay_file = create_overlay(
+    #     task=task,                  
+    #     workingdir=workingdir,
+    #     project=project,
+    #     subject=subject,
+    #     session=session,
+    #     pipeline=pipeline,
+    #     hint_overlay=hint_overlay) if hint_overlay != "" else None                
+    # overlay_command = "--overlay" if overlay_file is not None else None
+    
+    # if overlay_command is not None:                    
+    #     workdir=derivative_dir(workingdir=workingdir,
+    #                 project=project,
+    #                 subject=subject,
+    #                 session=session,
+    #                 pipeline=pipeline)
+    #     workdir_command="--workdir"
+    # else:
+    #     workdir = None
+    #     workdir_command = None
+    #     os.makedirs(workdir,exist_ok=True)
+    
+    cmdArray=["singularity","run","--app",
+    task.field_operator,
+    overlay_command,overlay_file,
+    workdir_command,workdir,
+    bindings,container]
+
+    ########
 
     conf = open(jobfile, "w") 
     L = [
@@ -676,7 +724,9 @@ def createJob(cmdArray,parms_to_add,**kwargs):
         f"#SBATCH --cpus-per-task {sbatch_cpus_per_task}" if not sbatch_cpus_per_task=="" else "",
         f"#SBATCH --mem-per-cpu {sbatch_mem_per_cpu}" if not sbatch_mem_per_cpu=="" else "",
         "module load singularity/3.8",
+        overlay_create_cmd,
         ' '.join(cmdArray),
+        ""
     ]
     job_script = '\n'.join(L)
     conf.write(job_script) 
@@ -938,35 +988,7 @@ def doSomething():
                     
                     sys.exit(1)    
 
-                hint_overlay = parms['hint-overlay'] if 'hint-overlay' in parms else ""    
-                
-                overlay_file = create_overlay(
-                    task=task,                  
-                    workingdir=workingdir,
-                    project=project,
-                    subject=subject,
-                    session=session,
-                    pipeline=pipeline,
-                    hint_overlay=hint_overlay) if hint_overlay != "" else None                
-                overlay_command = "--overlay" if overlay_file is not None else None
-                
-                if overlay_command is not None:                    
-                    workdir=derivative_dir(workingdir=workingdir,
-                                project=project,
-                                subject=subject,
-                                session=session,
-                                pipeline=pipeline)
-                    workdir_command="--workdir"
-                else:
-                    workdir = None
-                    workdir_command = None
-                    os.makedirs(workdir,exist_ok=True)
-              
-                cmdArray=["singularity","run","--app",
-                task.field_operator,
-                overlay_command,overlay_file,
-                workdir_command,workdir,
-                bindings,container]   
+ #########   
                 
                 # ###### Let's check for any prerequisites before we start
                 # ###### E.g. if there is a large disk requirement and that has been set as a hint, check if disk is available first
@@ -1040,7 +1062,8 @@ def doSomething():
                     project=project,
                     subject=subject,
                     session=session,
-                    taskinstance_uid=todo.uuid)    
+                    taskinstance_uid=todo.uuid,
+                    task=task)    
     
                 sbatch_cmd=["sbatch",jobfiles['jobfile']]
                 print(sbatch_cmd)
