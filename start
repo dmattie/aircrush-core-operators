@@ -561,6 +561,39 @@ def getMultipliers(ti_uuid:str):
     return None,None
     
 
+def createOverlay(overlay_size,**kwargs):
+    taskinstance_uid=kwargs['taskinstance_uid'] if 'taskinstance_uid' in kwargs else None
+    project=kwargs['project'].field_path_to_exam_data if 'project' in kwargs else ""        
+    subject=kwargs['subject'].title if 'subject' in kwargs else ""        
+    session=kwargs['session'].title if 'session' in kwargs else ""
+    workingdir=kwargs['workingdir'] if 'workingdir' in kwargs else aircrush.config['COMPUTE']['working_directory']
+    pipeline=kwargs['pipeline'] if 'pipeline' in kwargs else ""
+    hint_overlay=kwargs['hint-overlay'] if 'hint-overlay' in kwargs else ""
+
+    ti_col =  TaskInstanceCollection(cms_host=crush_host)
+    ti = ti_col.get_one(uuid=taskinstance_uid)  
+    task=ti.task_definition()
+    
+
+    subject_dir=f"sub-{subject}"
+    session_dir=f"ses-{session}" if session != "" else ""
+   
+    
+    overlay_file=f"{workingdir}/projects/{project}/datasets/derivatives/{pipeline}/{subject_dir}/{session_dir}/{task}_overlay.img"
+    if hint_overlay != "" and not os.path.isfile(overlay_file):
+        ret = subprocess.run(f"apptainer overlay create --size {hint_overlay} {overlay_file}",   
+                                capture_output=True,
+                                text=True,                                
+                                timeout=600) #Overlay should create in under 10 minutes
+              
+        if ret.returncode==0:
+            return overlay_file
+        else:
+            print(f"{FAIL}[ERROR]{ENDC} Failed creating the requested overlay file {overlay_file} of size {hint_overlay} as defined in the task using hint_overlay parameter.")
+            raise Exception(ret.stderr)
+
+
+   
 
 def createJob(cmdArray,parms_to_add,**kwargs):
     
@@ -577,6 +610,11 @@ def createJob(cmdArray,parms_to_add,**kwargs):
     sbatch_account = aircrush.config['COMPUTE']['account']
     sbatch_cpus_per_task = parms_to_add['sbatch-cpus-per-task'] if 'sbatch-cpus-per-task' in parms_to_add else ""
     sbatch_mem_per_cpu = parms_to_add['sbatch-mem-per-cpu'] if 'sbatch-mem-per-cpu' in parms_to_add else ""
+
+    hint_overlay = parms_to_add['hint-overlay'] if 'hint-overlay' in parms_to_add else ""
+
+    if hint_overlay != "":
+        overlay_file = _create_overlay(hint_overlay)
 
     duration_multiplier,memory_multiplier=getMultipliers(taskinstance_uid)
     try:        
@@ -714,7 +752,7 @@ def check_running_jobs(node_uuid):
                                 tis[ti].field_multiplier_duration=1.5                                
                             else:
                                 tis[ti].field_multiplier_duration=float(tis[ti].field_multiplier_duration)+0.5
-                            print("\tAllocated time was exhausted.  Extending to {tis[ti].field_multiplier_duration} times specified wall time.")                        
+                            print(f"\tAllocated time was exhausted.  Extending to {tis[ti].field_multiplier_duration} times specified wall time.")                        
                         if status=="CANCELLED":
                             #Check for Out-of-memory
                             if _ti_oom(ret.stdout)==True:
