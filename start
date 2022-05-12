@@ -572,41 +572,41 @@ def derivative_dir(**kwargs):
     subject_dir=f"sub-{subject.title}" if subject is not None else ""
     return f"{workingdir}/projects/{project.field_path_to_exam_data}/datasets/derivatives/{pipeline.field_id}/{subject_dir}{session_dir}"
 
-def create_overlay(**kwargs):
+# def create_overlay(**kwargs):
     
-    task=kwargs['task'] if 'task' in kwargs else None
-    project=kwargs['project'] if 'project' in kwargs else ""        
-    subject=kwargs['subject'] if 'subject' in kwargs else ""        
-    session=kwargs['session'] if 'session' in kwargs else ""
-    workingdir=kwargs['workingdir'] if 'workingdir' in kwargs else aircrush.config['COMPUTE']['working_directory']
-    pipeline=kwargs['pipeline'] if 'pipeline' in kwargs else ""
-    hint_overlay=kwargs['hint_overlay'] if 'hint_overlay' in kwargs else ""
+#     task=kwargs['task'] if 'task' in kwargs else None
+#     project=kwargs['project'] if 'project' in kwargs else ""        
+#     subject=kwargs['subject'] if 'subject' in kwargs else ""        
+#     session=kwargs['session'] if 'session' in kwargs else ""
+#     workingdir=kwargs['workingdir'] if 'workingdir' in kwargs else aircrush.config['COMPUTE']['working_directory']
+#     pipeline=kwargs['pipeline'] if 'pipeline' in kwargs else ""
+#     hint_overlay=kwargs['hint_overlay'] if 'hint_overlay' in kwargs else ""
 
-    subject_dir=f"sub-{subject}"
-    session_dir=f"ses-{session}" if session != "" else ""
+#     subject_dir=f"sub-{subject}"
+#     session_dir=f"ses-{session}" if session != "" else ""
     
-    derivative=derivative_dir(workingdir=workingdir,
-                                project=project,
-                                subject=subject,
-                                session=session,
-                                pipeline=pipeline)
-    overlay_file=f"{derivative}/{task.field_operator}_overlay.img"
-    if hint_overlay != "": 
-        if os.path.isfile(overlay_file):
-            return overlay_file
-        print("Creating overlay file...",end='',flush=True)
-        ret = subprocess.run(f"apptainer overlay create --size {hint_overlay} {overlay_file}",   
-                                capture_output=True,
-                                text=True, 
-                                shell=True,                               
-                                timeout=600) #Overlay should create in under 10 minutes
+#     derivative=derivative_dir(workingdir=workingdir,
+#                                 project=project,
+#                                 subject=subject,
+#                                 session=session,
+#                                 pipeline=pipeline)
+#     overlay_file=f"{derivative}/{task.field_operator}_overlay.img"
+#     if hint_overlay != "": 
+#         if os.path.isfile(overlay_file):
+#             return overlay_file
+#         print("Creating overlay file...",end='',flush=True)
+#         ret = subprocess.run(f"apptainer overlay create --size {hint_overlay} {overlay_file}",   
+#                                 capture_output=True,
+#                                 text=True, 
+#                                 shell=True,                               
+#                                 timeout=600) #Overlay should create in under 10 minutes
               
-        if ret.returncode==0:
-            print(f"{OKGREEN}done{ENDC}")
-            return overlay_file
-        else:
-            print(f"{FAIL}[ERROR]{ENDC} Failed creating the requested overlay file {overlay_file} of size {hint_overlay} as defined in the task using hint_overlay parameter.")
-            raise Exception(ret.stderr)
+#         if ret.returncode==0:
+#             print(f"{OKGREEN}done{ENDC}")
+#             return overlay_file
+#         else:
+#             print(f"{FAIL}[ERROR]{ENDC} Failed creating the requested overlay file {overlay_file} of size {hint_overlay} as defined in the task using hint_overlay parameter.")
+#             raise Exception(ret.stderr)
         
 
 def createJob(cmdArray,parms_to_add,**kwargs):
@@ -711,6 +711,16 @@ def createJob(cmdArray,parms_to_add,**kwargs):
     overlay_command,overlay_file,
     workdir_command,workdir,
     bindings,container]
+
+    print("Performing Parameter Keyword Expansion")
+    cmdArray = parameter_expansion(cmdArray,parms_to_add,
+        datacommons=datacommons,
+        workingdir=workingdir,
+        project=project,
+        subject=subject,
+        session=session,
+        pipeline=pipeline)  
+
 
     ########
 
@@ -1044,19 +1054,11 @@ def doSomething():
                 #         pull_data("rawdata",project,subject,session)
                 #     if parms[k=="#erivatives":
                 #         pull_data("derivatives",project,subject,session)
-                print("Performing Parameter Keyword Expansion")
-                cmdArray = parameter_expansion(cmdArray,parms,
-                    datacommons=datacommons,
-                    workingdir=workingdir,
-                    project=project,
-                    subject=subject,
-                    session=session,
-                    pipeline=pipeline)  
-
+                
                                  
                 #messages.append(f"cmdArray:{cmdArray}")            
                 print("Creating SLURM job")
-                jobfiles = createJob(cmdArray,parms,
+                jobfiles = createJob(parms,
                     datacommons=datacommons,
                     workingdir=workingdir,
                     project=project,
