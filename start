@@ -952,7 +952,7 @@ def doSomething():
                 else:
                     workdir = None
                     workdir_command = None
-                    os.makedirs(workdir,parents=True,exist_ok=True)
+                    os.makedirs(workdir,exist_ok=True)
         
                 cmdArray=["singularity","run","--app",
                 task.field_operator,
