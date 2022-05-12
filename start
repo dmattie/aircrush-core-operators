@@ -572,7 +572,7 @@ def derivative_dir(**kwargs):
 
     print(f"project:{project}, subject:{subject}, session:{session}, workingdir:{workingdir},pipeline:{pipeline},session_dir:{session_dir},subject_dir:{subject_dir}")
 
-    return f"{workingdir}/projects/{project.field_path_to_exam_data}/datasets/derivatives/{pipeline.id}/{subject_dir}{session_dir}"
+    return f"{workingdir}/projects/{project.field_path_to_exam_data}/datasets/derivatives/{pipeline.field_id}/{subject_dir}{session_dir}"
 
 def create_overlay(**kwargs):
     
