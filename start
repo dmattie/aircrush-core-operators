@@ -588,7 +588,8 @@ def create_overlay(**kwargs):
     if hint_overlay != "" and not os.path.isfile(overlay_file):
         ret = subprocess.run(f"apptainer overlay create --size {hint_overlay} {overlay_file}",   
                                 capture_output=True,
-                                text=True,                                
+                                text=True, 
+                                shell=True,                               
                                 timeout=600) #Overlay should create in under 10 minutes
               
         if ret.returncode==0:
