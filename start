@@ -585,12 +585,12 @@ def create_overlay(**kwargs):
     subject_dir=f"sub-{subject}"
     session_dir=f"ses-{session}" if session != "" else ""
     
-    derivative_dir=derivative_dir(workingdir=workingdir,
+    derivative=derivative_dir(workingdir=workingdir,
                                 project=project,
                                 subject=subject,
                                 session=session,
                                 pipeline=pipeline)
-    overlay_file=f"{derivative_dir}/{task.field_operator}_overlay.img"
+    overlay_file=f"{derivative}/{task.field_operator}_overlay.img"
 
     if hint_overlay != "" and not os.path.isfile(overlay_file):
         print("Creating overlay file...",end='',flush=True)
