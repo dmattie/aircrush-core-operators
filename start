@@ -561,6 +561,7 @@ def getMultipliers(ti_uuid:str):
     return None,None
     
 def derivative_dir(**kwargs):
+    print("get derivi")
     project=kwargs['project'] if 'project' in kwargs else ""        
     subject=kwargs['subject'] if 'subject' in kwargs else ""        
     session=kwargs['session'] if 'session' in kwargs else ""
@@ -569,7 +570,7 @@ def derivative_dir(**kwargs):
     
     session_dir=f"/ses-{session.title}" if session is not None else ""
     subject_dir=f"sub-{subject.title}" if subject is not None else ""
-
+    print(f"{workingdir}/projects/{project.field_path_to_exam_data}/datasets/derivatives/{pipeline.field_id}/{subject_dir}{session_dir}")
     return f"{workingdir}/projects/{project.field_path_to_exam_data}/datasets/derivatives/{pipeline.field_id}/{subject_dir}{session_dir}"
 
 def create_overlay(**kwargs):
@@ -591,11 +592,6 @@ def create_overlay(**kwargs):
                                 session=session,
                                 pipeline=pipeline)
     overlay_file=f"{derivative}/{task.field_operator}_overlay.img"
-    if hint_overlay != "":
-        print(f"{overlay_file}")
-    else:
-        print("no overlay")
-
     if hint_overlay != "" and not os.path.isfile(overlay_file):
         print("Creating overlay file...",end='',flush=True)
         ret = subprocess.run(f"apptainer overlay create --size {hint_overlay} {overlay_file}",   
@@ -610,10 +606,6 @@ def create_overlay(**kwargs):
         else:
             print(f"{FAIL}[ERROR]{ENDC} Failed creating the requested overlay file {overlay_file} of size {hint_overlay} as defined in the task using hint_overlay parameter.")
             raise Exception(ret.stderr)
-    print("!")
-
-
-   
 
 def createJob(cmdArray,parms_to_add,**kwargs):
     
