@@ -1064,6 +1064,7 @@ def doSomething():
                     project=project,
                     subject=subject,
                     session=session,
+                    pipeline=pipeline,
                     taskinstance_uid=todo.uuid,
                     task=task)    
     
