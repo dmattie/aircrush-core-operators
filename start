@@ -619,6 +619,8 @@ def createJob(parms_to_add,**kwargs):
     workingdir=kwargs['workingdir'] if 'workingdir' in kwargs else aircrush.config['COMPUTE']['working_directory']
     datacommons=kwargs['datacommons'] if 'datacommons' in kwargs else aircrush.config['COMPUTE']['commons_path']
     pipeline=kwargs['pipeline'] if 'pipeline' in kwargs else ""
+    bindings=kwargs['bindings'] if 'bindings' in kwargs else ""
+    container=kwargs['container'] if 'container' in kwargs else ""
 
     sbatch_time = parms_to_add['sbatch-time'] if 'sbatch-time' in parms_to_add else ""
     sbatch_account = aircrush.config['COMPUTE']['account']
@@ -1066,7 +1068,9 @@ def doSomething():
                     session=session,
                     pipeline=pipeline,
                     taskinstance_uid=todo.uuid,
-                    task=task)    
+                    task=task,
+                    bindings=bindings,
+                    container=container)    
     
                 sbatch_cmd=["sbatch",jobfiles['jobfile']]
                 print(sbatch_cmd)
