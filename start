@@ -939,7 +939,8 @@ def doSomething():
                     
                     sys.exit(1)    
 
-                hint_overlay = parms['hint-overlay'] if 'hint-overlay' in parms else ""                
+                hint_overlay = parms['hint-overlay'] if 'hint-overlay' in parms else ""    
+                print("create overlay")            
                 overlay_file = create_overlay(
                     task=task,                  
                     workingdir=workingdir,
@@ -962,12 +963,13 @@ def doSomething():
                     workdir = None
                     workdir_command = None
                     os.makedirs(workdir,exist_ok=True)
-        
+                print(workdir_command)
                 cmdArray=["singularity","run","--app",
                 task.field_operator,
                 overlay_command,overlay_file,
                 workdir_command,workdir,
                 bindings,container]   
+                print(cmdArray)
                 # ###### Let's check for any prerequisites before we start
                 # ###### E.g. if there is a large disk requirement and that has been set as a hint, check if disk is available first
                 
