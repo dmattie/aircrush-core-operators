@@ -936,7 +936,8 @@ def doSomething():
                     sys.exit(1)    
 
                 hint_overlay = parms['hint-overlay'] if 'hint-overlay' in parms else ""    
-                print("create overlay")            
+                print("create overlay")  
+
                 overlay_file = create_overlay(
                     task=task,                  
                     workingdir=workingdir,
@@ -945,8 +946,9 @@ def doSomething():
                     session=session,
                     pipeline=pipeline,
                     hint_overlay=hint_overlay) if hint_overlay != "" else None
+                print(f"b {overlay_file}")
                 overlay_command = "--overlay" if overlay_file is not None else None
-
+                print("c")
                 if overlay_command is not None:
                     print("x")
                     workdir=derivative_dir(workingdir=workingdir,
