@@ -577,7 +577,7 @@ def derivative_dir(**kwargs):
 def create_overlay(**kwargs):
     
     task=kwargs['task'] if 'task' in kwargs else None
-    project=kwargs['project'].field_path_to_exam_data if 'project' in kwargs else ""        
+    project=kwargs['project'] if 'project' in kwargs else ""        
     subject=kwargs['subject'].title if 'subject' in kwargs else ""        
     session=kwargs['session'].title if 'session' in kwargs else ""
     workingdir=kwargs['workingdir'] if 'workingdir' in kwargs else aircrush.config['COMPUTE']['working_directory']
