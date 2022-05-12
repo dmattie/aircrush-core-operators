@@ -585,7 +585,13 @@ def create_overlay(**kwargs):
     subject_dir=f"sub-{subject}"
     session_dir=f"ses-{session}" if session != "" else ""
     
-    overlay_file=f"{workingdir}/projects/{project}/datasets/derivatives/{pipeline.field_id}/{subject_dir}/{session_dir}/{task.field_operator}_overlay.img"
+    derivative_dir=derivative_dir(workingdir=workingdir,
+                                project=project,
+                                subject=subject,
+                                session=session,
+                                pipeline=pipeline)
+    overlay_file=f"{derivative_dir}/{task.field_operator}_overlay.img"
+
     if hint_overlay != "" and not os.path.isfile(overlay_file):
         print("Creating overlay file...",end='',flush=True)
         ret = subprocess.run(f"apptainer overlay create --size {hint_overlay} {overlay_file}",   
