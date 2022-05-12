@@ -578,8 +578,8 @@ def create_overlay(**kwargs):
     
     task=kwargs['task'] if 'task' in kwargs else None
     project=kwargs['project'] if 'project' in kwargs else ""        
-    subject=kwargs['subject'].title if 'subject' in kwargs else ""        
-    session=kwargs['session'].title if 'session' in kwargs else ""
+    subject=kwargs['subject'] if 'subject' in kwargs else ""        
+    session=kwargs['session'] if 'session' in kwargs else ""
     workingdir=kwargs['workingdir'] if 'workingdir' in kwargs else aircrush.config['COMPUTE']['working_directory']
     pipeline=kwargs['pipeline'] if 'pipeline' in kwargs else ""
     hint_overlay=kwargs['hint_overlay'] if 'hint_overlay' in kwargs else ""
