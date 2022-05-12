@@ -572,7 +572,7 @@ def derivative_dir(**kwargs):
 
     return f"{workingdir}/projects/{project.field_path_to_exam_data}/datasets/derivatives/{pipeline.id}/{subject_dir}{session_dir}"
 
-def create_overlay(overlay_size,**kwargs):
+def create_overlay(**kwargs):
     task=kwargs['task'] if 'task' in kwargs else None
     project=kwargs['project'].field_path_to_exam_data if 'project' in kwargs else ""        
     subject=kwargs['subject'].title if 'subject' in kwargs else ""        
