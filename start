@@ -591,7 +591,7 @@ def create_overlay(**kwargs):
                                 session=session,
                                 pipeline=pipeline)
     overlay_file=f"{derivative}/{task.field_operator}_overlay.img"
-
+    print(f"{overlay_file}")
     if hint_overlay != "" and not os.path.isfile(overlay_file):
         print("Creating overlay file...",end='',flush=True)
         ret = subprocess.run(f"apptainer overlay create --size {hint_overlay} {overlay_file}",   
