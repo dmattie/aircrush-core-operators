@@ -560,26 +560,31 @@ def getMultipliers(ti_uuid:str):
             return dur, mem
     return None,None
     
+def derivative_dir(**kwargs):
+    project=kwargs['project'].field_path_to_exam_data if 'project' in kwargs else ""        
+    subject=kwargs['subject'] if 'subject' in kwargs else ""        
+    session=kwargs['session'] if 'session' in kwargs else ""
+    workingdir=kwargs['workingdir'] if 'workingdir' in kwargs else aircrush.config['COMPUTE']['working_directory']
+    pipeline=kwargs['pipeline'] if 'pipeline' in kwargs else ""
+    
+    session_dir="/ses-{session.title}" if session is not None else ""
+    subject_dir="sub-{subject.title}" if subject is not None else ""
 
-def createOverlay(overlay_size,**kwargs):
-    taskinstance_uid=kwargs['taskinstance_uid'] if 'taskinstance_uid' in kwargs else None
+    return f"{workingdir}/projects/{project.field_path_to_exam_data}/datasets/derivatives/{pipeline.id}/{subject_dir}{session_dir}"
+
+def create_overlay(overlay_size,**kwargs):
+    task=kwargs['task'] if 'task' in kwargs else None
     project=kwargs['project'].field_path_to_exam_data if 'project' in kwargs else ""        
     subject=kwargs['subject'].title if 'subject' in kwargs else ""        
     session=kwargs['session'].title if 'session' in kwargs else ""
     workingdir=kwargs['workingdir'] if 'workingdir' in kwargs else aircrush.config['COMPUTE']['working_directory']
     pipeline=kwargs['pipeline'] if 'pipeline' in kwargs else ""
-    hint_overlay=kwargs['hint-overlay'] if 'hint-overlay' in kwargs else ""
-
-    ti_col =  TaskInstanceCollection(cms_host=crush_host)
-    ti = ti_col.get_one(uuid=taskinstance_uid)  
-    task=ti.task_definition()
-    
+    hint_overlay=kwargs['hint_overlay'] if 'hint_overlay' in kwargs else ""
 
     subject_dir=f"sub-{subject}"
     session_dir=f"ses-{session}" if session != "" else ""
-   
     
-    overlay_file=f"{workingdir}/projects/{project}/datasets/derivatives/{pipeline}/{subject_dir}/{session_dir}/{task}_overlay.img"
+    overlay_file=f"{workingdir}/projects/{project}/datasets/derivatives/{pipeline.field_id}/{subject_dir}/{session_dir}/{task.field_operator}_overlay.img"
     if hint_overlay != "" and not os.path.isfile(overlay_file):
         ret = subprocess.run(f"apptainer overlay create --size {hint_overlay} {overlay_file}",   
                                 capture_output=True,
@@ -614,7 +619,9 @@ def createJob(cmdArray,parms_to_add,**kwargs):
     hint_overlay = parms_to_add['hint-overlay'] if 'hint-overlay' in parms_to_add else ""
 
     if hint_overlay != "":
-        overlay_file = _create_overlay(hint_overlay)
+        overlay_file = create_overlay(hint_overlay)
+    else:
+        overlay_file = None
 
     duration_multiplier,memory_multiplier=getMultipliers(taskinstance_uid)
     try:        
@@ -912,9 +919,8 @@ def doSomething():
                 else:
                     if aircrush.config.has_option('COMPUTE','bindings'):        
                         bindings=aircrush.config['COMPUTE']['bindings']
-
-                        
-                cmdArray=["singularity","run","--app",task.field_operator,bindings,container]              
+                    
+           
                 try:
                     parms = ast.literal_eval(task.field_parameters) 
                 except:
@@ -923,7 +929,35 @@ def doSomething():
                     
                     sys.exit(1)    
 
+                hint_overlay = parms['hint-overlay'] if 'hint-overlay' in parms else ""                
+                overlay_file = create_overlay(
+                    task=task,                  
+                    workingdir=workingdir,
+                    project=project,
+                    subject=subject,
+                    session=session,
+                    pipeline=pipeline,
+                    hint_overlay=hint_overlay) if hint_overlay != "" else None
+                overlay_command = "overlay" if overlay_file is not None else None
 
+                if overlay_command is not None:
+
+                    workdir=derivative_dir(workingdir=workingdir,
+                                project=project,
+                                subject=subject,
+                                session=session,
+                                pipeline=pipeline)+"/temp"
+                    workdir_command="workdir"
+                else:
+                    workdir = None
+                    workdir_command = None
+                    os.makedirs(workdir,parents=True,exist_ok=True)
+        
+                cmdArray=["singularity","run","--app",
+                task.field_operator,
+                overlay_command,overlay_file,
+                workdir_command,workdir,
+                bindings,container]   
                 # ###### Let's check for any prerequisites before we start
                 # ###### E.g. if there is a large disk requirement and that has been set as a hint, check if disk is available first
                 
