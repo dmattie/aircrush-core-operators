@@ -859,7 +859,7 @@ def check_running_jobs(node_uuid):
                                 tis[ti].field_remaining_retries-=1
                                 tis[ti].field_seff=ret.stdout
                                 updateStatus(tis[ti],"failed")  
-                    elif status=='RUNNING':
+                    elif status=='RUNNING' or status=='PENDING':
                         print(f"{OKCYAN}{status}{ENDC} Nothing will be done.")                               
                     else: #UNRECOGNIZED SEFF STATUS
                         print(f"{WARNING}UNKNOWN SEFF STATUS ({status}){ENDC} Nothing will be done.")                               
