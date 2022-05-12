@@ -609,7 +609,7 @@ def derivative_dir(**kwargs):
 #             raise Exception(ret.stderr)
         
 
-def createJob(cmdArray,parms_to_add,**kwargs):
+def createJob(parms_to_add,**kwargs):
     
     task=kwargs['task'] if 'task' in kwargs else None
     taskinstance_uid=kwargs['taskinstance_uid'] if 'taskinstance_uid' in kwargs else None
