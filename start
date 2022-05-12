@@ -570,8 +570,6 @@ def derivative_dir(**kwargs):
     session_dir=f"/ses-{session.title}" if session is not None else ""
     subject_dir=f"sub-{subject.title}" if subject is not None else ""
 
-    print(f"project:{project}, subject:{subject}, session:{session}, workingdir:{workingdir},pipeline:{pipeline},session_dir:{session_dir},subject_dir:{subject_dir}")
-
     return f"{workingdir}/projects/{project.field_path_to_exam_data}/datasets/derivatives/{pipeline.field_id}/{subject_dir}{session_dir}"
 
 def create_overlay(**kwargs):
@@ -950,7 +948,7 @@ def doSomething():
                     session=session,
                     pipeline=pipeline,
                     hint_overlay=hint_overlay) if hint_overlay != "" else None
-                overlay_command = "overlay" if overlay_file is not None else None
+                overlay_command = "--overlay" if overlay_file is not None else None
 
                 if overlay_command is not None:
 
@@ -959,7 +957,7 @@ def doSomething():
                                 subject=subject,
                                 session=session,
                                 pipeline=pipeline)+"/temp"
-                    workdir_command="workdir"
+                    workdir_command="--workdir"
                 else:
                     workdir = None
                     workdir_command = None
