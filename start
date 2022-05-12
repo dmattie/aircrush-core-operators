@@ -948,12 +948,13 @@ def doSomething():
                 overlay_command = "--overlay" if overlay_file is not None else None
 
                 if overlay_command is not None:
-
+                    print("x")
                     workdir=derivative_dir(workingdir=workingdir,
                                 project=project,
                                 subject=subject,
                                 session=session,
                                 pipeline=pipeline)
+                    print("y")
                     print(workdir)
                     print(workdir+"/temp")
                     workdir_command="--workdir"
