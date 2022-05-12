@@ -561,7 +561,7 @@ def getMultipliers(ti_uuid:str):
     return None,None
     
 def derivative_dir(**kwargs):
-    print("get derivi")
+    
     project=kwargs['project'] if 'project' in kwargs else ""        
     subject=kwargs['subject'] if 'subject' in kwargs else ""        
     session=kwargs['session'] if 'session' in kwargs else ""
@@ -570,7 +570,6 @@ def derivative_dir(**kwargs):
     
     session_dir=f"/ses-{session.title}" if session is not None else ""
     subject_dir=f"sub-{subject.title}" if subject is not None else ""
-    print(f"{workingdir}/projects/{project.field_path_to_exam_data}/datasets/derivatives/{pipeline.field_id}/{subject_dir}{session_dir}")
     return f"{workingdir}/projects/{project.field_path_to_exam_data}/datasets/derivatives/{pipeline.field_id}/{subject_dir}{session_dir}"
 
 def create_overlay(**kwargs):
@@ -954,7 +953,9 @@ def doSomething():
                                 project=project,
                                 subject=subject,
                                 session=session,
-                                pipeline=pipeline)+"/temp"
+                                pipeline=pipeline)
+                    print(workdir)
+                    print(workdir+"/temp")
                     workdir_command="--workdir"
                 else:
                     workdir = None
