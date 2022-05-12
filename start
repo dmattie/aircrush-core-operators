@@ -573,6 +573,7 @@ def derivative_dir(**kwargs):
     return f"{workingdir}/projects/{project.field_path_to_exam_data}/datasets/derivatives/{pipeline.id}/{subject_dir}{session_dir}"
 
 def create_overlay(**kwargs):
+    
     task=kwargs['task'] if 'task' in kwargs else None
     project=kwargs['project'].field_path_to_exam_data if 'project' in kwargs else ""        
     subject=kwargs['subject'].title if 'subject' in kwargs else ""        
@@ -586,6 +587,7 @@ def create_overlay(**kwargs):
     
     overlay_file=f"{workingdir}/projects/{project}/datasets/derivatives/{pipeline.field_id}/{subject_dir}/{session_dir}/{task.field_operator}_overlay.img"
     if hint_overlay != "" and not os.path.isfile(overlay_file):
+        print("Creating overlay file...",end='',flush=True)
         ret = subprocess.run(f"apptainer overlay create --size {hint_overlay} {overlay_file}",   
                                 capture_output=True,
                                 text=True, 
@@ -593,6 +595,7 @@ def create_overlay(**kwargs):
                                 timeout=600) #Overlay should create in under 10 minutes
               
         if ret.returncode==0:
+            print("{OKGREEN}done{ENDC}")
             return overlay_file
         else:
             print(f"{FAIL}[ERROR]{ENDC} Failed creating the requested overlay file {overlay_file} of size {hint_overlay} as defined in the task using hint_overlay parameter.")
@@ -617,12 +620,12 @@ def createJob(cmdArray,parms_to_add,**kwargs):
     sbatch_cpus_per_task = parms_to_add['sbatch-cpus-per-task'] if 'sbatch-cpus-per-task' in parms_to_add else ""
     sbatch_mem_per_cpu = parms_to_add['sbatch-mem-per-cpu'] if 'sbatch-mem-per-cpu' in parms_to_add else ""
 
-    hint_overlay = parms_to_add['hint-overlay'] if 'hint-overlay' in parms_to_add else ""
+   # hint_overlay = parms_to_add['hint-overlay'] if 'hint-overlay' in parms_to_add else ""
 
-    if hint_overlay != "":
-        overlay_file = create_overlay(hint_overlay)
-    else:
-        overlay_file = None
+    # if hint_overlay != "":
+    #     overlay_file = create_overlay(hint_overlay)
+    # else:
+    #     overlay_file = None
 
     duration_multiplier,memory_multiplier=getMultipliers(taskinstance_uid)
     try:        
