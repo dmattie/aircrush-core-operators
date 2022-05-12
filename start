@@ -451,7 +451,7 @@ def parameter_expansion(cmdArray,parms_to_add,**kwargs):
             parm = parm.replace('#project',project.field_path_to_exam_data)
             parm = parm.replace('#datasetdir',f"{workingdir}/projects/{project.field_path_to_exam_data}/datasets/")
 
-        if not k[0:7]=="sbatch-":
+        if not k[0:7]=="sbatch-" and not k[0:5]=="hint-":
             cmdArray.append(f"--{k}")
             if parm is not None:
                 cmdArray.append(parm) 
@@ -939,8 +939,7 @@ def doSomething():
                     sys.exit(1)    
 
                 hint_overlay = parms['hint-overlay'] if 'hint-overlay' in parms else ""    
-                print("create overlay")  
-
+                
                 overlay_file = create_overlay(
                     task=task,                  
                     workingdir=workingdir,
@@ -948,32 +947,27 @@ def doSomething():
                     subject=subject,
                     session=session,
                     pipeline=pipeline,
-                    hint_overlay=hint_overlay) if hint_overlay != "" else None
-                print(f"b {overlay_file}")
+                    hint_overlay=hint_overlay) if hint_overlay != "" else None                
                 overlay_command = "--overlay" if overlay_file is not None else None
-                print("c")
-                if overlay_command is not None:
-                    print("x")
+                
+                if overlay_command is not None:                    
                     workdir=derivative_dir(workingdir=workingdir,
                                 project=project,
                                 subject=subject,
                                 session=session,
                                 pipeline=pipeline)
-                    print("y")
-                    print(workdir)
-                    print(workdir+"/temp")
                     workdir_command="--workdir"
                 else:
                     workdir = None
                     workdir_command = None
                     os.makedirs(workdir,exist_ok=True)
-                print(workdir_command)
+              
                 cmdArray=["singularity","run","--app",
                 task.field_operator,
                 overlay_command,overlay_file,
                 workdir_command,workdir,
                 bindings,container]   
-                print(cmdArray)
+                
                 # ###### Let's check for any prerequisites before we start
                 # ###### E.g. if there is a large disk requirement and that has been set as a hint, check if disk is available first
                 
