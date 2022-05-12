@@ -674,7 +674,7 @@ def createJob(parms_to_add,**kwargs):
     hint_overlay = parms_to_add['hint-overlay'] if 'hint-overlay' in parms_to_add else ""  
     if hint_overlay != "":
         overlay_file=f"{derivative}/{task.field_operator}_overlay.img"
-        overlay_create_cmd="apptainer overlay create --size {hint_overlay} {overlay_file}"
+        overlay_create_cmd=f"apptainer overlay create --size {hint_overlay} {overlay_file}"
         overlay_command="--overlay"
         workdir=f"{derivative}/temp"
         workdir_command="--workdir"
