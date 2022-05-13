@@ -6,7 +6,7 @@ from aircrushcore.cms import compute_node, compute_node_collection, session_coll
 from aircrushcore.controller.configuration import AircrushConfig
 from aircrushcore.dag import Workload
 from aircrushcore.cms import *
-from aircrushcore.common import Readiness
+from aircrushcore.common.enumerators import Readiness
 from aircrushcore.datacommons.data_commons import DataCommons
 from os.path import exists,dirname
 import os,sys
