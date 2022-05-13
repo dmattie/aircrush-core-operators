@@ -152,6 +152,7 @@ if [[ $OVERWRITE -eq 1 ]];then
     rm --force $TARGET/crush_dti.trk #Clear track_transform output
     rm --force $TARGET/gradientmatrix*.txt  #Clean up old gradient matrix files
     rm -r --force $TARGET/crush  #Clean up old crush derived results
+    rm --force $TARGET/core.* #Remove old core dumps
 
     echo "Any previous output have been removed"
 fi
