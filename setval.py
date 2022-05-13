@@ -12,7 +12,7 @@ def main():
     global aircrush,crush_host,args
     print("Aircrush set utility")
     parser = argparse.ArgumentParser(
-        description="CRUSH client command line utility. Start all tasks with this command")
+        description="CRUSH client command line utility. Back-end commands to set crush data")
     parser.add_argument('-set',action='store',type=str,
         help="Specify a setting to change [ti-status|ti-memory-multiplier].")
     parser.add_argument('-uuid',action='store',

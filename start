@@ -6,6 +6,7 @@ from aircrushcore.cms import compute_node, compute_node_collection, session_coll
 from aircrushcore.controller.configuration import AircrushConfig
 from aircrushcore.dag import Workload
 from aircrushcore.cms import *
+from aircrushcore.common import Readiness
 from aircrushcore.datacommons.data_commons import DataCommons
 from os.path import exists,dirname
 import os,sys
@@ -20,6 +21,7 @@ import socket
 from humanfriendly import parse_size
 from util.setup import ini_settings
 from util.conversion import millify
+
 
 aircrush=None
 crush_host=None
@@ -931,11 +933,14 @@ def doSomething():
     if args.statusonly:
         return
 
-    if not isready:
+    if isready==Readiness.NOT_READY:
         print("This worker node is not ready to do more.")
         return   
 
-    print(f"{HEADER}Allocating new tasks{ENDC}")
+    if isready==Readiness.READY:
+        print(f"{HEADER}Allocating new tasks{ENDC}")
+    elif isready==Readiness.LIMITED:
+        print(f"{HEADER}Advancing currently allocated sessions{ENDC}")
     w=Workload(aircrush) #The list of things to do
     
     todo = w.get_next_task(node_uuid=nuid) #Do whatever the big brain tells us to do next
