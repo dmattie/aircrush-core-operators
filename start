@@ -465,23 +465,26 @@ def parameter_expansion(cmdArray,parms_to_add,**kwargs):
     if 'pipeline' in kwargs:
         pipeline=kwargs['pipeline']
  
+    try:
+        for k in parms_to_add:   
 
-    for k in parms_to_add:   
-
-        parm= parms_to_add[k]
-        if parm is not None:
-            parm = parm.replace("#workingdir",workingdir)
-            parm = parm.replace("#datacommons",datacommons)
-            parm = parm.replace("#pipeline",pipeline.field_id)
-            parm = parm.replace("#subject",subject.title)
-            parm = parm.replace("#session",session.title)
-            parm = parm.replace('#project',project.field_path_to_exam_data)
-            parm = parm.replace('#datasetdir',f"{workingdir}/projects/{project.field_path_to_exam_data}/datasets/")
-
-        if not k[0:7]=="sbatch-" and not k[0:5]=="hint-":
-            cmdArray.append(f"--{k}")
+            parm= parms_to_add[k]
             if parm is not None:
-                cmdArray.append(parm) 
+                parm = parm.replace("#workingdir",workingdir)
+                parm = parm.replace("#datacommons",datacommons)
+                parm = parm.replace("#pipeline",pipeline.field_id)
+                parm = parm.replace("#subject",subject.title)
+                parm = parm.replace("#session",session.title)
+                parm = parm.replace('#project',project.field_path_to_exam_data)
+                parm = parm.replace('#datasetdir',f"{workingdir}/projects/{project.field_path_to_exam_data}/datasets/")
+
+            if not k[0:7]=="sbatch-" and not k[0:5]=="hint-":
+                cmdArray.append(f"--{k}")
+                if parm is not None:
+                    cmdArray.append(parm) 
+    except Exception as e:
+        print(f"Parameter expansion failed. {e}")
+        raise e
    
     return cmdArray
 # def ini_settings():
@@ -1075,7 +1078,7 @@ def doSomething():
                 count_limping=states['limping']
 
                 if count_completed==0 and count_running==0 and count_processed==0 and count_limping==0:
-                    print("No obvious successful retrieval of this session from the data commons. Fetching now...")
+                    print("No previous retrieval of this session from the data commons. Fetching now...")
                     pull_data("rawdata",project,subject,session)
                     pull_data("derivatives",project,subject,session)
                 #            
