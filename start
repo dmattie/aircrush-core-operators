@@ -197,17 +197,37 @@ def pull_data(stage,project,subject,session):
             root=f"/projects/{project.field_path_to_exam_data}/datasets/{stage}"
             for derivative in derivatives:
                 source=f"{datacommons}/projects/{project.field_path_to_exam_data}/datasets/{stage}/{derivative}"
-                target=f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage}/{derivative}"                
-                _rsync_get(data_transfer_node=data_transfer_node,
-                            source=source,                            
-                            target=target)
+                target=f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage}/{derivative}"   
+                if _exists_on_datacommons(data_transfer_node,source):
+                    _rsync_get(data_transfer_node=data_transfer_node,
+                                source=source,                            
+                                target=target)
+                else:
+                    print(f"{source} not on datacommons... skipping")
         else:
             source=f"{datacommons}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
             target=f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
-            _rsync_get(data_transfer_node=data_transfer_node,
-                            source=source,
-                            target=target)
+            if _exists_on_datacommons(data_transfer_node,source):
+                _rsync_get(data_transfer_node=data_transfer_node,
+                                source=source,
+                                target=target)
+            else:
+                print(f"{source} not on datacommons... skipping")
 
+
+def _exists_on_datacommons(data_transfer_node,path):
+    if data_transfer_node is None or data_transfer_node=="":
+        #Local
+        if os.path.exists(path):
+            return True
+    else:        
+        ret = subprocess.run(f"ssh {data_transfer_node} [ -d {path} ] || [ -f {path} ]",   
+                                 capture_output=False,                                 
+                                 shell=True,                               
+                                 timeout=30)               
+        if ret.returncode==0: 
+            return True                     
+    return False
 
 def _get_derivatives(**kwargs):
     data_transfer_node=kwargs['data_transfer_node'] if 'data_transfer_node' in kwargs else None 
