@@ -1121,9 +1121,10 @@ def doSomething():
                     bindings=bindings,
                     container=container)    
     
-                sbatch_cmd=["cd ~/scratch;sbatch",jobfiles['jobfile']]
+                sbatch_cmd=["sbatch",jobfiles['jobfile']]
                 print(sbatch_cmd)
-                ret = subprocess.run(sbatch_cmd,                               
+                ret = subprocess.run(sbatch_cmd, 
+                                cwd="~/scratch",                              
                                 capture_output=True,
                                 text=True,                                
                                 timeout=60)      
