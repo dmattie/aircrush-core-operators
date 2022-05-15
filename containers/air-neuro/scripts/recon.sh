@@ -23,6 +23,7 @@ Help()
    echo "--session SESSION                      Specify session ID to clone"  
    echo "--pipeline PIPELINE_ID                 Specify derivatives directory to store output.  If unspecified, store in rawdata." 
    echo "--reprocess                            If recon-all has been previously run, remove it and recon-all again"
+   echo "--verbose                              Print out all commands executed"
    echo
 }
 
@@ -33,7 +34,7 @@ Help()
 # Get the options
 
 
-TEMP=`getopt -o h: --long help,datasetdir:,subject:,session:,pipeline:,reprocess, \
+TEMP=`getopt -o h: --long help,datasetdir:,subject:,session:,pipeline:,reprocess,verbose, \
              -n 'recon' -- "$@"`
 
 if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
@@ -46,6 +47,7 @@ SUBJECT=""
 SESSION=""
 PIPELINE=""
 REPROCESS="N"
+VERBOSE="N"
 
 while true; do
   case "$1" in
@@ -55,12 +57,15 @@ while true; do
     --session ) SESSION="$2";shift 2;;
     --pipeline ) PIPELINE="$2";shift 2;;
     --reprocess ) REPROCESS="Y";shift;break;;
+    --verbose ) VERBOSE="Y";shift;;     
     -- ) shift; break ;;
     * ) break ;;
   esac
 done
 
-
+if [[ $VERBOSE == "Y" ]];then
+    set -x
+fi
 
 if [[ $DATASETDIR == "" ]];then
     >&2 echo "ERROR: --datasetdir not specified"
