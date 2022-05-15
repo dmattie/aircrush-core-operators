@@ -741,9 +741,12 @@ def createJob(parms_to_add,**kwargs):
     
     cmdArray=["singularity","run","--app",
     task.field_operator,
-    overlay_command,overlay_file,
-    workdir_command,workdir,
-    bindings,container] 
+    overlay_command if overlay_command is not None else "",
+    overlay_file if overlay_file is not None else "",
+    workdir_command if workdir_command is not None else "",
+    workdir if workdir is not None else "",
+    bindings if bindings is not None else "",
+    container] 
     
     cmdArray = parameter_expansion(cmdArray,parms_to_add,
         datacommons=datacommons,
