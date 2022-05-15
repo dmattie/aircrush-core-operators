@@ -755,6 +755,18 @@ def createJob(parms_to_add,**kwargs):
 
     ########
 
+    print(f"#!/bin/bash")
+    print(f"#SBATCH -e {stderrfile}")
+    print(f"#SBATCH -o {stdoutfile}")
+    print(f"#SBATCH --time {sbatch_time}" if not sbatch_time=="" else "")
+    print(f"#SBATCH --account {sbatch_account}" if not sbatch_account=="" else "")
+    print(f"#SBATCH --cpus-per-task {sbatch_cpus_per_task}" if not sbatch_cpus_per_task=="" else "")
+    print(f"#SBATCH --mem-per-cpu {sbatch_mem_per_cpu}" if not sbatch_mem_per_cpu=="" else "")
+    print("module load singularity/3.8")
+    print(overlay_create_cmd if not overlay_create_cmd is None else "")
+    print(' '.join(cmdArray))
+        
+
     conf = open(jobfile, "w") 
     L = [
         "#!/bin/bash",
