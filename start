@@ -745,14 +745,18 @@ def createJob(parms_to_add,**kwargs):
     bindings,container]
 
     print("Performing Parameter Keyword Expansion")
-    cmdArray = parameter_expansion(cmdArray,parms_to_add,
-        datacommons=datacommons,
-        workingdir=workingdir,
-        project=project,
-        subject=subject,
-        session=session,
-        pipeline=pipeline)  
-
+    try:
+        cmdArray = parameter_expansion(cmdArray,parms_to_add,
+            datacommons=datacommons,
+            workingdir=workingdir,
+            project=project,
+            subject=subject,
+            session=session,
+            pipeline=pipeline)  
+    except Exception as e:
+        print(f"Parameter expansion failed. {e}")
+        raise e
+    print("Parameter expansion complete")
 
     ########
 
