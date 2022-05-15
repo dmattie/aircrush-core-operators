@@ -246,8 +246,12 @@ def _get_derivatives(**kwargs):
     
     if subject is not None and session is not None:
         to_check.append(f"/sub-{subject}/ses-{session}") 
+        to_check.append(f"/sub-{subject}/sub{subject}_ses-{session}.tar")
+        to_check.append(f"/sub-{subject}/sub{subject}_ses-{session}.tar.gz") 
     elif subject is not None:
         to_check.append(f"/sub-{subject}")
+        to_check.append(f"/sub-{subject}.tar")
+        to_check.append(f"/sub-{subject}.tar.gz")
     
     to_return=[]
     
@@ -271,7 +275,7 @@ def _rsync_get(**kwargs):
     
     os.makedirs(target,exist_ok=True)     
 
-    if data_transfer_node=="":
+    if data_transfer_node=="":        
         if not os.path.isdir(source):
             raise Exception(f"Subject/session not found on data commons ({source})")
     else:
