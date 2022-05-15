@@ -29,12 +29,6 @@ Help()
    echo "--maxcores MAX                         Specify a hard limit on the number of cores used"
    echo "--overwrite                            Overwrite any existing derivative files with a conflicting name"
    echo "--overlay                              Path to optional singularity overlay file"
-   echo "--invert_x                             [dti|odf]_tracker switch to invert x vector"
-   echo "--invert_y                             [dti|odf]_tracker switch to invert y vector"
-   echo "--invert_z                             [dti|odf]_tracker switch to invert x,y, or z component(s) of vector"
-   echo "--swap_sxy                             [dti|odf]_tracker switch to swap x and y vectors while tracking"
-   echo "--swap_syz                             [dti|odf]_tracker switch to swap y and z vectors while tracking"
-   echo "--swap_szx                             [dti|odf]_tracker switch to swap x and z vectors while tracking"
    echo "--verbose                              Print out all commands executed"
    
    echo
@@ -46,7 +40,7 @@ Help()
 ############################################################
 # Get the options
 
-TEMP=`getopt -o h: --long help,datasetdir:,subject:,session:,pipeline:,maxcores:,gradientmatrix:,bmax:,b0:,overwrite,invert_x,invert_y,invert_z,swap_sxy,swap_syz,swap_szx,verbose,overlay:\
+TEMP=`getopt -o h: --long help,datasetdir:,subject:,session:,pipeline:,maxcores:,gradientmatrix:,overwrite,verbose,overlay:\
              -n 'crush' -- "$@"`
 
 if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
@@ -60,15 +54,7 @@ SESSION=""
 PIPELINE=""
 GRADIENTMATRIX=""
 MAXCORES=""
-BMAX=""
-BNOT=""
 OVERWRITE=0
-INVERT_X=""
-INVERT_Y=""
-INVERT_Z=""
-SWAP_SXY=""
-SWAP_SYZ=""
-SWAP_SZX=""
 VERBOSE="N"
 OVERLAY=""
 
@@ -80,23 +66,15 @@ while true; do
     --session ) SESSION="$2";shift 2;;
     --pipeline ) PIPELINE="$2";shift 2;;
     --gradientmatrix ) GRADIENTMATRIX="$2";shift 2;;
-    --bmax ) BMAX="$2";shift 2;;
-    --BNOT ) BNOT="$2";shift 2;;   
     --maxcores ) MAXCORES="$2";shift 2;;
     --overwrite ) OVERWRITE=1;shift;; 
     --overlay ) OVERLAY="$2";shift 2;;    
-    --invert_x ) INVERT_X=" -ix";shift;;     
-    --invert_y ) INVERT_Y=" -iy";shift;;     
-    --invert_z ) INVERT_Z=" -iz";shift;;             
-    --swap_sxy ) SWAP_SXY=" -sxy";shift;;         
-    --swap_syz ) SWAP_SYZ=" -syz";shift;;         
-    --swap_szx ) SWAP_SZX=" -szx";shift;; 
     --verbose ) VERBOSE="Y";shift;;                
     -- ) shift; break ;;
     * ) break ;;
   esac
 done
-echo "Checking subspace..."
+
 if [[ $VERBOSE == "Y" ]];then
     set -x
 fi
@@ -141,16 +119,7 @@ fi
 
 echo "Cleaning house..."
 if [[ $OVERWRITE -eq 1 ]];then
-    rm --force $TARGET/hardi_mat*.dat #Clear hardi_mat output    
-    rm --force $TARGET/recon_out*  # clear odf_recon output    
-    rm --force $TARGET/dti_recon_out* # clear dti_recon output        
-    rm --force $TARGET/odf_tracker.log  
-    rm --force $TARGET/dti_tracker.log 
-    rm --force $TARGET/RegTransform4D  #clear flirt output
-    rm --force $TARGET/crush.trk  #Clear track_transform output
-    rm --force $TARGET/crush_qball.trk  #Clear track_transform output
-    rm --force $TARGET/crush_dti.trk #Clear track_transform output
-    rm --force $TARGET/gradientmatrix*.txt  #Clean up old gradient matrix files
+
     rm -r --force $TARGET/crush  #Clean up old crush derived results
     rm --force $TARGET/core.* #Remove old core dumps
 
@@ -162,90 +131,8 @@ mkdir -p $TARGET
 if [[ $GRADIENTMATRIX != "" ]];then
     cp $GRADIENTMATRIX $TARGET/gradientmatrix_dti.txt
     cp $GRADIENTMATRIX $TARGET/gradientmatrix_qball.txt
-else
-
-    if [[ -f $TARGET/gradientmatrix_dti.txt ]];then
-        echo "Existing gradientmatrix for dti imaging model detected.  Skipping (re-)creation."    
-    else 
-        echo "Calculating reconstruction matrix from gradient table::dti"
-        f_creategradientmatrix $TARGET/gradientmatrix_dti.txt dti
-    fi
-
-
-    if [[ -f $TARGET/gradientmatrix_qball.txt ]];then
-        echo "Existing gradientmatrix for qball imaging model detected.  Skipping (re-)creation."    
-    else 
-        echo "Calculating reconstruction matrix from gradient table::qball"
-        f_creategradientmatrix $TARGET/gradientmatrix_qball.txt qball
-    fi
-
-fi
-echo "Gradients..."
-
-res=$?
-if [[ $res -ne 0 ]];then
-    >&2 echo "ERROR: Unable to establish a gradient matrix.  Unable to continue."
-fi
-echo "Hardi..."
-###########################
-# HARDI_MAT               #
-###########################
-
-if [[ $GRADIENTMATRIX == "" ]];then
-    GRADIENTMATRIX=$TARGET/gradientmatrix_dti.txt     
 fi
 
- f_hardi_mat $GRADIENTMATRIX "dti" $TARGET/reg2brain.data.nii.gz
-  res=$?
-
- if [[ $res != 0 ]];then
-    >&2 echo "ERROR: Unable to perform hardi_mat.  Unable to continue."
-    exit 1
- fi
-
-if [[ $GRADIENTMATRIX == "" ]];then
-    GRADIENTMATRIX=$TARGET/gradientmatrix_qball.txt     
-fi
-
-
- f_hardi_mat $GRADIENTMATRIX "qball" $TARGET/reg2brain.data.nii.gz
- 
-  res=$?
-
- if [[ $res != 0 ]];then
-    >&2 echo "ERROR: Unable to perform hardi_mat (for hardi/q-ball reconstruction).  Unable to continue."
-    exit 1
- fi
-                        
-
-###########################
-# RECON                   #
-###########################
-echo "Recon..."
-diffusion_result=$( f_diffusion_recon $INVERT_X $INVERT_Y $INVERT_Z $SWAP_SXY $SWAP_SYZ $SWAP_SZX )
-res=$?
-
-
-if [[ ! $res -eq 0 ]];then
-    >&2 echo $diffusion_result
-    if [[ ! $res -eq 2 ]];then   #2 means files already exist and overwrite not specified  
-        >&2 echo "ERROR: Unable to perform Cortical Reconstruction.  Unable to continue."
-        exit 1
-    fi
-fi
-
-###############################
-# flirt / affine registration #
-###############################
-echo "flirt..."
-flirt_result=$( f_flirt )
-res=$?
-
-if [[ $res != 0 ]];then
-    >&2 echo "ERROR: Unable to perform flirt/affine registration.  Unable to continue."
-    >&2 echo $flirt_result
-    exit 1
-fi
 
 #####################################
 #  ROI x ROI measurement extraction #
@@ -257,6 +144,9 @@ if [[ -f $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/parcellatio
 fi
 echo "Checking overlay..."
 if [[ -z "${APPTAINER_NAME}" ]]; then
+  if [[ $OVERWRITE -eq 1 ]];then
+    rm -r --force /crush
+  fi
   mkdir -p /crush
   if [[ $? -eq 0 ]];then
     OVERLAY_PATH="/crush" 

@@ -209,6 +209,25 @@ options:"
     fi
     $SCRIPT_HOME/parcellate.sh $*
 
+
+###############
+# Reconstruction and tracking
+###############
+%apphelp tracking
+    Reconstruct images to tensors and perform fiber tracking  
+    Usage:
+        singularity run --app tracking [air-neuro.sif] [path-to-subject/session]
+    Example: 
+        singularity run --app tracking air-neuro.sif derivatives/levman/sub-12345/ses-001 levman
+%apprun tracking
+    if [ -f ~/.airneuro.conf ];then
+        SCRIPT_HOME=$(cat ~/.airneuro.conf|grep script_home_override|cut -d= -f2)
+        echo "Script home overridden from .airneuro.conf setting:  $SCRIPT_HOME to be used"
+    else
+        SCRIPT_HOME=/usr/local/scripts
+    fi
+    $SCRIPT_HOME/tracking.sh $*
+    
 ###############
 # crush
 ###############
