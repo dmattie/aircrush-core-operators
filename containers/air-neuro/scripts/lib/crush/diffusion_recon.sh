@@ -26,7 +26,18 @@ function f_diffusion_exists()
         >&2 echo "ERROR: Diffusion file not found matching search pattern : ($TARGET/reg2brain.data.nii.gz)"
         exit 1
     fi
-    echo $dwifile
+    dwifile_unzipped=$TARGET/reg2brain.data.nii
+    if [[ -f $dwifile_unzipped ]];then
+      rm $dwifile_unzipped
+    fi
+    cd $TARGET
+    gunzip $dwifile
+    if [[ -f $dwifile_unzipped ]];then
+      echo $dwifile_unzipped
+    else
+      echo $dwifile
+    fi
+
 }
 
 

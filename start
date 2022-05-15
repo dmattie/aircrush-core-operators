@@ -328,6 +328,7 @@ def _rsync_get(**kwargs):
         tarpath=pathlib.Path(target).parent.resolve()
         tar.extractall(path=tarpath)
         tar.close()
+        os.remove(target)
         print(f"{OKGREEN}done{ENDC}")
 
 def _rsync_put(**kwargs):
