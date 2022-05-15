@@ -446,6 +446,7 @@ def push_data(stage,project,subject,session,**kwargs):
         
  
 def parameter_expansion(cmdArray,parms_to_add,**kwargs):
+    print("Performing Parameter Keyword Expansion")
     project=None
     subject=None
     session=None
@@ -742,21 +743,15 @@ def createJob(parms_to_add,**kwargs):
     task.field_operator,
     overlay_command,overlay_file,
     workdir_command,workdir,
-    bindings,container]
-
-    print("Performing Parameter Keyword Expansion")
-    try:
-        cmdArray = parameter_expansion(cmdArray,parms_to_add,
-            datacommons=datacommons,
-            workingdir=workingdir,
-            project=project,
-            subject=subject,
-            session=session,
-            pipeline=pipeline)  
-    except Exception as e:
-        print(f"Parameter expansion failed. {e}")
-        raise e
-    print("Parameter expansion complete")
+    bindings,container] 
+    
+    cmdArray = parameter_expansion(cmdArray,parms_to_add,
+        datacommons=datacommons,
+        workingdir=workingdir,
+        project=project,
+        subject=subject,
+        session=session,
+        pipeline=pipeline)  
 
     ########
 
@@ -770,10 +765,11 @@ def createJob(parms_to_add,**kwargs):
         f"#SBATCH --cpus-per-task {sbatch_cpus_per_task}" if not sbatch_cpus_per_task=="" else "",
         f"#SBATCH --mem-per-cpu {sbatch_mem_per_cpu}" if not sbatch_mem_per_cpu=="" else "",
         "module load singularity/3.8",
-        overlay_create_cmd,
+        overlay_create_cmd if not overlay_create_cmd is None else "",
         ' '.join(cmdArray),
         ""
     ]
+    print(L)
     job_script = '\n'.join(L)
     conf.write(job_script) 
     conf.close() 
