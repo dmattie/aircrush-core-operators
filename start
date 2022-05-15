@@ -276,7 +276,7 @@ def _rsync_get(**kwargs):
     os.makedirs(target,exist_ok=True)     
 
     if data_transfer_node=="":        
-        if not os.path.isdir(source) and not os.path.is_file(source):
+        if not os.path.exists(source):
             raise Exception(f"Subject/session not found on data commons ({source})")
     else:
         source=f"{data_transfer_node}:{source}"
@@ -297,8 +297,9 @@ def _rsync_put(**kwargs):
     
 
     if data_transfer_node=="":
-        if not os.path.isdir(target):
-            raise Exception(f"Subject/session not found on data commons ({target})")
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        if not os.path.exists(dir_path):
+            raise Exception(f"Subject/session PATH not found on data commons ({dir_path})")
     else:   
 
         mkdirs_cmd=["ssh",data_transfer_node, f"mkdir -p {target}"]                  
