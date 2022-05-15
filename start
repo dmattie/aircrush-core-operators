@@ -198,6 +198,7 @@ def pull_data(stage,project,subject,session):
 
             root=f"/projects/{project.field_path_to_exam_data}/datasets/{stage}"
             for derivative in derivatives:
+                print(f"///[{derivative}]///")
                 source=f"{datacommons}/projects/{project.field_path_to_exam_data}/datasets/{stage}/{derivative}"
                 target=f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage}/{derivative}"   
                 if _exists_on_datacommons(data_transfer_node,source):
@@ -207,13 +208,25 @@ def pull_data(stage,project,subject,session):
                 else:
                     print(f"{source} not on datacommons... skipping")
         else:
-            source=f"{datacommons}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
-            target=f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
+            foundsource=False
+            
+            tarsource=f"{datacommons}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/sub-{subject.title}_ses-{session.title}.tar"
+            tartarget=f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/sub-{subject.title}_ses-{session.title}.tar"
             if _exists_on_datacommons(data_transfer_node,source):
                 _rsync_get(data_transfer_node=data_transfer_node,
-                                source=source,
-                                target=target)
-            else:
+                                source=tarsource,
+                                target=tartarget)  
+                foundsource=True 
+            else:         
+                source=f"{datacommons}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
+                target=f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
+                if _exists_on_datacommons(data_transfer_node,source):
+                    _rsync_get(data_transfer_node=data_transfer_node,
+                                    source=source,
+                                    target=target)
+                    foundsource=True    
+
+            if foundsource==False:
                 print(f"{source} not on datacommons... skipping")
 
 
