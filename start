@@ -211,7 +211,7 @@ def pull_data(stage,project,subject,session):
             foundsource=False
 
             tarsource=f"{datacommons}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/sub-{subject.title}_ses-{session.title}.tar"
-            tartarget=f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/sub-{subject.title}_ses-{session.title}.tar"
+            tartarget=f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/sub-{subject.title}_ses-{session.title}.tar"
             if _exists_on_datacommons(data_transfer_node,tarsource):
                 _rsync_get(data_transfer_node=data_transfer_node,
                                 source=tarsource,
@@ -308,7 +308,8 @@ def _rsync_get(**kwargs):
     if source is None or target is None or data_transfer_node is None:
         raise Exception("Insufficient args passed to _rsync_get")
     
-    os.makedirs(target,exist_ok=True)     
+    target_parent=pathlib.Path(target).parent.resolve()
+    os.makedirs(target_parent,exist_ok=True)     
 
     if data_transfer_node=="":        
         if not os.path.exists(source):
