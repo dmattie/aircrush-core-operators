@@ -763,7 +763,8 @@ def createJob(parms_to_add,**kwargs):
     print(f"#SBATCH --cpus-per-task {sbatch_cpus_per_task}" if not sbatch_cpus_per_task=="" else "")
     print(f"#SBATCH --mem-per-cpu {sbatch_mem_per_cpu}" if not sbatch_mem_per_cpu=="" else "")
     print("module load singularity/3.8")
-    print(overlay_create_cmd if not overlay_create_cmd is None else "")
+    print(overlay_create_cmd if not overlay_create_cmd is None else "#")
+    print(cmdArray)
     print(' '.join(cmdArray))
         
 
