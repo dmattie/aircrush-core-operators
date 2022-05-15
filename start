@@ -1124,7 +1124,7 @@ def doSomething():
                 sbatch_cmd=["sbatch",jobfiles['jobfile']]
                 print(sbatch_cmd)
                 ret = subprocess.run(sbatch_cmd, 
-                                cwd="~/scratch",                              
+                                cwd=aircrush.config['COMPUTE']['working_directory'],                              
                                 capture_output=True,
                                 text=True,                                
                                 timeout=60)      
