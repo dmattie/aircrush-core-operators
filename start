@@ -276,7 +276,7 @@ def _rsync_get(**kwargs):
     os.makedirs(target,exist_ok=True)     
 
     if data_transfer_node=="":        
-        if not os.path.isdir(source):
+        if not os.path.isdir(source) and not os.path.is_file(source):
             raise Exception(f"Subject/session not found on data commons ({source})")
     else:
         source=f"{data_transfer_node}:{source}"
