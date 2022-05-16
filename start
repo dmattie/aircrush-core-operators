@@ -476,7 +476,8 @@ def parameter_expansion(cmdArray,parms_to_add,**kwargs):
     session=None
     workingdir=""
     datacommons=""
-    pipeline=""    
+    pipeline=""   
+    task=None 
     if 'project' in kwargs:
         project=kwargs['project']
     if 'subject' in kwargs:
@@ -489,6 +490,8 @@ def parameter_expansion(cmdArray,parms_to_add,**kwargs):
         datacommons=kwargs['datacommons']
     if 'pipeline' in kwargs:
         pipeline=kwargs['pipeline']
+    if 'task' in kwargs:
+        task=kwargs['task']
  
     try:
         for k in parms_to_add:   
@@ -512,7 +515,7 @@ def parameter_expansion(cmdArray,parms_to_add,**kwargs):
         raise e
 
     #Check for project overrides:
-    overrides=project.get_overrides()
+    overrides=project.get_overrides(task.uuid)
     if(len(overrides)>0):
         print(f"{WARNING}Project overrides detected{ENDC}")
     for k in overrides:
@@ -789,7 +792,8 @@ def createJob(parms_to_add,**kwargs):
         project=project,
         subject=subject,
         session=session,
-        pipeline=pipeline)  
+        pipeline=pipeline,
+        task=task)  
 
     ########
 
