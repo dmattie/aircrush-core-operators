@@ -510,6 +510,13 @@ def parameter_expansion(cmdArray,parms_to_add,**kwargs):
     except Exception as e:
         print(f"Parameter expansion failed. {e}")
         raise e
+
+    #Check for project overrides:
+    overrides=project.get_overrides()
+    for k in overrides:
+        cmdArray.append(f"--{k}")
+        if overrides[k] is not None:
+            cmdArray.append(f"{overrides[k]}")
    
     return cmdArray
 # def ini_settings():
