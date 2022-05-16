@@ -516,7 +516,8 @@ def parameter_expansion(cmdArray,parms_to_add,**kwargs):
     if(len(overrides)>0):
         print(f"{WARNING}Project overrides detected{ENDC}")
     for k in overrides:
-        print(f"\t{k}")
+        v = overrides[k] if overrides[k] is not None else ""
+        print(f"\t{k}={v}")
         cmdArray.append(f"--{k}")
         if overrides[k] is not None:
             cmdArray.append(f"{overrides[k]}")
