@@ -797,19 +797,6 @@ def createJob(parms_to_add,**kwargs):
 
     ########
 
-    print(f"#!/bin/bash")
-    print(f"#SBATCH -e {stderrfile}")
-    print(f"#SBATCH -o {stdoutfile}")
-    print(f"#SBATCH --time {sbatch_time}" if not sbatch_time=="" else "")
-    print(f"#SBATCH --account {sbatch_account}" if not sbatch_account=="" else "")
-    print(f"#SBATCH --cpus-per-task {sbatch_cpus_per_task}" if not sbatch_cpus_per_task=="" else "")
-    print(f"#SBATCH --mem-per-cpu {sbatch_mem_per_cpu}" if not sbatch_mem_per_cpu=="" else "")
-    print("module load singularity/3.8")
-    print(overlay_create_cmd if not overlay_create_cmd is None else "#")
-    print(cmdArray)
-    print(' '.join(cmdArray))
-        
-
     conf = open(jobfile, "w") 
     L = [
         "#!/bin/bash",
@@ -824,11 +811,13 @@ def createJob(parms_to_add,**kwargs):
         ' '.join(cmdArray),
         ""
     ]
-    print(L)
+    for ll in L:
+        print(ll)
+    
     job_script = '\n'.join(L)
     conf.write(job_script) 
     conf.close() 
-    print(f"Slurm job written to {jobfile}")
+    print(f"Slurm job written to {OKGREEN}{jobfile}{ENDC}")
     toreturn={}
     toreturn['jobfile']=jobfile
     toreturn['stdout']=stdoutfile
@@ -1161,7 +1150,7 @@ def doSomething():
                     container=container)    
     
                 sbatch_cmd=["sbatch",jobfiles['jobfile']]
-                print(sbatch_cmd)
+                
                 ret = subprocess.run(sbatch_cmd, 
                                 cwd=aircrush.config['COMPUTE']['working_directory'],                              
                                 capture_output=True,
@@ -1240,7 +1229,7 @@ def updateStatus(task_instance,status:str,detail:str="",new_errors:str=""):
     uuid=task_instance.upsert()
     
 def _count_session_ti_states(session:Session):
-    states={'completed':0,'processed':0,'running':0,'failed':0,'waiting':0,'limping':0,'notstarted':0}
+    states={'completed':0,'processed':0,'running':0,'failed':0,'waiting':0,'limping':0,'notstarted':0,'terminal':0}
     pipelines={}
     ti_col=TaskInstanceCollection(cms_host=crush_host,session=session.uuid)
     tis_for_session=ti_col.get()
@@ -1257,6 +1246,8 @@ def _count_session_ti_states(session:Session):
             states['waiting']+=1
         elif tis_for_session[ti].field_status=='limping':
             states['limping']+=1    
+        elif tis_for_session[ti].field_status=='terminal':
+            states['terminal']+=1
         else:
             states['notstarted']+=1
 
@@ -1289,7 +1280,8 @@ def cascade_status_to_subject(node_uuid):
         count_processed=states['processed']
         count_waiting=states['waiting']
         count_limping=states['limping']
-        derived_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted,count_processed,count_waiting,count_limping)        
+        count_terminal=states['terminal']
+        derived_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted,count_processed,count_waiting,count_limping,count_terminal)        
         session.field_status=derived_status
         subject=session.subject()                        
 
@@ -1309,7 +1301,7 @@ def cascade_status_to_subject(node_uuid):
 
             print(f"\tSession {session.title} is orphaned, please conduct a health check.\n\tSubject:{subject_msg}\n\tProject:{project_msg}  Skipping")
             continue
-        print(f"Synchronizing {project.title}:{subject.title}/{session.title} with status {OKCYAN}{session.field_status}{ENDC} (failed:{count_failed} running:{count_running} completed:{count_completed} not started:{count_notstarted} processed:{count_processed} waiting:{count_waiting} limping:{count_limping})")
+        print(f"Synchronizing {project.title}:{subject.title}/{session.title} with status {OKCYAN}{session.field_status}{ENDC} (failed:{count_failed} running:{count_running} completed:{count_completed} not started:{count_notstarted} processed:{count_processed} waiting:{count_waiting} limping:{count_limping} terminal:{count_terminal})")
         if session.field_status=='processed' or session.field_status=='completed':
             #push_data("rawdata",project,subject,session)      
             #              
@@ -1327,6 +1319,7 @@ def cascade_status_to_subject(node_uuid):
         count_processed=0
         count_waiting=0
         count_limping=0
+        count_terminal=0
 
         ses_col=SessionCollection(cms_host=crush_host,subject=subject)
         sessions_for_subject=ses_col.get()
@@ -1346,15 +1339,19 @@ def cascade_status_to_subject(node_uuid):
             if sessions_for_subject[sess].field_status=='limping':
                 count_limping+=1
                 continue    
+            if sessions_for_subject[sess].field_status=='terminal':
+                count_terminal+=1
+                continue
             count_notstarted+=1
         
-        derived_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted,count_processed,count_waiting,count_limping)
-        print(f"Subject ({subjects_of_attached_sessions[subject].title}) status set to {OKCYAN}{derived_status}{ENDC} (failed:{count_failed}, running:{count_running}, completed:{count_completed}, not started:{count_notstarted}, processed:{count_processed}, waiting: {count_waiting}, limping:{count_limping})")
+        derived_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted,count_processed,count_waiting,count_limping,count_terminal)
+        print(f"Subject ({subjects_of_attached_sessions[subject].title}) status set to {OKCYAN}{derived_status}{ENDC} (failed:{count_failed} running:{count_running} completed:{count_completed} not started:{count_notstarted} processed:{count_processed} waiting: {count_waiting}, limping:{count_limping} terminal:{count_terminal})")
         subjects_of_attached_sessions[subject].field_status=derived_status
         subjects_of_attached_sessions[subject].upsert()
 
-def derive_parent_status(failed,running,completed,notstarted,processed,waiting,limping):
-    
+def derive_parent_status(failed,running,completed,notstarted,processed,waiting,limping,terminal):
+    if terminal>0:
+        return "terminal"
     if processed > 0 and failed==0 and running==0 and completed==0 and notstarted==0 and limping==0:
         #All session operations are done for this subject, time to push up to data commons
         return "processed"
