@@ -1227,13 +1227,17 @@ def updateStatus(task_instance,status:str,detail:str="",new_errors:str=""):
     task_instance.field_errorlog = new_errors
 
     if status=="failed":
+        color="{FAIL}"
         ses=task_instance.associated_session()
         sub=ses.subject()
         proj=sub.project()
+        print(f"TF? {proj.field_treat_failed_as_terminal}")
         if proj.field_treat_failed_as_terminal==True:
             task_instance.field_status="terminal"
+    else:
+        color="{OKCYAN}"
 
-    print(f"Updating job ({task_instance.field_jobid}) status to CMS:{proj.title}/{sub.title}/{ses.title}/{task_instance.title} =>{status}")
+    print(f"status {proj.title}/{sub.title}/{ses.title}/{task_instance.title}->{color}{status}{ENDC}")
     uuid=task_instance.upsert()
     
 def _count_session_ti_states(session:Session):
