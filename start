@@ -358,7 +358,7 @@ def _rsync_put(**kwargs):
     if os.path.isdir(source):        
         print("Creating tarfile...",end='')
 
-        ses=os.path.basename(target)
+        ses=os.path.basename(source)
         sub=os.path.basename(os.path.dirname(source))
         root=root=os.path.dirname(os.path.dirname(source))
 
