@@ -305,13 +305,10 @@ def _get_derivatives(**kwargs):
     
     to_return=[]
     
-    for derivative in derivatives:
-        print(derivative)
-        print(type(derivative))
-        sys.exit(1)
+    for derivative in derivatives:        
         #If the end of this derivative matches the subeject/[session] we are looking
         #for then added it to the to_return list        
-        derivative_str=derivative.decode().strip()
+        derivative_str=derivative.strip()
         for checkme in to_check:
             if derivative_str[len(derivative_str)-len(checkme):]==checkme:
                 to_return.append(derivative_str[len(f"{datacommons}/projects/{project}/datasets/derivatives"):])
