@@ -356,7 +356,7 @@ def _rsync_put(**kwargs):
         raise Exception("Insufficient args passed to _rsync_get")
     
     if os.path.isdir(source):        
-        print("Creating tarfile...",end='')
+        print("\tCreating tarfile...",end='',flush=True)
         normpath=os.path.normpath(source)
         ses=os.path.basename(normpath)
         sub=os.path.basename(os.path.dirname(normpath))        
@@ -364,11 +364,12 @@ def _rsync_put(**kwargs):
 
         sespart=f"_{ses}" if ses[0:4]=="ses-" else ""       
         if sub[0:4]=="sub-":
-            tar_to_create=f"{root}/{sub}{sespart}.tar"
+            tar_to_create=f"{root}/{sub}/{sub}{sespart}.tar"
         else:
             raise Exception(f"Source to store on datacommons doesn't appear to be BIDS compliant. Expected sub-##.  ({source}) (subject={sub})")
-            
-        tar=tarfile.open(tar_to_create,"w")
+        if os.path.isfile(tar_to_create):
+            os.remove(tar_to_create)
+        tar=tarfile.open(tar_to_create,"x")
         tar.add(source,arcname=ses)
         tar.close        
         print(f"{OKGREEN}done{ENDC}")
