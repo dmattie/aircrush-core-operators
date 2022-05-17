@@ -271,9 +271,7 @@ def _get_derivatives(**kwargs):
                         capture_output=True,
                         text=True,
                         timeout=600)
-        result = subprocessCmd.stdout
-        print(f"{subprocessCmd.returncode} returned, result:{result}") 
-     
+        result = subprocessCmd.stdout             
     else:
         print(f"ssh {data_transfer_node} {COMMAND}")
         subprocessCmd = subprocess.run(["ssh", data_transfer_node, COMMAND],
@@ -292,7 +290,7 @@ def _get_derivatives(**kwargs):
         return []
         
     else:
-        derivatives=result#result.splitlines()
+        derivatives=result.splitlines()
 
     to_check=[]
     
