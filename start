@@ -1282,6 +1282,7 @@ def _count_session_ti_states(session:Session):
 def cascade_status_to_subject(node_uuid):
     node_col=ComputeNodeCollection(cms_host=crush_host);
     node=node_col.get_one(uuid=node_uuid)
+    print(f"Reviewing compute node {node.title}")
     attached_sessions=node.allocated_sessions()
     if aircrush.config.has_option('COMPUTE','concurrency_limit'):
         concurrency_limit = aircrush.config['COMPUTE']['concurrency_limit']
@@ -1367,9 +1368,10 @@ def cascade_status_to_subject(node_uuid):
                 count_terminal+=1
                 continue
             count_notstarted+=1
-        
+        project=subjects_of_attached_sessions[subject].project()
+
         derived_status=derive_subject_status(count_failed,count_running,count_completed,count_notstarted,count_processed,count_waiting,count_limping,count_terminal)
-        print(f"Subject ({subjects_of_attached_sessions[subject].title}) status set to {OKCYAN}{derived_status}{ENDC} (failed:{count_failed} running:{count_running} completed:{count_completed} not started:{count_notstarted} processed:{count_processed} waiting: {count_waiting}, limping:{count_limping} terminal:{count_terminal})")
+        print(f"Subject ({project.title}/{subjects_of_attached_sessions[subject].title}) status set to {OKCYAN}{derived_status}{ENDC} (failed:{count_failed} running:{count_running} completed:{count_completed} not started:{count_notstarted} processed:{count_processed} waiting: {count_waiting}, limping:{count_limping} terminal:{count_terminal})")
         subjects_of_attached_sessions[subject].field_status=derived_status
         subjects_of_attached_sessions[subject].upsert()
 
