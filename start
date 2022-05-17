@@ -1225,7 +1225,15 @@ def updateStatus(task_instance,status:str,detail:str="",new_errors:str=""):
     task_instance.field_status=status        
     task_instance.body = detail
     task_instance.field_errorlog = new_errors
-    print(f"Updating job status to CMS:{task_instance.field_jobid} ({task_instance.title} =>{status}")
+
+    if status=="failed":
+        ses=task_instance.associated_session()
+        sub=ses.subject()
+        proj=sub.project()
+        if proj.field_treat_failed_as_terminal==True:
+            task_instance.field_status="terminal"
+
+    print(f"Updating job ({task_instance.field_jobid}) status to CMS:{proj.title}/{sub.title}/{ses.title}/{task_instance.title} =>{status}")
     uuid=task_instance.upsert()
     
 def _count_session_ti_states(session:Session):
