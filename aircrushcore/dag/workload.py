@@ -91,13 +91,14 @@ class Workload:
 
                     print(f"Candidate task instance {ti.title}...",end='')
   
+                    tises=ti.associated_session()
+                    if tises.field_status=='terminal':
+                        print("{WARNING}skipping{ENDC}, session is terminal.")
+                        continue
                     if not self.unmet_dependencies(ti): #Ignore any with unmet dependencies
 
                         #If 
-                        tises=ti.associated_session()
-                        if tises.field_status=='terminal':
-                            print("{WARNING}skipping{ENDC}, session is terminal.")
-                            continue
+                        
                         if not tises == None:
                             tisessub=tises.subject()
                             if not tisessub == None:

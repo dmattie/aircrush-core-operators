@@ -271,9 +271,14 @@ def _get_derivatives(**kwargs):
                         stderr=subprocess.PIPE)
         result = subprocessCmd.stdout.readlines()
 
-    if result==[]:
+    if subprocessCmd.returncode!=0:
         error=subprocessCmd.stderr.readlines()    
         raise Exception(f"Failed to find derivatives: {error}")
+
+    if result==[]:
+        print("No derivatives found in the data commons")
+        return []
+        
     else:
         derivatives=result#result.splitlines()
 
