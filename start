@@ -1281,11 +1281,12 @@ def cascade_status_to_subject(node_uuid):
         count_waiting=states['waiting']
         count_limping=states['limping']
         count_terminal=states['terminal']
-        derived_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted,count_processed,count_waiting,count_limping,count_terminal)        
+        derived_status=derive_session_status(count_failed,count_running,count_completed,count_notstarted,count_processed,count_waiting,count_limping,count_terminal)        
         session.field_status=derived_status
         subject=session.subject()                        
 
         subjects_of_attached_sessions[subject.uuid]=subject
+
         project=subject.project()        
 
         if subject == None or project == None:
@@ -1344,12 +1345,12 @@ def cascade_status_to_subject(node_uuid):
                 continue
             count_notstarted+=1
         
-        derived_status=derive_parent_status(count_failed,count_running,count_completed,count_notstarted,count_processed,count_waiting,count_limping,count_terminal)
+        derived_status=derive_subject_status(count_failed,count_running,count_completed,count_notstarted,count_processed,count_waiting,count_limping,count_terminal)
         print(f"Subject ({subjects_of_attached_sessions[subject].title}) status set to {OKCYAN}{derived_status}{ENDC} (failed:{count_failed} running:{count_running} completed:{count_completed} not started:{count_notstarted} processed:{count_processed} waiting: {count_waiting}, limping:{count_limping} terminal:{count_terminal})")
         subjects_of_attached_sessions[subject].field_status=derived_status
         subjects_of_attached_sessions[subject].upsert()
 
-def derive_parent_status(failed,running,completed,notstarted,processed,waiting,limping,terminal):
+def derive_session_status(failed,running,completed,notstarted,processed,waiting,limping,terminal):
     if terminal>0:
         return "terminal"
     if processed > 0 and failed==0 and running==0 and completed==0 and notstarted==0 and limping==0:
@@ -1382,7 +1383,44 @@ def derive_parent_status(failed,running,completed,notstarted,processed,waiting,l
         return "waiting"
 
     return "notstarted"
+def derive_subject_status(failed,running,completed,notstarted,processed,waiting,limping,terminal):
+    no_life_left=terminal+completed+processed
+    some_life_left=failed+running+notstarted+waiting+limping
+    
+    if some_life_left>0:
 
+        if processed > 0 and failed==0 and running==0 and completed==0 and notstarted==0 and limping==0:
+            #All session operations are done for this subject, time to push up to data commons
+            return "processed"
+        if processed > 0 and failed==0 and running==0 and completed==0 and limping==0 and notstarted>0:
+            #All session operations are done for this subject, time to push up to data commons
+            return "waiting"     
+        if limping >0:
+            return "limping"   
+
+        if failed>0:
+            if notstarted+running+processed+completed==0:
+                return "failed"
+            else:
+                return "limping"
+
+        if running>0:
+            if failed>0:
+                return "limping"
+            if failed==0:
+                return "running"
+    if no_life_left>0:
+        if completed>0:
+            if notstarted==0:
+                return "completed"
+            else:
+                return "waiting"
+        if waiting>0:
+            return "waiting"
+        if terminal>0:
+            return "terminal"
+
+    return "notstarted"
 def doSync():
     
     dc=DataCommons(aircrush)
