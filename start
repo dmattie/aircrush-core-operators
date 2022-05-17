@@ -322,14 +322,15 @@ def _rsync_get(**kwargs):
     ret,out = getstatusoutput(rsync_cmd)
     if ret!=0:
         raise Exception(f"Failed to copy session directory: {out}")
-    if tarfile.is_tarfile(target):
-        print("Extracting tarfile...",end='')
-        tar=tarfile.open(target)
-        tarpath=pathlib.Path(target).parent.resolve()
-        tar.extractall(path=tarpath)
-        tar.close()
-        os.remove(target)
-        print(f"{OKGREEN}done{ENDC}")
+    if os.path.isfile(target):
+        if tarfile.is_tarfile(target):
+            print("Extracting tarfile...",end='')
+            tar=tarfile.open(target)
+            tarpath=pathlib.Path(target).parent.resolve()
+            tar.extractall(path=tarpath)
+            tar.close()
+            os.remove(target)
+            print(f"{OKGREEN}done{ENDC}")
 
 def _rsync_put(**kwargs):
     data_transfer_node=kwargs['data_transfer_node'] if 'data_transfer_node' in kwargs else None 
