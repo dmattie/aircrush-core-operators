@@ -137,17 +137,16 @@ if [[ ! -d $TARGET ]];then
     exit 1
 fi
 
-
 if [[ $OVERWRITE -eq 1 ]];then
     rm --force $TARGET/registration/*
-    rm --force $TARGET/reg2brain.data.nii.gz  
+    rm --force $TARGET/reg2brain*
     if [[ -d $TARGET/registration ]];then
         rmdir $TARGET/registration
     fi
 fi
 
-if [[ -f $TARGET/reg2brain.data.nii.gz ]];then
-    echo "Existing registration detected ($TARGET/reg2brain.data.nii.gz) and --overwrite not specified.  Cleaning up any residual files and Skipping registration."
+if [[ -f $TARGET/reg2brain.data.nii ]];then
+    echo "Existing registration detected ($TARGET/reg2brain.data.nii) and --overwrite not specified.  Cleaning up any residual files and Skipping registration."
     rm --force $TARGET/registration/*
     if [[ -d $TARGET/registration ]];then
         rmdir $TARGET/registration
@@ -200,10 +199,10 @@ function flirt_ref() {
   REFERENCE=$2
   echo $1
   if [[ $BET2 -eq 0 ]];then
-    flirt -in $1 -ref $REFERENCE -omat $fbase.RegTransform4D -out reg2ref.$fbase.nii.gz
+    flirt -in $1 -ref $REFERENCE -omat $fbase.RegTransform4D -out reg2ref.$fbase.nii
   else
     bet2 $1 bet_$1 -f 0.2
-    flirt -in bet_$1 -ref $REFERENCE -omat $fbase.RegTransform4D -out reg2ref.$fbase.nii.gz
+    flirt -in bet_$1 -ref $REFERENCE -omat $fbase.RegTransform4D -out reg2ref.$fbase.nii
   fi
 
 }
@@ -212,10 +211,10 @@ function flirt_ref() {
 ls vol*.n* | xargs -n1 -I@ -P$PARALLELISM bash -c "$(declare -f flirt_ref) ; flirt_ref @ $REFERENCE;"
 
 
-fslmerge -a reg2brain.data.nii.gz reg2ref.*
+fslmerge -a reg2brain.data.nii reg2ref.*
 
-if [[ ! -f "reg2brain.data.nii.gz" ]];then
-    >&2 echo "ERROR: failed to complete image registration.  Expected to see a file reg2brain.data.nii.gz produced, but didn't"
+if [[ ! -f "reg2brain.data.nii" ]];then
+    >&2 echo "ERROR: failed to complete image registration.  Expected to see a file reg2brain.data.nii produced, but didn't"
     exit 1
 else
     #Discard residue

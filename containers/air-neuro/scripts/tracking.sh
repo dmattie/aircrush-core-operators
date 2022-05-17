@@ -191,8 +191,8 @@ if [[ $GRADIENTMATRIX == "" ]];then
     GRADIENTMATRIX=$TARGET/gradientmatrix_dti.txt     
 fi
 
- f_hardi_mat $GRADIENTMATRIX "dti" $TARGET/reg2brain.data.nii.gz
-  res=$?
+f_hardi_mat $GRADIENTMATRIX "dti" $TARGET/reg2brain.data.nii
+res=$?
 
  if [[ $res != 0 ]];then
     >&2 echo "ERROR: Unable to perform hardi_mat.  Unable to continue."
@@ -204,7 +204,7 @@ if [[ $GRADIENTMATRIX == "" ]];then
 fi
 
 
- f_hardi_mat $GRADIENTMATRIX "qball" $TARGET/reg2brain.data.nii.gz
+ f_hardi_mat $GRADIENTMATRIX "qball" $TARGET/reg2brain.data.nii
  
   res=$?
 
