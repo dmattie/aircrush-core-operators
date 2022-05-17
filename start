@@ -357,22 +357,43 @@ def _rsync_put(**kwargs):
     if source is None or target is None or data_transfer_node is None:
         raise Exception("Insufficient args passed to _rsync_get")
     
+    if os.path.isdir(source):        
+        print("Creating tarfile...",end='')
 
+        ses=os.path.basename(target)
+        sub=os.path.basename(os.path.dirname(source))
+        root=root=os.path.dirname(os.path.dirname(source))
+
+        sespart=f"_{ses}" if ses[0:4]=="ses-" else ""       
+        if sub[0:4]=="sub-":
+            tar_to_create=f"{root}/{sub}{sespart}.tar"
+        else:
+            raise Exception(f"Source to store on datacommons doesn't appear to be BIDS compliant. Expected sub-##.  ({source})")
+            
+        tar=tarfile.open(tar_to_create,"w")
+        tar.add(source,arcname=ses)
+        tar.close        
+        print(f"{OKGREEN}done{ENDC}")
+        source=tar_to_create
+
+    # Ensure parent directories exist on target
     if data_transfer_node=="":
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        if not os.path.exists(dir_path):
-            raise Exception(f"Subject/session PATH not found on data commons ({dir_path})")
+        target_parent = pathlib.Path(target).parent.resolve()
+        os.makedirs(target_parent,exist_ok=True)   
+        #dir_path = os.path.dirname(os.path.realpath(__file__))
+        if not os.path.exists(target_parent):
+            raise Exception(f"Subject/session PATH not found on data commons ({target_parent})")
     else:   
 
-        mkdirs_cmd=["ssh",data_transfer_node, f"mkdir -p {target}"]                  
+        mkdirs_cmd=["ssh",data_transfer_node, f"mkdir -p {target_parent}"]                  
         ret,out = getstatusoutput(mkdirs_cmd)
         if ret!=0:
             raise Exception(f"Failed to create target directory:({target}).  Received: {out}")
 
-    target=f"{data_transfer_node}:{target}"
+        target=f"{data_transfer_node}:{target}"
 
     rsync_cmd=["rsync","-ra","--ignore-missing-args", f"{source}",f"{target}"]      
-    print(f"\t{rsync_cmd}")      
+    print(f"{rsync_cmd}")      
     ret,out = getstatusoutput(rsync_cmd)
     if ret!=0:
         raise Exception(f"Failed to copy session directory: {out}")
@@ -429,11 +450,7 @@ def push_data(stage,project,subject,session,**kwargs):
                 root=f"projects/{project.field_path_to_exam_data}/datasets/derivatives/{derivative}/"
                 source=f"{wd}/{root}"
                 target=f"{datacommons}/{root}"
-
-                print(f"\tCloning source:({source})\n\t            to:({target})")        
-                print(f"\tDTN:[{data_transfer_node}]") 
-                            
-                
+               
                 ret = _rsync_put(data_transfer_node=data_transfer_node,
                         source=source,                            
                         target=target) 
@@ -1343,7 +1360,7 @@ def cascade_status_to_subject(node_uuid):
             print(f"\tSession {session.title} is orphaned, please conduct a health check.\n\tSubject:{subject_msg}\n\tProject:{project_msg}  Skipping")
             continue
         print(f"Synchronizing {project.title}:{subject.title}/{session.title} with status {OKCYAN}{session.field_status}{ENDC} (failed:{count_failed} running:{count_running} completed:{count_completed} not started:{count_notstarted} processed:{count_processed} waiting:{count_waiting} limping:{count_limping} terminal:{count_terminal})")
-        if session.field_status=='processed' or session.field_status=='completed':
+        if session.field_status=='processed' or session.field_status=='completed' or session.field_status=='terminal':
             #push_data("rawdata",project,subject,session)      
             #              
             push_data("derivatives",project,subject,session,pipelines=pipelines)
