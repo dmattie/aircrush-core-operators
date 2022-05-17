@@ -256,12 +256,13 @@ def _get_derivatives(**kwargs):
         depth=3
     COMMAND=f"if [ -d {datacommons}/projects/{project}/datasets/derivatives ];then find {datacommons}/projects/{project}/datasets/derivatives -maxdepth {depth}; fi"
     if data_transfer_node=="": #find local derivatives
-        print(f"\tLooking for derivatives: {COMMAND}")
+        print(f"\tLooking for derivatives: {datacommons}/projects/{project}/datasets/derivatives")
         subprocessCmd = subprocess.Popen([COMMAND],
                         shell=True,
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE)
         result = subprocessCmd.stdout.readlines()
+        print(f"{subprocessCmd.returncode} returned, result:{result}") 
      
     else:
         print(f"ssh {data_transfer_node} {COMMAND}")
