@@ -1245,16 +1245,16 @@ def updateStatus(task_instance,status:str,detail:str="",new_errors:str=""):
     task_instance.field_errorlog = new_errors
 
     if status=="failed":
-        color="{FAIL}"
+        color=f"{FAIL}"
         ses=task_instance.associated_session()
         sub=ses.subject()
         proj=sub.project()        
         if proj.field_treat_failed_as_terminal==True:
             task_instance.field_status="terminal"
+            print(f"{WARNING}AUTO{ENDC} Project is set to terminate sessions on failure, no re-attempts")
+        print(f"status {task_instance.title}->{FAIL}{status}{ENDC}")
     else:
-        color="{OKCYAN}"
-
-    print(f"status {task_instance.title}->{color}{status}{ENDC}")
+        print(f"status {task_instance.title}->{OKCYAN}{status}{ENDC}")    
     uuid=task_instance.upsert()
     
 def _count_session_ti_states(session:Session):
