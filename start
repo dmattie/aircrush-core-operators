@@ -1248,14 +1248,13 @@ def updateStatus(task_instance,status:str,detail:str="",new_errors:str=""):
         color="{FAIL}"
         ses=task_instance.associated_session()
         sub=ses.subject()
-        proj=sub.project()
-        print(f"TF? {proj.field_treat_failed_as_terminal}")
+        proj=sub.project()        
         if proj.field_treat_failed_as_terminal==True:
             task_instance.field_status="terminal"
     else:
         color="{OKCYAN}"
 
-    print(f"status {proj.title}::{task_instance.title}->{color}{status}{ENDC}")
+    print(f"status {task_instance.title}->{color}{status}{ENDC}")
     uuid=task_instance.upsert()
     
 def _count_session_ti_states(session:Session):
