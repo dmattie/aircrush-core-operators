@@ -93,7 +93,7 @@ class Workload:
   
                     tises=ti.associated_session()
                     if tises.field_status=='terminal':
-                        print("{WARNING}skipping{ENDC}, session is terminal.")
+                        print(f"{WARNING}skipping{ENDC}, session is terminal.")
                         continue
                     if not self.unmet_dependencies(ti): #Ignore any with unmet dependencies
 

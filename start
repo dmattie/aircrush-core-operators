@@ -254,7 +254,7 @@ def _get_derivatives(**kwargs):
         depth=2
     else:
         depth=3
-    COMMAND=f"test -d {datacommons}/projects/{project}/datasets/derivatives && find {datacommons}/projects/{project}/datasets/derivatives -maxdepth {depth}"
+    COMMAND=f"if [ -d {datacommons}/projects/{project}/datasets/derivatives ];then find {datacommons}/projects/{project}/datasets/derivatives -maxdepth {depth}; fi"
     if data_transfer_node=="": #find local derivatives
         print(f"\tLooking for derivatives: {COMMAND}")
         subprocessCmd = subprocess.Popen([COMMAND],
