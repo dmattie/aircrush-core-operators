@@ -397,6 +397,7 @@ def _rsync_put(**kwargs):
     if ret!=0:
         raise Exception(f"Failed to copy session directory: {out}")
 
+    sys.exit(1)
     return True
 
 
