@@ -1237,12 +1237,16 @@ def updateStatus(task_instance,status:str,detail:str="",new_errors:str=""):
     else:
         color="{OKCYAN}"
 
-    print(f"status {proj.title}/{sub.title}/{ses.title}/{task_instance.title}->{color}{status}{ENDC}")
+    print(f"status {proj.title}::{task_instance.title}->{color}{status}{ENDC}")
     uuid=task_instance.upsert()
     
 def _count_session_ti_states(session:Session):
     states={'completed':0,'processed':0,'running':0,'failed':0,'waiting':0,'limping':0,'notstarted':0,'terminal':0}
     pipelines={}
+
+    sub=session.subject()
+    proj=sub.project()
+
     ti_col=TaskInstanceCollection(cms_host=crush_host,session=session.uuid)
     tis_for_session=ti_col.get()
     for ti in tis_for_session:
@@ -1253,11 +1257,17 @@ def _count_session_ti_states(session:Session):
         elif tis_for_session[ti].field_status=='running':
             states['running']+=1
         elif tis_for_session[ti].field_status=='failed':
-            states['failed']+=1
+            if proj.field_treat_failed_as_terminal==False:
+                states['failed']+=1 
+            else:
+                states['terminal']+=1 
         elif tis_for_session[ti].field_status=='waiting':
             states['waiting']+=1
         elif tis_for_session[ti].field_status=='limping':
-            states['limping']+=1    
+            if proj.field_treat_failed_as_terminal==False:
+                states['limping']+=1    
+            else:
+                states['terminal']+=1             
         elif tis_for_session[ti].field_status=='terminal':
             states['terminal']+=1
         else:
