@@ -366,7 +366,7 @@ def _rsync_put(**kwargs):
         if sub[0:4]=="sub-":
             tar_to_create=f"{root}/{sub}{sespart}.tar"
         else:
-            raise Exception(f"Source to store on datacommons doesn't appear to be BIDS compliant. Expected sub-##.  ({source})")
+            raise Exception(f"Source to store on datacommons doesn't appear to be BIDS compliant. Expected sub-##.  ({source}) (subject={sub})")
             
         tar=tarfile.open(tar_to_create,"w")
         tar.add(source,arcname=ses)
