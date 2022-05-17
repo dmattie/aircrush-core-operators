@@ -88,12 +88,16 @@ class Workload:
                 session = ti.associated_session()    
                 
                 if session.field_responsible_compute_node == node_uuid: # This session has been allocated to the node asking for work
-                    print(f"Candidate task instance {ti.title} ...",end='')
+
+                    print(f"Candidate task instance {ti.title}...",end='')
   
                     if not self.unmet_dependencies(ti): #Ignore any with unmet dependencies
 
                         #If 
                         tises=ti.associated_session()
+                        if tises.field_status=='terminal':
+                            print("{WARNING}skipping{ENDC}, session is terminal.")
+                            continue
                         if not tises == None:
                             tisessub=tises.subject()
                             if not tisessub == None:
