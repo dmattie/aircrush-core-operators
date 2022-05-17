@@ -306,6 +306,9 @@ def _get_derivatives(**kwargs):
     to_return=[]
     
     for derivative in derivatives:
+        print(derivative)
+        print(type(derivative))
+        sys.exit(1)
         #If the end of this derivative matches the subeject/[session] we are looking
         #for then added it to the to_return list        
         derivative_str=derivative.decode().strip()
