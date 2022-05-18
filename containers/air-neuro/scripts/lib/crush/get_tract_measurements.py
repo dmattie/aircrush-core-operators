@@ -15,7 +15,7 @@ def process(**kwargs):#segment,counterpart,method):
         tractographypath=os.path.dirname(kwargs['tract_file'])
         tract=kwargs['tract_file']
         pipelineId=kwargs['pipeline']
-        crush_dir=['crush_dir']
+        crush_dir=kwargs['crush_dir']
         calcs={}
         #track_vis ./DTI35_postReg_Threshold5.trk -roi_end ./wmparc3001.nii.gz -roi_end2 ./wmparc3002.nii.gz -nr
         
