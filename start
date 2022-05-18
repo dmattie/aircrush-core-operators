@@ -421,6 +421,18 @@ def _rsync_put(**kwargs):
     ret,out = getstatusoutput(rsync_cmd)
     if ret!=0:
         raise Exception(f"Failed to copy session directory: {out}")
+    else:
+        if len(sespart_target)>0:
+            cleanup_cmd=f"if [ -d {target_parent}/{ses} ] && [ -f {target} ];then mv {target_parent}/{ses} {target_parent}/{ses}.old; fi"
+            if data_transfer_node!="":
+                cleanup_cmd=f"ssh {data_transfer_node} {cleanup_cmd}"
+            ret = subprocess.run(cleanup_cmd,   
+                            capture_output=True,
+                            text=True, 
+                            shell=True,
+                            timeout=3600) #long timeout just in case hanging for a password              
+            if ret.returncode!=0:  
+                print(f"{WARNING}ERROR{ENDC} cleaning up old directory.  Now both a session directory and a tar exist.  The tar is newer.\n{ret.stderr}\nCommand Attempted:{cleanup_cmd}")
 
     sys.exit(1)
     return True
