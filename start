@@ -426,6 +426,7 @@ def _rsync_put(**kwargs):
             cleanup_cmd=f"if [ -d {target_parent}/{ses} ] && [ -f {target} ];then mv {target_parent}/{ses} {target_parent}/{ses}.old; fi"
             if data_transfer_node!="":
                 cleanup_cmd=f"ssh {data_transfer_node} {cleanup_cmd}"
+            print(cleanup_cmd)
             ret = subprocess.run(cleanup_cmd,   
                             capture_output=True,
                             text=True, 
