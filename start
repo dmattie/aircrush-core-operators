@@ -329,10 +329,18 @@ def _rsync_get(**kwargs):
     if data_transfer_node=="":        
         if not os.path.exists(source):
             raise Exception(f"Subject/session not found on data commons ({source})")
+        suffix = "/" if os.path.isdir(source) else ""
     else:
+        is_dir_cmd=f"ssh {data_transfer_node} test -d source"
+        ret = subprocess.run(is_dir_cmd,   
+                            capture_output=False,                            
+                            shell=True,                               
+                            timeout=60)                       
+        suffix = "/" if ret.returncode==0 else ""
+
         source=f"{data_transfer_node}:{source}"
 
-    rsync_cmd=["rsync","-ra","--ignore-missing-args", f"{source}",f"{target}"]      
+    rsync_cmd=["rsync","-ra","--ignore-missing-args", f"{source}{suffix}",f"{target}"]      
     print(rsync_cmd)      
     ret,out = getstatusoutput(rsync_cmd)
     if ret!=0:
