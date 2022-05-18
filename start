@@ -1398,9 +1398,12 @@ def cascade_status_to_subject(node_uuid):
             push_data("derivatives",project,subject,session,pipelines=pipelines)
             if session.field_status=='processed':
                 session.field_status='completed'
+            cn=session.field_responsible_compute_node
             session.field_responsible_compute_node=None #Free up a slot on compute node for more
+            print(f"{subject.title}.{session.title} deallocated from {cn}.  New allocation:{session.field_responsible_compute_node}")
 
         session.upsert()
+        print("Session updated")
     print(f"{UNDERLINE}Updating subject status based on session status...{ENDC}")
     for subject in subjects_of_attached_sessions:
         count_running=0
