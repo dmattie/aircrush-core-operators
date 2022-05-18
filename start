@@ -369,11 +369,22 @@ def _rsync_put(**kwargs):
             raise Exception(f"Source to store on datacommons doesn't appear to be BIDS compliant. Expected sub-##.  ({source}) (subject={sub})")
         if os.path.isfile(tar_to_create):
             os.remove(tar_to_create)
-        tar=tarfile.open(tar_to_create,"x")
-        tar.add(source,arcname=ses)
-        tar.close        
-        print(f"{OKGREEN}done{ENDC}")
-        source=tar_to_create
+        tar_cmd=f"tar -cf {tar_to_create} -C {source} ."
+        ret = subprocess.run(tar_cmd,   
+                            capture_output=True,
+                            text=True, 
+                            shell=True,                               
+                            timeout=600) #Overlay should create in under 10 minutes
+              
+        if ret.returncode==0:            
+            # tar=tarfile.open(tar_to_create,"x")
+            # tar.add(source,arcname=ses)
+            # tar.close        
+            print(f"{OKGREEN}done{ENDC}")
+            source=tar_to_create
+        else:
+            print(f"{FAIL}FAIL{ENDC} Unable to create tar file for pushing back to data commons\n{ret.stderr}\nCommand Attempted: {tar_cmd}")
+            sys.exit(1)
 
 
     #ensure target is a tar:
