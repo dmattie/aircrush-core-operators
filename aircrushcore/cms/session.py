@@ -13,7 +13,7 @@ class Session():
         self.HOST=None
         self.published=None
         self.sticky=None
-        self.field_responsible_compute_node=None
+        self.field_responsible_compute_node=""
 
         if 'metadata' in kwargs:
             m=kwargs['metadata']
@@ -79,6 +79,8 @@ class Session():
                     }
                 }
                 payload['data']['relationships']['field_responsible_compute_node']=field_responsible_compute_node
+            else:
+                payload['data']['relationships']['field_responsible_compute_node']=None
             
             if self.uuid:   #Update existing                               
                 payload['data']['id']=self.uuid                                                                  

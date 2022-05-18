@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse
 from pickle import FALSE
 from aircrushcore.cms import compute_node, compute_node_collection, session_collection, task_instance_collection
@@ -14,7 +16,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="CRUSH client command line utility. Back-end commands to set crush data")
     parser.add_argument('-set',action='store',type=str,
-        help="Specify a setting to change [ti-status|ti-memory-multiplier].")
+        help="Specify a setting to change [ti-status|ti-memory-multiplier|ses-cn].")
     parser.add_argument('-uuid',action='store',
         help='UUID of CMS object' )
     parser.add_argument('-value',action='store',
@@ -32,7 +34,9 @@ def main():
     if args.set == "ti-status":
         set_ti_status(uuid=args.uuid,status=args.value)
     if args.set == "ti-memory-multiplier":
-        set_ti_memory_multiplier(uuid=args.uuid,val=args.value)        
+        set_ti_memory_multiplier(uuid=args.uuid,val=args.value)  
+    if args.set == "ses-cn":
+        set_session_compute_node(uuid=args.uuid,val=args.value)      
     else:
         print("Nothing to do")
 
@@ -52,7 +56,13 @@ def set_ti_memory_multiplier(uuid:str, val:str):
         ti.field_multiplier_memory=val
         ti.upsert()        
         print("Update Complete")        
-
+def set_session_compute_node(uuid:str,val:str):
+    ses_col=SessionCollection(cms_host=crush_host)
+    if ses_col is not None:
+        ses=ses_col.get_one(uuid)
+        print(f"{ses.title}\n\tOld ComputeNode:{ses.field_responsible_compute_node}\n\tNew ComputeNode:{val}") 
+        ses.field_responsible_compute_node=val
+        ses.upsert()     
 if __name__ == '__main__':
     main()
 
