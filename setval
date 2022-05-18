@@ -16,7 +16,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="CRUSH client command line utility. Back-end commands to set crush data")
     parser.add_argument('-set',action='store',type=str,
-        help="Specify a setting to change [ti-status|ti-memory-multiplier|ses-cn].")
+        help="Specify a setting to change [ti-status|ti-memory-multiplier|ti-job|ses-cn].")
     parser.add_argument('-uuid',action='store',
         help='UUID of CMS object' )
     parser.add_argument('-value',action='store',
@@ -35,6 +35,8 @@ def main():
         set_ti_status(uuid=args.uuid,status=args.value)
     if args.set == "ti-memory-multiplier":
         set_ti_memory_multiplier(uuid=args.uuid,val=args.value)  
+    if args.set == "ti-job":
+        set_ti_job(uuid=args.uuid,val=args.value)          
     if args.set == "ses-cn":
         set_session_compute_node(uuid=args.uuid,val=args.value)      
     else:
@@ -48,6 +50,14 @@ def set_ti_status(uuid:str, status:str):
         ti.field_status=status
         ti.upsert()        
         print("Update Complete")
+def set_ti_job(uuid:str, val:str):
+    ti_col=TaskInstanceCollection(cms_host=crush_host)
+    if ti_col is not None:
+        ti=ti_col.get_one(uuid)        
+        print(f"{ti.title}\n\tOld Job:{ti.field_jobid}\n\tNew Status:{val}")
+        ti.field_jobid=val
+        ti.upsert()        
+        print("Update Complete")        
 def set_ti_memory_multiplier(uuid:str, val:str):
     ti_col=TaskInstanceCollection(cms_host=crush_host)
     if ti_col is not None:

@@ -29,13 +29,13 @@ def process(**kwargs):#segment,counterpart,method):
             trackvis = ["track_vis",tract,f"-{method}",wmparcStart,f"-{method}2",wmparcEnd,"-nr", "-ov",f"{crush_dir}/{segment}/{segment}-{counterpart}-{method}.nii","-disable_log"]
             
             if not os.path.isdir(f"{crush_dir}/"):
-                os.mkdir(f"{crush_dir}/")
+                os.makedirs(f"{crush_dir}/",exist_ok=True)
 
 
 
             if not os.path.isfile(f"{crush_dir}/{segment}/{segment}-{counterpart}-{method}.nii"):
                 if not os.path.isdir(f"{crush_dir}/{segment}"):
-                    os.mkdir(f"{crush_dir}/{segment}")
+                    os.makedirs(f"{crush_dir}/{segment}",exist_ok=True)
                 try:
 
                     with open(f"{crush_dir}/{segment}/{segment}-{counterpart}-{method}.nii.txt", "w") as track_vis_out:
@@ -136,7 +136,7 @@ def process(**kwargs):#segment,counterpart,method):
         try:
 
             if not os.path.isdir(f"{crush_dir}/{segment}" ):
-                os.mkdir(f"{crush_dir}/{segment}" )
+                os.makedirs(f"{crush_dir}/{segment}",exist_ok=True )
 
             calcsJson = f"{crush_dir}/{segment}/calcs-{segment}-{counterpart}-{method}.json" 
             
