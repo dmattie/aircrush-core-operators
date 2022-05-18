@@ -221,7 +221,7 @@ else
     rm --force vol*
     rm --force bet_vol*
     rm --force reg2ref*
-    gunzip reg2brain.data.nii.gz
+    #gunzip reg2brain.data.nii.gz
     # mkdir -p registration
     # rm --force registration/all-volumes.tar
     # rm --force registration/reg2ref.tar
