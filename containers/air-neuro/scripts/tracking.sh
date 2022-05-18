@@ -191,33 +191,33 @@ if [[ $GRADIENTMATRIX == "" ]];then
     GRADIENTMATRIX=$TARGET/gradientmatrix_dti.txt     
 fi
 
-if [ -f $TARGET/reg2brain.data.nii ];then
+if [[ -f $TARGET/reg2brain.data.nii ]];then
    gz=""
 else
    gz=".gz""
 fi
 
-f_hardi_mat $GRADIENTMATRIX "dti" $TARGET/reg2brain.data.nii$gz
+f_hardi_mat $GRADIENTMATRIX "dti" "$TARGET/reg2brain.data.nii$gz"
 res=$?
 
- if [[ $res != 0 ]];then
+if [[ $res != 0 ]];then
     >&2 echo "ERROR: Unable to perform hardi_mat.  Unable to continue."
     exit 1
- fi
+fi
 
 if [[ $GRADIENTMATRIX == "" ]];then
     GRADIENTMATRIX=$TARGET/gradientmatrix_qball.txt     
 fi
 
 
- f_hardi_mat $GRADIENTMATRIX "qball" $TARGET/reg2brain.data.nii$gz
+f_hardi_mat $GRADIENTMATRIX "qball" "$TARGET/reg2brain.data.nii$gz"
  
-  res=$?
+res=$?
 
- if [[ $res != 0 ]];then
+if [[ $res != 0 ]];then
     >&2 echo "ERROR: Unable to perform hardi_mat (for hardi/q-ball reconstruction).  Unable to continue."
     exit 1
- fi
+fi
                         
 
 ###########################
