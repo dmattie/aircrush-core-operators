@@ -265,7 +265,7 @@ def _get_derivatives(**kwargs):
               
 #         if ret.returncode==0:
 #         
-        print(f"\tLooking for derivatives: {datacommons}/projects/{project}/datasets/derivatives")
+        #print(f"\tLooking for derivatives: {datacommons}/projects/{project}/datasets/derivatives")
         subprocessCmd = subprocess.run([COMMAND],
                         shell=True,
                         capture_output=True,
@@ -433,6 +433,8 @@ def _rsync_put(**kwargs):
                             timeout=3600) #long timeout just in case hanging for a password              
             if ret.returncode!=0:  
                 print(f"{WARNING}ERROR{ENDC} cleaning up old directory.  Now both a session directory and a tar exist.  The tar is newer.\n{ret.stderr}\nCommand Attempted:{cleanup_cmd}")
+        else:
+            print(f"No session detected for this subject {len(sespart_target)}")
 
     sys.exit(1)
     return True
@@ -468,12 +470,6 @@ def push_data(stage,project,subject,session,**kwargs):
         #Test if we are on an HCP node, use sbatch to perform rsync if so
 
         if stage=="derivatives":
-            print("\tPushing derivatives")
-            # if "pipelines" in kwargs:
-            #     pipelines=kwargs['pipelines']
-            #     for pipeline in pipelines:   
-            #         print(pipeline)
-
             derivatives=_get_derivatives(data_transfer_node="",#get derivatives in local/(compute node)
                 project=project.field_path_to_exam_data,
                 datacommons=wd,
@@ -487,7 +483,7 @@ def push_data(stage,project,subject,session,**kwargs):
                 root=f"projects/{project.field_path_to_exam_data}/datasets/derivatives/{derivative}/"
                 source=f"{wd}/{root}"
                 target=f"{datacommons}/{root}"
-               
+                print(f"Committing {derivative}")
                 ret = _rsync_put(data_transfer_node=data_transfer_node,
                         source=source,                            
                         target=target) 
