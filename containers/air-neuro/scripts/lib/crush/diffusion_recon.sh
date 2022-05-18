@@ -157,7 +157,7 @@ function f_diffusion_recon()
 
 
     if [[ $dwifile == "FALSE" ]];then
-        >&2 echo "ERROR: Diffusion file not found matching search pattern : ($TARGET/reg2brain.data.nii.gz)."        
+        >&2 echo "ERROR: Diffusion file not found matching search pattern : ($dwifile)."        
         return 1
     fi
     #How many B values do we have.  If only one, we can use ODF recon, otherwise use DTI
