@@ -194,7 +194,7 @@ fi
 if [[ -f $TARGET/reg2brain.data.nii ]];then
    gz=""
 else
-   gz=".gz""
+   gz=".gz"
 fi
 
 f_hardi_mat $GRADIENTMATRIX "dti" "$TARGET/reg2brain.data.nii$gz"
