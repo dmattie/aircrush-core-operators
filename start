@@ -487,7 +487,7 @@ def push_data(stage,project,subject,session,**kwargs):
                         source=source,                            
                         target=target) 
                 if ret==True:
-                    print(f"\n\Derivative committed to data commons: {source}\n")                
+                    print(f"\tDerivative committed to data commons: {source}\n")                
 
             # else:
             #     raise Exception("WARNING: You attempted to return derivatives to the data commons but did not specify which pipelines.")
@@ -1396,8 +1396,9 @@ def cascade_status_to_subject(node_uuid):
             #push_data("rawdata",project,subject,session)      
             #              
             push_data("derivatives",project,subject,session,pipelines=pipelines)
-            session.field_status='completed'
-            #session.field_responsible_compute_node=None #Free up a slot on compute node for more
+            if session.field_status=='processed':
+                session.field_status='completed'
+            session.field_responsible_compute_node=None #Free up a slot on compute node for more
 
         session.upsert()
     print(f"{UNDERLINE}Updating subject status based on session status...{ENDC}")
