@@ -375,6 +375,20 @@ def _rsync_put(**kwargs):
         print(f"{OKGREEN}done{ENDC}")
         source=tar_to_create
 
+
+    #ensure target is a tar:
+    normpath_target=os.path.normpath(target)
+    ses_target=os.path.basename(normpath_target)
+    sub_target=os.path.basename(os.path.dirname(normpath_target))        
+    root=root=os.path.dirname(os.path.dirname(normpath_target))
+
+    sespart_target=f"_{ses_target}" if ses_target[0:4]=="ses-" else ""       
+    if sub_target[0:4]=="sub-":
+        target=f"{root}/{sub_target}/{sub_target}{sespart_target}.tar"
+    else:
+        raise Exception(f"Target specified to store on datacommons doesn't appear to be BIDS compliant. Expected sub-##.  ({target}) (subject={sub_target})")
+
+
     # Ensure parent directories exist on target
     if data_transfer_node=="":
         target_parent = pathlib.Path(target).parent.resolve()
