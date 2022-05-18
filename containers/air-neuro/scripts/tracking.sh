@@ -191,7 +191,13 @@ if [[ $GRADIENTMATRIX == "" ]];then
     GRADIENTMATRIX=$TARGET/gradientmatrix_dti.txt     
 fi
 
-f_hardi_mat $GRADIENTMATRIX "dti" $TARGET/reg2brain.data.nii
+if [ -f $TARGET/reg2brain.data.nii ];then
+   gz=""
+else
+   gz=".gz""
+fi
+
+f_hardi_mat $GRADIENTMATRIX "dti" $TARGET/reg2brain.data.nii$gz
 res=$?
 
  if [[ $res != 0 ]];then
@@ -204,7 +210,7 @@ if [[ $GRADIENTMATRIX == "" ]];then
 fi
 
 
- f_hardi_mat $GRADIENTMATRIX "qball" $TARGET/reg2brain.data.nii
+ f_hardi_mat $GRADIENTMATRIX "qball" $TARGET/reg2brain.data.nii$gz
  
   res=$?
 
