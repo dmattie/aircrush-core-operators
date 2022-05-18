@@ -21,6 +21,7 @@ function f_flirt()
             return 1   
         fi
         reg2brain=$TARGET/reg2brain.data.nii.gz
+    fi
 
     if [[ ! -f $FREESURFER/mri/brainmask.nii ]];then
         echo "flirt:unable to find reference brainmask.nii[$FREESURFER/mri/brainmask.nii]."     
