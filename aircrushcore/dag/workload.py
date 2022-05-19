@@ -206,7 +206,7 @@ class Workload:
                 ses_col = SessionCollection(cms_host=self.crush_host)
                 #Get sessions that don't have a compute node allocated and are attached to this project
           
-                outstanding_sessions = ses_col.get(page_limit=2,filter=f"&filter[status-filter][condition][path]=field_status&filter[status-filter][condition][operator]=NOT%20IN&filter[status-filter][condition][value][1]=completed&filter[status-filter][condition][value][2]=processed&filter[status-filter][condition][value][3]=terminal&filter[cn-filter][condition][path]=field_responsible_compute_node&filter[cn-filter][condition][operator]=IS%20NULL&filter[proj-filter][condition][path]=field_participant.field_project.id&filter[proj-filter][condition][operator]=%3D&filter[proj-filter][condition][value]={outstanding_project.id}")
+                outstanding_sessions = ses_col.get(page_limit=2,filter=f"&filter[status-filter][condition][path]=field_status&filter[status-filter][condition][operator]=NOT%20IN&filter[status-filter][condition][value][1]=completed&filter[status-filter][condition][value][2]=processed&filter[status-filter][condition][value][3]=terminal&filter[cn-filter][condition][path]=field_responsible_compute_node&filter[cn-filter][condition][operator]=IS%20NULL&filter[proj-filter][condition][path]=field_participant.field_project.id&filter[proj-filter][condition][operator]=%3D&filter[proj-filter][condition][value]={outstanding_project.uuid}")
                                           
                 for ses_uid in outstanding_sessions:
                     session=ses_col.get_one(ses_uid)
