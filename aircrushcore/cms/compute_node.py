@@ -273,7 +273,7 @@ class ComputeNode():
 
     def _attach_to_session(self,session:Session):
     #    pass
-        if session.field_responsible_compute_node is None:
+        if session.field_responsible_compute_node is None or session.field_responsible_compute_node=="":
             session.field_responsible_compute_node=self.uuid
             print(f"session {session.title} attached to {session.field_responsible_compute_node}")
             session.upsert

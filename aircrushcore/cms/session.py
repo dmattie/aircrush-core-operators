@@ -86,8 +86,7 @@ class Session():
                 payload['data']['id']=self.uuid                                                                  
                 r= self.HOST.patch(f"jsonapi/node/session/{self.uuid}",payload)                
             else:            
-                r= self.HOST.post("jsonapi/node/session",payload)                     
-            print(payload)
+                r= self.HOST.post("jsonapi/node/session",payload)                                 
             if(r.status_code!=200 and r.status_code!=201):  
                 raise ValueError(f"Session upsert failed [{self.uuid}/{self.title}] on CMS HOST: {r.status_code}\n\t{r.reason}")                             
             else:    
