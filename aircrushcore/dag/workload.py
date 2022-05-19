@@ -214,7 +214,7 @@ class Workload:
                     print(f"at least {len(outstanding_sessions)} found")
                 for ses_uid in outstanding_sessions:
                     session=ses_col.get_one(ses_uid)
-                    if session.field_responsible_compute_node is None:
+                    if session.field_responsible_compute_node is None or session.field_responsible_compute_node=="":
                         subject=session.subject()
                         project=subject.project()
                         print(f"{subject.title}/{session.title}")
