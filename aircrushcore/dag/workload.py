@@ -216,8 +216,7 @@ class Workload:
                     session=ses_col.get_one(ses_uid)
                     if session.field_responsible_compute_node is None or session.field_responsible_compute_node=="":
                         subject=session.subject()
-                        project=subject.project()
-                        print(f"{subject.title}/{session.title}")
+                        project=subject.project()                        
                         if subject == None or project == None:
                             print(f"Session {session.title} is orphaned, please conduct a health check.  Skipping")
                             continue
@@ -225,6 +224,7 @@ class Workload:
                         print(f"Allocating {project.title}/{subject.title}/{session.title}")
                         compute_node.allocate_session(session_uuid=session.uuid)                
                         allocated_sessions = compute_node.allocated_sessions()
+                        print(f"Concurrency limit:{self.concurrency_limit}   allocated_sessions{len(allocated_sessions)}")
                         if self.concurrency_limit<=len(allocated_sessions):
                             break
                     else:
