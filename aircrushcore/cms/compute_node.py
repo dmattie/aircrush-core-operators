@@ -230,13 +230,15 @@ class ComputeNode():
     def allocated_sessions(self):
         
         sess_col = SessionCollection(cms_host=self.HOST)   
-        try:
-            sess_uids = sess_col.get(filter=f"&filter[field_responsible_compute_node.id][value]={self.uuid}")
+        try:            
+            sess_uids = sess_col.get(filter=f"&filter[field_responsible_compute_node.id][value]={self.uuid}")            
         except Exception as e:
             print(f"{FAIL}[ERROR]{ENDC} Unable to determine sessions allocated to this compute node.")
             self.eprint(e)
-        
-        return sess_uids
+        if sess_uids is None:
+            return {}
+        else:
+            return sess_uids
         #sess_uids = sess_col.get()
     def allocate_session(self,session_uuid:str):
         if self.uuid is None:
@@ -273,7 +275,10 @@ class ComputeNode():
     #    pass
         if session.field_responsible_compute_node is None:
             session.field_responsible_compute_node=self.uuid
+            print(f"session {session.title} attached to {session.field_responsible_compute_node}")
             session.upsert
+        else:
+            print(f"Failed to attach {self.title} to session {session.title}")
         # else:
         #     cn_coll = ComputeNodeCollection(cms_host=self.HOST)
         #     cn=cn_coll.get_one(session.field_responsible_compute_node)

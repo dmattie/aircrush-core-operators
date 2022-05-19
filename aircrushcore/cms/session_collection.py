@@ -55,6 +55,7 @@ class SessionCollection():
             page_limit=9999
 
         url=f"jsonapi/node/session?{filter}{filter_uuid}{custom_filter}"           
+        print(url)
         r = self.HOST.get(url)
         if r.status_code==200:  #We can connect to CRUSH host           
               
