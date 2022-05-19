@@ -228,7 +228,7 @@ class Workload:
                         if self.concurrency_limit<=len(allocated_sessions):
                             break
                     else:
-                        print(f"{subject.title}/{session.title} already assigned")
+                        print(f"{session.field_responsible_compute_node} already assigned")
 
         compute_node.refresh_task_instances()
         
