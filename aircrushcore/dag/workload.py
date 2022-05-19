@@ -211,13 +211,13 @@ class Workload:
                 if len(outstanding_sessions)==0:
                     print(f"none found")
                 else:
-                    print("at least {len(outstanding_sessions)} found")
+                    print(f"at least {len(outstanding_sessions)} found")
                 for ses_uid in outstanding_sessions:
                     session=ses_col.get_one(ses_uid)
                     if session.field_responsible_compute_node is None:
                         subject=session.subject()
                         project=subject.project()
-
+                        print(f"{subject.title}/{session.title}")
                         if subject == None or project == None:
                             print(f"Session {session.title} is orphaned, please conduct a health check.  Skipping")
                             continue
@@ -227,6 +227,8 @@ class Workload:
                         allocated_sessions = compute_node.allocated_sessions()
                         if self.concurrency_limit<=len(allocated_sessions):
                             break
+                    else:
+                        print(f"{subject.title}/{session.title} already assigned")
 
         compute_node.refresh_task_instances()
         
