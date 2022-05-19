@@ -207,9 +207,9 @@ class Workload:
                         #Get sessions that don't have a compute node allocated
                  #   outstanding_sessions = ses_col.get(page_limit=2,filter="&filter[field_status][value]=notstarted")
                     #filter="&filter[status-filter][condition][path]=field_status&filter[status-filter][condition][operator]=NOT%20IN&filter[status-filter][condition][value][1]=completed&filter[status-filter][condition][value][2]=processed"
-                    outstanding_sessions = ses_col.get(page_limit=2,filter="&filter[status-filter][condition][path]=field_status&filter[status-filter][condition][operator]=NOT%20IN&filter[status-filter][condition][value][1]=completed&filter[status-filter][condition][value][2]=processed&filter[status-filter][condition][value][3]=terminal")
+                    outstanding_sessions = ses_col.get(page_limit=2,filter="&filter[status-filter][condition][path]=field_status&filter[status-filter][condition][operator]=NOT%20IN&filter[status-filter][condition][value][1]=completed&filter[status-filter][condition][value][2]=processed&filter[status-filter][condition][value][3]=terminal&filter[cn-filter][condition][path]=field_responsible_compute_node&filter[cn-filter][condition][operator]=IS%20NULL")
                  
-                    print(f"\t\t{outstanding_subjects[outstanding_subject].title} has {len(outstanding_sessions)}  incomplete sessions")
+                    print(f"\t\t{outstanding_subjects[outstanding_subject].title} has {len(outstanding_sessions)}  incomplete sessions not yet allocated to a compute node")
                     for ses_uid in outstanding_sessions:
                         session=ses_col.get_one(ses_uid)
                         if session.field_responsible_compute_node is None:
