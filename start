@@ -995,7 +995,10 @@ def check_running_jobs(node_uuid):
                             if len(error_contents)>2000:
                                 error_contents=f"log file has been truncated.  see error log for complete detail\n\n{error_contents[-2000:]}"
                             tis[ti].field_errorlog=error_contents
-
+                            print("########  error log stored")                            
+                        else:
+                            print(f"Error file not found ({tis[ti].field_errorfile})")
+                        print(f"##### Remaining retries: {tis[ti].field_remaining_retries}")
                         if not tis[ti].field_remaining_retries:
                             tis[ti].field_remaining_retries=5
                             tis[ti].field_seff=ret.stdout
