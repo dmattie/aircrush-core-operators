@@ -431,9 +431,9 @@ def _rsync_put(**kwargs):
         raise Exception(f"Failed to copy session directory: {out}")
     else:
         if len(sespart_target)>0:
-            cleanup_cmd=f"if [ -d {target_parent}/{ses} ] && [ -f {target} ];then rm -r {target_parent}/{ses} {target_parent}/{ses}; fi"
+            cleanup_cmd=f"if [ -d {target_parent}/{ses} ] && [ -f {target} ]];then rm -r {target_parent}/{ses} {target_parent}/{ses}; fi"
             if data_transfer_node!="":
-                cleanup_cmd=f"ssh {data_transfer_node} {cleanup_cmd}"
+                cleanup_cmd=f"ssh {data_transfer_node} '{cleanup_cmd}'"
             
             ret = subprocess.run(cleanup_cmd,   
                             capture_output=True,
