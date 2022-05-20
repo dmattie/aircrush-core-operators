@@ -16,9 +16,13 @@ def main():
     parser = argparse.ArgumentParser(
         description="CRUSH client command line utility. Back-end commands to set crush data")
     parser.add_argument('-set',action='store',type=str,
-        help="Specify a setting to change [ti-status|ti-memory-multiplier|ti-job|ses-cn].")
+        help="Specify a setting to change [ti-status|ti-memory-multiplier|ti-job|ses-cn|sub-status].")
     parser.add_argument('-uuid',action='store',
         help='UUID of CMS object' )
+    parser.add_argument('-subject',action='store',
+        help='Subject of CMS object' )   
+    parser.add_argument('-project',action='store',
+        help='Project of CMS object' )             
     parser.add_argument('-value',action='store',
         help='New value')
     args = parser.parse_args()
@@ -38,7 +42,13 @@ def main():
     if args.set == "ti-job":
         set_ti_job(uuid=args.uuid,val=args.value)          
     if args.set == "ses-cn":
-        set_session_compute_node(uuid=args.uuid,val=args.value)      
+        set_session_compute_node(uuid=args.uuid,val=args.value)     
+    if args.set == "sub-status":
+        if args.uuid is None and args.subject is not None and args.project is not None:
+            uuid=get_sub_uuid(proj=args.project,sub=args.subject)
+        else:
+            uuid=args.uuid
+        set_sub_status(uuid=uuid,val=args.value)   
     else:
         print("Nothing to do")
 
@@ -73,6 +83,25 @@ def set_session_compute_node(uuid:str,val:str):
         print(f"{ses.title}\n\tOld ComputeNode:{ses.field_responsible_compute_node}\n\tNew ComputeNode:{val}") 
         ses.field_responsible_compute_node=val
         ses.upsert()     
+def set_sub_status(uuid:str,val:str):
+    sub_col=SubjectCollection(cms_host=crush_host)
+    if sub_col is not None:
+        sub = sub_col.get_one(uuid)
+        print(f"{sub.title}\n\tOld Status:{sub.field_status}\n\tNew Status:{val}") 
+        sub.field_status=val
+        sub.upsert()  
+def get_sub_uuid(proj:str,sub:str):
+    proj_col=ProjectCollection(cms_host=crush_host)
+    project=proj_col.get_one_by_name(proj)
+    sub_col=SubjectCollection(cms_host=crush_host,project=project.uuid)
+    subjects=sub_col.get(title=sub)   
+
+    if len(subjects)>0:
+        return next(iter(subjects))
+    else:
+        print(f"Subject {sub} in project {proj.title} not found")
+        return None
+
 if __name__ == '__main__':
     main()
 

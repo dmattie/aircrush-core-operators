@@ -46,8 +46,13 @@ class SubjectCollection():
         else:
             filter=""
 
+        if 'title' in kwargs:
+            filter_title=f"&filter[title][value]={kwargs['title']}"
+        else:
+            filter_title=""
 
-        url=f"jsonapi/node/participant?{filter}{filter_uuid}"
+
+        url=f"jsonapi/node/participant?{filter}{filter_uuid}{filter_title}"
         
         r = self.HOST.get(url)
         if r.status_code==200:  #We can connect to CRUSH host           
