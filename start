@@ -999,7 +999,7 @@ def check_running_jobs(node_uuid):
                         else:
                             print(f"Error file not found ({tis[ti].field_errorfile})")
                         
-                        if tis[ti].field_remaining_retries is None or tis[ti].field_remaining_retries="":
+                        if tis[ti].field_remaining_retries is None or tis[ti].field_remaining_retries=="":
                             tis[ti].field_remaining_retries=5
                             tis[ti].field_seff=ret.stdout
                             updateStatus(tis[ti],"failed")
