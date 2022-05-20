@@ -235,6 +235,9 @@ if [[ ! $res -eq 0 ]];then
         exit 1
     fi
 fi
+#We don't always know the correct settings for tracking, so lets do them all for review later
+echo "Tracking alternative tract settings for visual inspection"
+${SCRIPTPATH}/test-for-inversion.sh $TARGET "dti"
 
 ###############################
 # flirt / affine registration #
