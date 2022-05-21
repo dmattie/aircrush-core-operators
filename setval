@@ -16,11 +16,13 @@ def main():
     parser = argparse.ArgumentParser(
         description="CRUSH client command line utility. Back-end commands to set crush data")
     parser.add_argument('-set',action='store',type=str,
-        help="Specify a setting to change [ti-status|ti-memory-multiplier|ti-job|ses-cn|sub-status].")
+        help="Specify a setting to change [ti-status|ti-memory-multiplier|ti-job|ses-cn|sub-status|ses-status].")
     parser.add_argument('-uuid',action='store',
         help='UUID of CMS object' )
-    parser.add_argument('-subject',action='store',
+    parser.add_argument('-subject',action='store',    
         help='Subject of CMS object' )   
+    parser.add_argument('-session',action='store',    
+        help='Session of CMS object' )           
     parser.add_argument('-project',action='store',
         help='Project of CMS object' )             
     parser.add_argument('-value',action='store',
@@ -37,18 +39,24 @@ def main():
 
     if args.set == "ti-status":
         set_ti_status(uuid=args.uuid,status=args.value)
-    if args.set == "ti-memory-multiplier":
+    elif args.set == "ti-memory-multiplier":
         set_ti_memory_multiplier(uuid=args.uuid,val=args.value)  
-    if args.set == "ti-job":
+    elif args.set == "ti-job":
         set_ti_job(uuid=args.uuid,val=args.value)          
-    if args.set == "ses-cn":
+    elif args.set == "ses-cn":
         set_session_compute_node(uuid=args.uuid,val=args.value)     
-    if args.set == "sub-status":
+    elif args.set == "sub-status":
         if args.uuid is None and args.subject is not None and args.project is not None:
             uuid=get_sub_uuid(proj=args.project,sub=args.subject)
         else:
             uuid=args.uuid
         set_sub_status(uuid=uuid,val=args.value)   
+    elif args.set == "ses-status":
+        if args.uuid is None and args.subject is not None and args.project is not None and args.session is not None:
+            uuid=get_ses_uuid(proj=args.project,sub=args.subject,ses=args.session)
+        else:
+            uuid=args.uuid
+        set_ses_status(uuid=uuid,val=args.value)         
     else:
         print("Nothing to do")
 
@@ -90,6 +98,13 @@ def set_sub_status(uuid:str,val:str):
         print(f"{sub.title}\n\tOld Status:{sub.field_status}\n\tNew Status:{val}") 
         sub.field_status=val
         sub.upsert()  
+def set_ses_status(uuid:str,val:str):
+    ses_col=SessionCollection(cms_host=crush_host)
+    if ses_col is not None:
+        ses = ses_col.get_one(uuid)
+        print(f"{ses.title} ({uuid})\n\tOld Status:{ses.field_status}\n\tNew Status:{val}") 
+        ses.field_status=val
+        ses.upsert()  
 def get_sub_uuid(proj:str,sub:str):
     proj_col=ProjectCollection(cms_host=crush_host)
     project=proj_col.get_one_by_name(proj)
@@ -101,6 +116,24 @@ def get_sub_uuid(proj:str,sub:str):
     else:
         print(f"Subject {sub} in project {proj.title} not found")
         return None
+def get_ses_uuid(proj:str,sub:str,ses:str):
+    proj_col=ProjectCollection(cms_host=crush_host)
+    project=proj_col.get_one_by_name(proj)
+    sub_col=SubjectCollection(cms_host=crush_host,project=project.uuid)
+    subjects=sub_col.get(title=sub)   
+
+    if len(subjects)>0:
+        subject=next(iter(subjects))
+        print(f"subject {subject}")
+        ses_col=SessionCollection(cms_host=crush_host,subject=subject)
+        sessions=ses_col.get(title=ses)
+        if len(sessions)>0:
+            return next(iter(sessions))
+        else:
+            print(f"Session {ses} in {proj.title}/{subject.title} not found")
+    else:
+        print(f"Subject {sub} in project {proj.title} not found")
+        return None        
 
 if __name__ == '__main__':
     main()
