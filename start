@@ -449,7 +449,7 @@ def _rsync_put(**kwargs):
         ## DELETE LOCAL COPY ##
         #######################
         shutil.move(source,f"{source}.deleteme")
-        print("{WARNING}Safe to remove {normpath}/{ses}")
+        print(f"{WARNING}Safe to remove {normpath}/{ses}")
 
     return True
 
