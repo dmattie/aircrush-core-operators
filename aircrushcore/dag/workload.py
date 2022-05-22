@@ -95,6 +95,31 @@ class Workload:
                     if tises.field_status=='terminal':
                         print(f"{WARNING}skipping{ENDC}, session is terminal.")
                         continue
+                    if ti.field_status=='failed':
+                        #Sometimes sbatch submissions return a non-zero exit.... but actually submitted the job successfully.
+                        #to avoid running a task that may already be running, lets check the job and ensure it isn't running
+                        if ti.field_jobid is not None and ti.field_jobid !="":
+                            seff_cmd=['seff',f"{ti.field_jobid}"]           
+                            try:
+                                ret = subprocess.run(seff_cmd,   
+                                                capture_output=True,
+                                                text=True,                                
+                                                timeout=60)                              
+                                if ret.returncode==0:
+                                    lines=ret.stdout.split('\n')
+                                    for line in lines:
+                                        if line[:6]=="State:":
+                                            tokens=line.split()            
+                                            status=tokens[1]
+                                            if status=='RUNNING' or status=='PENDING':
+                                                print(f"{WARNING}WARNING{ENDC} Task status is 'failed' but appears to be running.  See seff {ti.field_jobid}.  This candidate task instance will be skipped")
+                                                continue
+                            except Exception as e:
+                                print(f"{WARNING}WARNING{ENDC} Unable to confirm task instance is in fact not still running\n({e}\n...skipping")
+                                continue
+
+
+
                     if not self.unmet_dependencies(ti): #Ignore any with unmet dependencies
 
                         #If 
