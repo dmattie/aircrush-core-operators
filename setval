@@ -8,6 +8,7 @@ from aircrushcore.dag import Workload
 from aircrushcore.cms import *
 from aircrushcore.datacommons.data_commons import DataCommons
 from util.setup import ini_settings
+import os
 
 def main():
 
@@ -16,7 +17,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="CRUSH client command line utility. Back-end commands to set crush data")
     parser.add_argument('-set',action='store',type=str,
-        help="Specify a setting to change [ti-status|ti-memory-multiplier|ti-job|ses-cn|sub-status|ses-status].")
+        help="Specify a setting to change [ti-status|ti-memory-multiplier|ti-job|ti-error|ses-cn|sub-status|ses-status].")
     parser.add_argument('-uuid',action='store',
         help='UUID of CMS object' )
     parser.add_argument('-subject',action='store',    
@@ -56,7 +57,9 @@ def main():
             uuid=get_ses_uuid(proj=args.project,sub=args.subject,ses=args.session)
         else:
             uuid=args.uuid
-        set_ses_status(uuid=uuid,val=args.value)         
+        set_ses_status(uuid=uuid,val=args.value)  
+    elif args.set == "ti-error":
+        set_ti_error(uuid=args.uuid,val=args.value)       
     else:
         print("Nothing to do")
 
@@ -68,6 +71,23 @@ def set_ti_status(uuid:str, status:str):
         ti.field_status=status
         ti.upsert()        
         print("Update Complete")
+def set_ti_error(uuid:str,val:str):
+    ti_col=TaskInstanceCollection(cms_host=crush_host)
+    if ti_col is not None:
+        ti=ti_col.get_one(uuid)  
+    else:
+        print("TI collection is empty")
+        return
+    print(f"Old errorfile:{ti.field_errorfile}, this setting will not change")
+    print(f"Data read from {val}")
+    if val and os.path.isfile(val):
+        logfile = open(val,'r')
+        error_contents = logfile.read()
+        if len(error_contents)>2000:
+            error_contents=f"log file has been truncated.  see error log for complete detail\n\n{error_contents[-2000:]}"
+        ti.field_errorlog=error_contents
+        print("########  error log stored") 
+        ti.upsert()   
 def set_ti_job(uuid:str, val:str):
     ti_col=TaskInstanceCollection(cms_host=crush_host)
     if ti_col is not None:

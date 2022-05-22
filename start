@@ -956,7 +956,9 @@ def check_running_jobs(node_uuid):
                                 log_contents=f"log file has been truncated.  see output log for complete detail\n\n{log_contents[-2000:]}"                            
                             tis[ti].body=log_contents
 
-                        updateStatus(tis[ti],"completed")
+                        #updateStatus(tis[ti],"completed")
+                        tis[ti].field_status="completed"
+                        tis[ti].upsert()  
                     elif status=="OUT_OF_MEMORY":
                         if tis[ti].field_logfile and os.path.isfile(tis[ti].field_logfile):
                             logfile = open(tis[ti].field_logfile,'r')
@@ -971,7 +973,9 @@ def check_running_jobs(node_uuid):
                         else:
                             tis[ti].field_multiplier_memory=float(tis[ti].field_multiplier_memory)+0.5
                         print(f"\tAllocated memory was exhausted.  Extending to {tis[ti].field_multiplier_memory} times specified memory allocation.")  
-                        updateStatus(tis[ti],"failed")  
+                        tis[ti].field_status="failed"
+                        tis[ti].upsert()  
+                        #updateStatus(tis[ti],"failed")  
 
                     elif status=='FAILED' or status=="TIMEOUT" or status=="CANCELLED":
                         if status=="TIMEOUT":
@@ -995,22 +999,26 @@ def check_running_jobs(node_uuid):
                             if len(error_contents)>2000:
                                 error_contents=f"log file has been truncated.  see error log for complete detail\n\n{error_contents[-2000:]}"
                             tis[ti].field_errorlog=error_contents
-                            print("########  error log stored")                            
+                            print("########  error log stored")         
+                                             
                         else:
                             print(f"Error file not found ({tis[ti].field_errorfile})")
                         
                         if tis[ti].field_remaining_retries is None or tis[ti].field_remaining_retries=="":
                             tis[ti].field_remaining_retries=5
                             tis[ti].field_seff=ret.stdout
-                            updateStatus(tis[ti],"failed")
+                            tis[ti].field_status="failed"                            
                         else:
                             if tis[ti].field_remaining_retries==0:
                                 tis[ti].field_seff=ret.stdout
-                                updateStatus(tis[ti],"halted","Too many failed retries.  This job will not continue without manual intervention")
+                                tis[ti].field_status="halted"                                
+                                print("Too many failed retries.  This job will not continue without manual intervention")
                             else:
                                 tis[ti].field_remaining_retries-=1
                                 tis[ti].field_seff=ret.stdout
-                                updateStatus(tis[ti],"failed")  
+                                tis[ti].field_status="failed"
+                        tis[ti].upsert()  
+                                
                         print(f"##### Remaining retries: {tis[ti].field_remaining_retries}")
                     elif status=='RUNNING' or status=='PENDING':
                         print(f"{OKCYAN}{status}{ENDC} Nothing will be done.")                               
@@ -1253,13 +1261,26 @@ def doSomething():
                             sbatch_contents = sbatch_contents_handle.read()
                             messages.append(sbatch_contents)
 
-                        updateStatus(todo,"running",'<br/>\n'.join(messages),ret.stderr)
+                        #updateStatus(todo,"running",'<br/>\n'.join(messages),ret.stderr)
+                        todo.body = '<br/>\n'.join(messages)
+                        todo.field_errorlog=ret.stderr
+                        todo.field_status="running"
+                        todo.upsert()
                     else:
                         messages.append(f"\nERROR: SLURM ID returned was unexpectedly 0.")  
-                        updateStatus(todo,"failed",'<br/>\n'.join(messages),ret.stderr)
+                        #updateStatus(todo,"failed",'<br/>\n'.join(messages),ret.stderr)
+                        todo.body = '<br/>\n'.join(messages)
+                        todo.field_errorlog=ret.stderr
+                        todo.field_status="failed"
+                        todo.upsert()
                 else:
                     print(ret.stderr)
-                    updateStatus(todo,"failed",'<br/>\n'.join(messages),ret.stderr)
+                    todo.body = '<br/>\n'.join(messages)
+                    todo.field_errorlog=ret.stderr
+                    todo.field_status="failed"
+                    todo.upsert()
+        
+                    #updateStatus(todo,"failed",'<br/>\n'.join(messages),ret.stderr)
             except Exception as e:
                 print(e)
                 print("An error has accurred.  Unable to proceed.  See previous messages.")
@@ -1268,7 +1289,12 @@ def doSomething():
                 else:
                     new_errors=str(e)
                 messages.append(f"Current date and time: {str(now)}")  
-                updateStatus(todo,"failed",'<br/>\n'.join(messages),new_errors)
+                todo.field_status="failed"
+                todo.body = '<br/>\n'.join(messages)
+                todo.field_errorlog=new_errors
+                todo.upsert()
+    
+               # updateStatus(todo,"failed",,new_errors)
             
             #Get the next thing to do
             #todo = w.get_next_task(node_uuid=nuid) #Do whatever the big brain tells us to do next

@@ -56,6 +56,13 @@ class TaskInstance():
         return str(self.__class__) + ": " + str(self.__dict__)
 
     def upsert(self):
+            if self.field_status=="failed" and self.field_associated_participant_ses is not None:
+                ses=self.associated_session()
+                sub=ses.subject()
+                proj=sub.project()
+                if proj.field_treat_failed_as_terminal==True:
+                    self.field_status="terminal"
+                    print(f"{WARNING}OVERRIDE{ENDC} Project is set to terminate sessions on failure, no re-attempts.  Status is overridden to {OKCYAN}terminal{ENDC}")
             
             payload = {
                 "data" : {
