@@ -23,6 +23,7 @@ from util.setup import ini_settings
 from util.conversion import millify
 import tarfile
 import pathlib
+import shutil
 
 
 aircrush=None
@@ -443,7 +444,12 @@ def _rsync_put(**kwargs):
             if ret.returncode!=0:  
                 print(f"{WARNING}ERROR{ENDC} cleaning up old directory.  Now both a session directory and a tar exist.  The tar is newer.\n{ret.stderr}\nCommand Attempted:{cleanup_cmd}")
         else:
-            print(f"No session detected for this subject {len(sespart_target)}")    
+            print(f"No session detected for this subject at target {len(sespart_target)}")    
+        #######################
+        ## DELETE LOCAL COPY ##
+        #######################
+        shutil.move(source,f"{source}.deleteme")
+
     return True
 
 
