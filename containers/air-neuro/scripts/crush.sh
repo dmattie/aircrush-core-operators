@@ -150,13 +150,16 @@ if [[ -z "${APPTAINER_NAME}" ]]; then
   mkdir -p /crush
   if [[ $? -eq 0 ]];then
     OVERLAY_PATH="/crush" 
+    CRUSHPATH="/crush"
     echo "You appear to have an overlay file. Crush will work in $OVERLAY_PATH"
   else    
     OVERLAY_PATH=""
+    CRUSHPATH="$DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/crush"
     echo "No overlay file detected.  It is strongly encouraged to use an overlay file to improve performance and avoid disk quotas.  See APPTAINER overlays."
   fi  
 else
   OVERLAY_PATH=""
+  CRUSHPATH="$DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/crush"
 fi
 echo "Crushing..."
 
@@ -181,8 +184,9 @@ if [[ -f $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/parcellatio
 fi
 
 echo "Consolidating..."
+
 python3 ${SCRIPTPATH}/lib/crush/consolidate-measurements.py \
--datasetdir $DATASETDIR \
+-crushpath $CRUSHPATH \
 -subject $SUBJECT \
 -session "$SESSION" \
 -pipeline $PIPELINE \
