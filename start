@@ -237,12 +237,19 @@ def _exists_on_datacommons(data_transfer_node,path):
         if os.path.exists(path):
             return True
     else:        
-        ret = subprocess.run(f"ssh {data_transfer_node} [ -d {path} ] || [ -f {path} ]",   
+        ret = subprocess.run(f"ssh {data_transfer_node} [ -f {path} ]",   
                                  capture_output=False,                                 
                                  shell=True,                               
                                  timeout=30)               
         if ret.returncode==0: 
-            return True                     
+            return True  
+        else:   
+            ret = subprocess.run(f"ssh {data_transfer_node} [ -d {path} ]",   
+                            capture_output=False,                                 
+                            shell=True,                               
+                            timeout=30)     
+            if ret.returncode==0:
+                return True                    
     return False
 
 def _get_derivatives(**kwargs):
