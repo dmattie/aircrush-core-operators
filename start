@@ -240,14 +240,14 @@ def _exists_on_datacommons(data_transfer_node,path):
         ret = subprocess.run(f"ssh {data_transfer_node} [ -f {path} ]",   
                                  capture_output=False,                                 
                                  shell=True,                               
-                                 timeout=30)               
+                                 timeout=60)               
         if ret.returncode==0: 
             return True  
         else:   
             ret = subprocess.run(f"ssh {data_transfer_node} [ -d {path} ]",   
                             capture_output=False,                                 
                             shell=True,                               
-                            timeout=30)     
+                            timeout=60)     
             if ret.returncode==0:
                 return True                    
     return False
@@ -263,16 +263,7 @@ def _get_derivatives(**kwargs):
     else:
         depth=3
     COMMAND=f"if [ -d {datacommons}/projects/{project}/datasets/derivatives ];then find {datacommons}/projects/{project}/datasets/derivatives -maxdepth {depth}; fi"
-    if data_transfer_node=="": #find local derivatives
-
-#         ret = subprocess.run(f"apptainer overlay create --size {hint_overlay} {overlay_file}",   
-#                                 capture_output=True,
-#                                 text=True, 
-#                                 shell=True,                               
-#                                 timeout=600) #Overlay should create in under 10 minutes
-              
-#         if ret.returncode==0:
-#         
+    if data_transfer_node=="": #find local derivatives      
         #print(f"\tLooking for derivatives: {datacommons}/projects/{project}/datasets/derivatives")
         subprocessCmd = subprocess.run([COMMAND],
                         shell=True,
@@ -385,17 +376,21 @@ def _rsync_put(**kwargs):
             raise Exception(f"Source to store on datacommons doesn't appear to be BIDS compliant. Expected sub-##.  ({source}) (subject={sub})")
         if os.path.isfile(tar_to_create):
             os.remove(tar_to_create)
-        tar_cmd=f"tar -cf {tar_to_create} -C {root}/{sub} {sespart.strip('_')} --remove-files"
+        tar_cmd=f"tar -cf {tar_to_create} -C {root}/{sub} {sespart.strip('_')}"
         ret = subprocess.run(tar_cmd,   
                             capture_output=True,
                             text=True, 
-                            shell=True,                               
-                            timeout=600) #Overlay should create in under 10 minutes
+                            shell=True) #Overlay should create in under 10 minutes
               
         if ret.returncode==0:            
             # tar=tarfile.open(tar_to_create,"x")
             # tar.add(source,arcname=ses)
-            # tar.close        
+            # tar.close    
+            # 
+            if ses[0:4]=="ses-":
+                shutil.rmtree(f"{root}/{sub}/{ses}")    
+            else:
+                shutil.rmtree(f"{root}/{sub}")    
             print(f"{OKGREEN}done{ENDC}")
             source=tar_to_create
         else:
