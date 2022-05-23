@@ -449,7 +449,7 @@ def _rsync_put(**kwargs):
         ## DELETE LOCAL COPY ##
         #######################
         shutil.move(source,f"{source}.deleteme")
-        print(f"{WARNING}Safe to remove {normpath}/{ses}")
+        print(f"{WARNING}Safe to remove {normpath}/{ses}{ENDC}")
 
     return True
 
@@ -942,7 +942,7 @@ def check_running_jobs(node_uuid):
         print(f"Checking for status on {active_tis} jobs thought to be running on this compute node.")
     for ti in tis:        
         if tis[ti].field_jobid:
-            print(f"Checking job {tis[ti].field_jobid}...",end='')
+            print(f"Checking job {tis[ti].field_jobid} ({tis[ti].title})...",end='')
             #seff_cmd=f"/usr/bin/local/seff {tis[ti].field_jobid}"
             seff_cmd=['seff',f"{tis[ti].field_jobid}"]           
             try:
@@ -966,7 +966,9 @@ def check_running_jobs(node_uuid):
                         #updateStatus(tis[ti],"completed")
                         tis[ti].field_status="completed"
                         tis[ti].upsert()  
+                        print(f"{OKGREEN}{status}{ENDC}")                        
                     elif status=="OUT_OF_MEMORY":
+                        print(f"{FAIL}{status}{ENDC} ",end='')
                         if tis[ti].field_logfile and os.path.isfile(tis[ti].field_logfile):
                             logfile = open(tis[ti].field_logfile,'r')
 
@@ -984,7 +986,8 @@ def check_running_jobs(node_uuid):
                         tis[ti].upsert()  
                         #updateStatus(tis[ti],"failed")  
 
-                    elif status=='FAILED' or status=="TIMEOUT" or status=="CANCELLED":
+                    elif status=='FAILED' or status=="TIMEOUT" or status=="CANCELLED" or status=="NODE_FAIL":
+                        print(f"{FAIL}{status}{ENDC}",end='')
                         if status=="TIMEOUT":
                             if tis[ti].field_multiplier_duration is None:
                                 tis[ti].field_multiplier_duration=1.5                                
