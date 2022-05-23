@@ -295,8 +295,8 @@ def _get_derivatives(**kwargs):
     
     if subject is not None and session is not None:
         to_check.append(f"/sub-{subject}/ses-{session}") 
-        to_check.append(f"/sub-{subject}/sub{subject}_ses-{session}.tar")
-        to_check.append(f"/sub-{subject}/sub{subject}_ses-{session}.tar.gz") 
+        to_check.append(f"/sub-{subject}/sub-{subject}_ses-{session}.tar")
+        to_check.append(f"/sub-{subject}/sub-{subject}_ses-{session}.tar.gz") 
     elif subject is not None:
         to_check.append(f"/sub-{subject}")
         to_check.append(f"/sub-{subject}.tar")
