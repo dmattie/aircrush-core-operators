@@ -427,7 +427,7 @@ def _rsync_put(**kwargs):
             raise Exception(f"Failed to create target directory:({target}).  Received: {out}")
 
         target=f"{data_transfer_node}:{target}"
-
+    target=target.rstrip("/")
     rsync_cmd=["rsync","-ra","--ignore-missing-args", f"{source}",f"{target}"]      
     print(f"{rsync_cmd}")  
 
