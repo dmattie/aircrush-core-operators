@@ -421,6 +421,7 @@ def _rsync_put(**kwargs):
     else:   
         target_parent=target[0:target.rindex("/")]
         #f"{root}/{sub_target}/{sub_target}"
+        print(f"Creating remote directory if missing: {target_parent}")
         mkdirs_cmd=["ssh",data_transfer_node, f"mkdir -p {target_parent}"]                  
         ret,out = getstatusoutput(mkdirs_cmd)
         if ret!=0:
