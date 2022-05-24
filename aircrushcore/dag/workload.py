@@ -13,7 +13,7 @@ OKBLUE = '\033[94m'
 OKCYAN = '\033[96m'
 OKGREEN = '\033[92m'
 WARNING = '\033[93m'
-FAIL = '\033[91m'
+FAIL = '\033[101;91m'
 ENDC = '\033[0m'
 BOLD = '\033[1m'
 UNDERLINE = '\033[4m'
@@ -196,7 +196,10 @@ class Workload:
                 for ti_uuid in tic_col:
                                
                     if ti_uuid != candidate_ti.uuid:
-                        print(f"\t{WARNING}Prereq {tic_col[ti_uuid].field_status}{ENDC}:{tic_col[ti_uuid].title}")                         
+                        if tic_col[ti_uuid].field_status=="halted":
+                            print(f"\t{FAIL}Prereq {tic_col[ti_uuid].field_status}{ENDC}:{tic_col[ti_uuid].title}") 
+                        else:
+                            print(f"\t{WARNING}Prereq {tic_col[ti_uuid].field_status}{ENDC}:{tic_col[ti_uuid].title}")                         
                         return True
         #print("\tno unmet dependencies for the task definition associated with this task instance")
         return False
