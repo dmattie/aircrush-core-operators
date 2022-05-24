@@ -461,7 +461,6 @@ def _rsync_put(**kwargs):
 
     return True
 
-def _create_parent_directory(data_transfer_node,target):
 
 def getstatusoutput(command):
     #print(command)    
