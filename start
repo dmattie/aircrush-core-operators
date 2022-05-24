@@ -1011,7 +1011,7 @@ def check_running_jobs(node_uuid):
                             error_contents = logfile.read()
                             if len(error_contents)>2000:
                                 error_contents=f"log file has been truncated.  see error log for complete detail\n\n{error_contents[-2000:]}"
-                            now = datetime.now()
+                            now = datetime.datetime.now()
                             nowstr=now.strftime("%m/%d/%Y, %H:%M:%S")
                             datestamp =f"##############################\n{nowstr}\n##############################"
                             tis[ti].field_errorlog=f"{datestamp}{error_contents}{tis[ti].field_errorlog}"
@@ -1133,7 +1133,7 @@ def doSomething():
 
 
             messages=[]
-            now = datetime.now()
+            now = datetime.datetime.now()
                 
             try:
                 #updateStatus(todo,"running","","")
