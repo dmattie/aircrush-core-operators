@@ -442,7 +442,7 @@ def _rsync_put(**kwargs):
     if ret.returncode!=0:
         raise Exception(f"Failed to copy session directory: {ret.stderr}")
     else:
-        if len(sespart_target)>0:
+        if os.path.isdir(source) and len(sespart_target)>0:
             cleanup_cmd=f"if [ -d {target_parent}/{ses} ] && [ -f {target} ]];then rm -r {target_parent}/{ses} {target_parent}/{ses}; fi"
             if data_transfer_node!="":
                 cleanup_cmd=f"ssh {data_transfer_node} '{cleanup_cmd}'"
@@ -455,7 +455,7 @@ def _rsync_put(**kwargs):
             if ret.returncode!=0:  
                 print(f"{WARNING}ERROR{ENDC} cleaning up old directory.  Now both a session directory and a tar exist.  The tar is newer.\n{ret.stderr}\nCommand Attempted:{cleanup_cmd}")
         else:
-            print(f"No session detected for this subject at target {len(sespart_target)}")    
+            print(f"No session directory to cleanup for this subject at target {len(sespart_target)}")    
         #######################
         ## DELETE LOCAL COPY ##
         #######################
