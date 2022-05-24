@@ -381,13 +381,9 @@ def _rsync_put(**kwargs):
         ret = subprocess.run(tar_cmd,   
                             capture_output=True,
                             text=True, 
-                            shell=True) #Overlay should create in under 10 minutes
+                            shell=True) 
               
         if ret.returncode==0:            
-            # tar=tarfile.open(tar_to_create,"x")
-            # tar.add(source,arcname=ses)
-            # tar.close    
-            # 
             if ses[0:4]=="ses-":
                 shutil.rmtree(f"{root}/{sub}/{ses}")    
             else:
@@ -397,19 +393,22 @@ def _rsync_put(**kwargs):
         else:
             print(f"{FAIL}FAIL{ENDC} Unable to create tar file for pushing back to data commons\n{ret.stderr}\nCommand Attempted: {tar_cmd}")
             sys.exit(1)
+        
 
+        #ensure target variable is a tar:
+        normpath_target=os.path.normpath(target)
+        ses_target=os.path.basename(normpath_target)
+        sub_target=os.path.basename(os.path.dirname(normpath_target))        
+        root=root=os.path.dirname(os.path.dirname(normpath_target))
 
-    #ensure target is a tar:
-    normpath_target=os.path.normpath(target)
-    ses_target=os.path.basename(normpath_target)
-    sub_target=os.path.basename(os.path.dirname(normpath_target))        
-    root=root=os.path.dirname(os.path.dirname(normpath_target))
+        sespart_target=f"_{ses_target}" if ses_target[0:4]=="ses-" else ""       
+        if sub_target[0:4]=="sub-":
+            target=f"{root}/{sub_target}/{sub_target}{sespart_target}.tar"
+        else:
+            raise Exception(f"Target specified to store on datacommons doesn't appear to be BIDS compliant. Expected sub-##.  ({target}) (subject={sub_target})")
 
-    sespart_target=f"_{ses_target}" if ses_target[0:4]=="ses-" else ""       
-    if sub_target[0:4]=="sub-":
-        target=f"{root}/{sub_target}/{sub_target}{sespart_target}.tar"
     else:
-        raise Exception(f"Target specified to store on datacommons doesn't appear to be BIDS compliant. Expected sub-##.  ({target}) (subject={sub_target})")
+        source=source.rstrip('/')
 
 
     # Ensure parent directories exist on target
@@ -420,7 +419,8 @@ def _rsync_put(**kwargs):
         if not os.path.exists(target_parent):
             raise Exception(f"Subject/session PATH not found on data commons ({target_parent})")
     else:   
-        target_parent=f"{root}/{sub_target}/{sub_target}"
+        target_parent=target[0:target.rindex("/")]
+        #f"{root}/{sub_target}/{sub_target}"
         mkdirs_cmd=["ssh",data_transfer_node, f"mkdir -p {target_parent}"]                  
         ret,out = getstatusoutput(mkdirs_cmd)
         if ret!=0:
@@ -429,10 +429,15 @@ def _rsync_put(**kwargs):
         target=f"{data_transfer_node}:{target}"
 
     rsync_cmd=["rsync","-ra","--ignore-missing-args", f"{source}",f"{target}"]      
-    print(f"{rsync_cmd}")      
-    ret,out = getstatusoutput(rsync_cmd)
-    if ret!=0:
-        raise Exception(f"Failed to copy session directory: {out}")
+    print(f"{rsync_cmd}")  
+
+    ret = subprocess.run(rsync_cmd,   
+                            capture_output=True,
+                            text=True,                             
+                            timeout=7200) #long timeout just in case hanging for a password                          
+    
+    if ret.returncode!=0:
+        raise Exception(f"Failed to copy session directory: {ret.stderr}")
     else:
         if len(sespart_target)>0:
             cleanup_cmd=f"if [ -d {target_parent}/{ses} ] && [ -f {target} ]];then rm -r {target_parent}/{ses} {target_parent}/{ses}; fi"
@@ -456,6 +461,7 @@ def _rsync_put(**kwargs):
 
     return True
 
+def _create_parent_directory(data_transfer_node,target):
 
 def getstatusoutput(command):
     #print(command)    
