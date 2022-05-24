@@ -419,9 +419,10 @@ def _rsync_put(**kwargs):
         if not os.path.exists(target_parent):
             raise Exception(f"Subject/session PATH not found on data commons ({target_parent})")
     else:   
+        target_parent=target[0:target.rindex("/")]
         target=f"{data_transfer_node}:{target}"
         target=target.rstrip('/')
-        target_parent=target[0:target.rindex("/")]
+        
         #f"{root}/{sub_target}/{sub_target}"
         print(f"Creating remote directory if missing: {target_parent}")
         mkdirs_cmd=["ssh",data_transfer_node, f"mkdir -p {target_parent}"]                  
