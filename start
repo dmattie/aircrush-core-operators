@@ -419,6 +419,7 @@ def _rsync_put(**kwargs):
         if not os.path.exists(target_parent):
             raise Exception(f"Subject/session PATH not found on data commons ({target_parent})")
     else:   
+        target=f"{data_transfer_node}:{target}"
         target=target.rstrip('/')
         target_parent=target[0:target.rindex("/")]
         #f"{root}/{sub_target}/{sub_target}"
@@ -428,7 +429,7 @@ def _rsync_put(**kwargs):
         if ret!=0:
             raise Exception(f"Failed to create target directory:({target}).  Received: {out}")
 
-        target=f"{data_transfer_node}:{target}"
+        
     
     rsync_cmd=["rsync","-ra","--ignore-missing-args", f"{source}",f"{target_parent}"]      
     print(f"{rsync_cmd}")  
