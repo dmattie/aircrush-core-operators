@@ -455,7 +455,7 @@ def _rsync_put(**kwargs):
             if ret.returncode!=0:  
                 print(f"{WARNING}ERROR{ENDC} cleaning up old directory.  Now both a session directory and a tar exist.  The tar is newer.\n{ret.stderr}\nCommand Attempted:{cleanup_cmd}")
         else:
-            print(f"No session directory to cleanup for this subject at target {len(sespart_target)}")    
+            print(f"No session directory to cleanup for this subject at target {len(target)}")    
         #######################
         ## DELETE LOCAL COPY ##
         #######################
