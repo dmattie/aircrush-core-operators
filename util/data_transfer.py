@@ -67,11 +67,13 @@ def _verify_and_remove(tarfile:str,target:str):
             raise Exception(f"Tar file not found on data commons as expected ({target})")
         else:
             if target[len(target)-11:]==".inprogress":
-                final_name=target[len(target)-11:]     
+                final_name=target[len(target)-11:]  
+                print(f"Moving [{target}] to [{final_name}]")   
                 shutil.move(target,final_name)
                 print("done")
                 return True
-            print("done")
+
+            print("done!")
             return True
     print(f"{ansi.WARNING}done{ansi.ENDC}")
     return False
@@ -99,6 +101,7 @@ def _localpath_to_remote(path):
     remainder=path[len(wd):]    
     return f"{dtn}{dtn_separator}{datacommons}{remainder}"
 def _create_remote_path(path):
+    print(f"Creating remote path {path}")
     if ":" in path:
         parts=path.split(":")
         host=parts[0]
