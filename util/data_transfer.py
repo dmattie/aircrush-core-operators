@@ -112,7 +112,8 @@ def _create_remote_path(path):
         if ret.returncode!=0:
             raise Exception(f"Failed to copy session directory: {ret.stderr}")
     else:
-        raise Exception("Malformed path.  Expected host:path")
+        os.makedirs(path,exist_ok=True )
+        #raise Exception("Malformed path.  Expected host:path")
 
 def _get_localexam_paths(project:str,subject:str,session:str):
     
