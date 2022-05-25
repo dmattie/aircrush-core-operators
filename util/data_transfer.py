@@ -68,7 +68,7 @@ def _verify_and_remove(tarfile:str,target:str):
         else:
             if target[len(target)-11:]==".inprogress":
                 final_name=target[len(target)-11:]  
-                print(f"Moving [{target}] to [{final_name}]")   
+                print(f"Rename [{target}] => [{final_name}]")   
                 shutil.move(target,final_name)
                 print("done")
                 return True
