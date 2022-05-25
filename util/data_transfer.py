@@ -79,7 +79,7 @@ def _verify_and_remove(tarfile:str,target:str):
     return False
         
 def _ship_tar(tarfile:str,target:str):
-    rsync_cmd=["rsync","-e","ssh -o PasswordAuthentication=no","-ra",tarfile,target]      
+    rsync_cmd=["rsync","-e","ssh -o PasswordAuthentication=no","-r",tarfile,target]      
     print(f"{rsync_cmd}")  
 
     ret = subprocess.run(rsync_cmd,   
@@ -196,7 +196,7 @@ def _rsync_put(**kwargs):
 
         
     
-    rsync_cmd=["rsync","-ra","--ignore-missing-args", f"{source}",f"{target_parent}"]      
+    rsync_cmd=["rsync","-r","--ignore-missing-args", f"{source}",f"{target_parent}"]      
     print(f"{rsync_cmd}")  
 
     ret = subprocess.run(rsync_cmd,   
