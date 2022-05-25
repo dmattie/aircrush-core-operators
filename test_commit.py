@@ -2,7 +2,7 @@ from util import data_transfer
 import sys
 
 project='abide'
-subject='a'
+subject='28880'
 session='1'
 
 data_transfer.commit(project=project,subject=subject,session=session)

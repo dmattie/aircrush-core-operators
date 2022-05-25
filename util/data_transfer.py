@@ -67,7 +67,7 @@ def _verify_and_remove(tarfile:str,target:str):
             raise Exception(f"Tar file not found on data commons as expected ({target})")
         else:
             if target[len(target)-11:]==".inprogress":
-                final_name=target[len(target)-11:]  
+                final_name=target[0:len(target)-11]  
                 print(f"Rename [{target}] => [{final_name}]")   
                 shutil.move(target,final_name)
                 print("done")
