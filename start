@@ -193,9 +193,8 @@ def pull_data(stage,project,subject,session):
         if stage =="derivatives":
             #Look on the data commons for any derivative sub-folder containing this subject/session
             
-            derivatives=_get_derivatives(data_transfer_node=data_transfer_node,
-                                        project=project.field_path_to_exam_data,
-                                        datacommons=datacommons,
+            derivatives=data_transfer._get_derivatives(data_transfer_node=data_transfer_node,
+                                        project=project.field_path_to_exam_data,                                       
                                         subject=subject.title,
                                         session=session.title)
 
