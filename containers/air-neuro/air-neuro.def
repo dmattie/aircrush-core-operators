@@ -246,3 +246,20 @@ options:"
     fi
     $SCRIPT_HOME/crush.sh $*
     
+###############
+# tar_derivatives
+###############
+%apphelp tar_derivatives
+    Tar all operation results (all derivatives) for the subject/[session] 
+    Usage:
+        singularity run --app crush_wrapup [air-neuro.sif] --datasetdir --subject [--session]
+    Example: 
+        singularity run --app crush_wrapup air-neuro.sif --datasetdir /scratch/datacommons/projects/abide/datasets --subject 007 --session 1
+%apprun tar_derivatives
+    if [ -f ~/.airneuro.conf ];then
+        SCRIPT_HOME=$(cat ~/.airneuro.conf|grep script_home_override|cut -d= -f2)
+        echo "Script home overridden from .airneuro.conf setting:  $SCRIPT_HOME to be used"
+    else
+        SCRIPT_HOME=/usr/local/scripts
+    fi
+    $SCRIPT_HOME/tar_derivatives.sh $*
