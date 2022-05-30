@@ -2,11 +2,6 @@
 
 import argparse
 import errno
-from pickle import FALSE
-from tempfile import tempdir
-from click import command
-
-from matplotlib import cm
 from aircrushcore.cms import Project,Subject,Session,Host
 from aircrushcore.cms.project_collection import ProjectCollection
 from aircrushcore.cms.subject_collection import SubjectCollection
