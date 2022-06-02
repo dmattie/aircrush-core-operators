@@ -49,7 +49,9 @@ def get_seff_completion_state(stdout:str):
             return status            
     return None
     
-def check_running_jobs(node_uuid):
+def check_running_jobs(node_uuid,**kwargs):
+    if 'aircrush' in kwargs:
+        aircrush=kwargs['aircrush']
 
     try: aircrush
     except NameError: aircrush=setup.ini_settings()
@@ -218,7 +220,9 @@ def count_session_ti_states(session:Session):
     return states,pipelines
 
 
-def cascade_status_to_subject(node_uuid):
+def cascade_status_to_subject(node_uuid,**kwargs):
+    if 'aircrush' in kwargs:
+        aircrush=kwargs['aircrush']
     try: aircrush
     except NameError: aircrush=setup.ini_settings()
     try: crush_host
