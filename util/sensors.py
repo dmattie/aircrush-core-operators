@@ -56,8 +56,7 @@ def check_running_jobs(node_uuid,**kwargs):
         aircrush=setup.ini_settings()
     if 'cms_host' in kwargs:
         crush_host=kwargs['cms_host']  
-    else:      
-        print("Unknown cms host")
+    else:              
         crush_host=config.get_cms_host()
 
     # try: aircrush
@@ -184,11 +183,11 @@ def _ti_oom(seff_stdout):
                 continue
     return False
 
-def count_session_ti_states(session:Session):
-    try: aircrush
-    except NameError: aircrush=setup.ini_settings()
-    try: crush_host
-    except NameError: crush_host=config.get_cms_host()
+def count_session_ti_states(session:Session,crush_host):
+    # try: aircrush
+    # except NameError: aircrush=setup.ini_settings()
+    # try: crush_host
+    # except NameError: crush_host=config.get_cms_host()
 
     states={'completed':0,'processed':0,'running':0,'failed':0,'waiting':0,'limping':0,'notstarted':0,'terminal':0}
     pipelines={}
@@ -234,8 +233,7 @@ def cascade_status_to_subject(node_uuid,**kwargs):
         aircrush=setup.ini_settings()
     if 'cms_host' in kwargs:
         crush_host=kwargs['cms_host']
-    else:
-        print("Re-connecting")
+    else:        
         crush_host=config.get_cms_host()
 
     node_col=ComputeNodeCollection(cms_host=crush_host);
@@ -253,7 +251,7 @@ def cascade_status_to_subject(node_uuid,**kwargs):
 
         session=attached_sessions[session_uuid]        
 
-        states,pipelines = count_session_ti_states(session)
+        states,pipelines = count_session_ti_states(session,crush_host=crush_host)
 
         count_running=states['running']
         count_failed=states['failed']
