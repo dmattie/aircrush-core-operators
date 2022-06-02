@@ -1,30 +1,26 @@
 #!/usr/bin/env python3
 
 import argparse
-from pickle import FALSE
-from aircrushcore.cms import compute_node, compute_node_collection, session_collection, task_instance_collection
-from aircrushcore.controller.configuration import AircrushConfig
 from aircrushcore.dag import Workload
 from aircrushcore.cms import *
 from aircrushcore.common.enumerators import Readiness
-from aircrushcore.datacommons.data_commons import DataCommons
+
 from os.path import exists,dirname
 import os,sys
 import importlib
 import getpass
-#from operators import invoke_operator
 import datetime
 import ast
 import subprocess
 import argparse
-import socket
 from humanfriendly import parse_size
-from util.setup import ini_settings
 from util.conversion import millify
+from util import sensors
 from util import data_transfer
-import tarfile
-import pathlib
-import shutil
+from util import setup
+from util import config
+from util import housekeeping
+from util.color import ansi
 
 
 
@@ -32,15 +28,15 @@ aircrush=None
 crush_host=None
 args=None
 
-HEADER = '\033[95m'
-OKBLUE = '\033[94m'
-OKCYAN = '\033[96m'
-OKGREEN = '\033[92m'
-WARNING = '\033[93m'
-FAIL = '\033[91m'
-ENDC = '\033[0m'
-BOLD = '\033[1m'
-UNDERLINE = '\033[4m'
+# HEADER = '\033[95m'
+# OKBLUE = '\033[94m'
+# OKCYAN = '\033[96m'
+# OKGREEN = '\033[92m'
+# WARNING = '\033[93m'
+# FAIL = '\033[91m'
+# ENDC = '\033[0m'
+# BOLD = '\033[1m'
+# UNDERLINE = '\033[4m'
 
 def ready():
     #Sense readiness to do something
@@ -102,466 +98,8 @@ def getMyComputeNodeUUID():
     return nuid,readystate
 
 
-def pullContainer(uri:str):
-    #return "requirements.txt"   ##TODO
-    if (args.container):
-        
-        return args.container
-
-    container_dir=aircrush.config['COMPUTE']['singularity_container_location']
-
-    sif = f"{container_dir}/{uri[uri.rfind('/')+1:len(uri)].replace(':','_')}.sif"
-    if os.path.isfile(sif):
-        print(f"Container exists - will not overwrite ({sif})")
-        return sif
-
-    cmdArray=["singularity","pull","--dir",container_dir,uri]
-    print(cmdArray)
-    ret = subprocess.call(cmdArray)
-    
-    if not os.path.isfile(sif):
-        raise Exception(f"Failed to pull container specified. {sif} not found")
-        
-    return sif
-
-def pull_source_data(project,subject,session):
-    wd=aircrush.config['COMPUTE']['working_directory']
-    datacommons=aircrush.config['COMPUTE']['commons_path']
-    #Test if we are on an HCP node, use sbatch to perform rsync if so
-
-    root=f"/projects/{project.field_path_to_exam_data}/datasets/source"
-    
-
-    #If none of the if statements below match, the entire source will be cloned
-    print(f"start root:{datacommons}/{root}")
-    if os.path.isdir(f"{datacommons}/{root}/{subject.title}"):
-        root=f"{root}/{subject.title}"
-        if os.path.isdir(f"{datacommons}/{root}/{session.title}"):
-            root=f"{datacommons}/{root}/{session.title}"
-
-    if os.path.isdir(f"{datacommons}/{root}/sub-{subject.title}"):
-        root=f"{root}/sub-{subject.title}"
-        if os.path.isdir(f"{datacommons}/{root}/ses-{session.title}"):
-            root=f"{root}/ses-{session.title}"
-            print(f"new root:  {root}")
-        
-    source_session_dir=f"{datacommons}/{root}"
-    target_session_dir=f"{wd}/{root}"
-
-    # if os.path.isdir(target_session_dir):
-    #     #It's already there, ignore quietly
-    #     print(f"{target_session_dir} Already exists")
-    #     return
-    # else:
-    print(f"Cloning ({source_session_dir}) to local working directory ({target_session_dir})")
-    os.makedirs(target_session_dir,exist_ok=True)         
-
-    # ret = subprocess.getstatusoutput("which sbatch")
-    # if ret[0]==0:
-    #     print("sbatch exists, starting asynchronous copy")
-    # else:
-    #     print("SBATCH doesn't exist, performing synchronous copy")
-        
-    if not os.path.isdir(source_session_dir):
-        raise Exception(f"Subject/session not found on data commons ({source_session_dir})")
-    rsync_cmd=f"rsync -r --ignore-missing-args {source_session_dir} {target_session_dir}"
-    print(rsync_cmd)
-    
-    ret = subprocess.getstatusoutput(rsync_cmd)
-    if ret[0]!=0:
-        raise Exception(f"Failed to copy session directory: {ret[1]}")
-        
-def pull_data(stage,project,subject,session):
-    if stage=="source":
-        pull_source_data(project,subject,session)
-    else:
-        wd=aircrush.config['COMPUTE']['working_directory']
-
-        ##Get the hostname of cluster hosting data commons for remote rsync
-        ##user must have setup known_hosts for unattended rsync
-        if aircrush.config.has_option('COMMONS','data_transfer_node'):            
-            data_transfer_node=aircrush.config['COMMONS']['data_transfer_node']
-            if not data_transfer_node=="":                
-                # if not data_transfer_node[-1]==":":  #Add a colon to the end for rsync syntax if necessary
-                #     data_transfer_node=f"{data_transfer_node}:"
-                print(f"{WARNING}The data commons is found on data transfer node {data_transfer_node} User must have setup unattended rsync using ssh-keygen for this process to be scheduled.  If this node is local, remove the data_transfer_node option from crush.ini{ENDC}")
-                
-        else:
-            data_transfer_node=""
-
-        datacommons=aircrush.config['COMMONS']['commons_path']
-        if stage =="derivatives":
-            #Look on the data commons for any derivative sub-folder containing this subject/session
-            
-            derivatives=data_transfer._get_derivatives(dtn=data_transfer_node,
-                                        project=project.field_path_to_exam_data,                                       
-                                        subject=subject.title,
-                                        session=session.title)
-
-            root=f"/projects/{project.field_path_to_exam_data}/datasets/{stage}"
-            for derivative in derivatives:
-                print(f"///[{derivative}]///")
-                source=f"{datacommons}/projects/{project.field_path_to_exam_data}/datasets/{stage}/{derivative}"
-                target=f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage}/{derivative}"   
-                if _exists_on_datacommons(data_transfer_node,source):
-                    _rsync_get(data_transfer_node=data_transfer_node,
-                                source=source,                            
-                                target=target)
-                else:
-                    print(f"{source} not on datacommons... skipping")
-        else:
-            foundsource=False
-
-            tarsource=f"{datacommons}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/sub-{subject.title}_ses-{session.title}.tar"
-            tartarget=f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/sub-{subject.title}_ses-{session.title}.tar"
-            if _exists_on_datacommons(data_transfer_node,tarsource):
-                _rsync_get(data_transfer_node=data_transfer_node,
-                                source=tarsource,
-                                target=tartarget)  
-                foundsource=True 
-            else:         
-                source=f"{datacommons}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
-                target=f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
-                if _exists_on_datacommons(data_transfer_node,source):
-                    _rsync_get(data_transfer_node=data_transfer_node,
-                                    source=source,
-                                    target=target)
-                    foundsource=True    
-
-            if foundsource==False:
-                print(f"{source} not on datacommons... skipping")
 
 
-def _exists_on_datacommons(data_transfer_node,path):
-    if data_transfer_node is None or data_transfer_node=="":
-        #Local
-        if os.path.exists(path):
-            return True
-    else:        
-        ret = subprocess.run(f"ssh {data_transfer_node} [ -f {path} ]",   
-                                 capture_output=False,                                 
-                                 shell=True,                               
-                                 timeout=60)               
-        if ret.returncode==0: 
-            return True  
-        else:   
-            ret = subprocess.run(f"ssh {data_transfer_node} [ -d {path} ]",   
-                            capture_output=False,                                 
-                            shell=True,                               
-                            timeout=60)     
-            if ret.returncode==0:
-                return True                    
-    return False
-
-# def _get_derivatives(**kwargs):
-#     data_transfer_node=kwargs['data_transfer_node'] if 'data_transfer_node' in kwargs else None 
-#     project=kwargs['project'] if 'project' in kwargs else None 
-#     datacommons=kwargs['datacommons'] if 'datacommons' in kwargs else None 
-#     subject=kwargs['subject'] if 'subject' in kwargs else None
-#     session=kwargs['session'] if 'session' in kwargs else None
-#     if session is None:
-#         depth=2
-#     else:
-#         depth=3
-#     COMMAND=f"if [ -d {datacommons}/projects/{project}/datasets/derivatives ];then find {datacommons}/projects/{project}/datasets/derivatives -maxdepth {depth}; fi"
-#     if data_transfer_node=="": #find local derivatives      
-#         #print(f"\tLooking for derivatives: {datacommons}/projects/{project}/datasets/derivatives")
-#         subprocessCmd = subprocess.run([COMMAND],
-#                         shell=True,
-#                         capture_output=True,
-#                         text=True,
-#                         timeout=600)
-#         result = subprocessCmd.stdout             
-#     else:
-#         print(f"ssh {data_transfer_node} {COMMAND}")
-#         subprocessCmd = subprocess.run(["ssh", data_transfer_node, COMMAND],
-#                         shell=False,
-#                         capture_output=True,
-#                         text=True,
-#                         timeout=600)
-#         result = subprocessCmd.stdout
-
-#     if subprocessCmd.returncode!=0:
-#         error=subprocessCmd.stderr  
-#         raise Exception(f"Failed to find derivatives: {error}")
-
-#     if result==[]:
-#         print("No derivatives found in the data commons")
-#         return []
-        
-#     else:
-#         derivatives=result.splitlines()
-
-#     to_check=[]
-    
-#     if subject is not None and session is not None:
-#         to_check.append(f"/sub-{subject}/ses-{session}") 
-#         to_check.append(f"/sub-{subject}/sub-{subject}_ses-{session}.tar")
-#         to_check.append(f"/sub-{subject}/sub-{subject}_ses-{session}.tar.gz") 
-#     elif subject is not None:
-#         to_check.append(f"/sub-{subject}")
-#         to_check.append(f"/sub-{subject}.tar")
-#         to_check.append(f"/sub-{subject}.tar.gz")
-    
-#     to_return=[]
-    
-#     for derivative in derivatives:        
-#         #If the end of this derivative matches the subeject/[session] we are looking
-#         #for then added it to the to_return list        
-#         derivative_str=derivative.strip()
-#         for checkme in to_check:
-#             if derivative_str[len(derivative_str)-len(checkme):]==checkme:
-#                 to_return.append(derivative_str[len(f"{datacommons}/projects/{project}/datasets/derivatives"):])
-#     print(f"\tFound {len(to_return)} derivatives")
-#     return to_return
-
-def _rsync_get(**kwargs):
-    data_transfer_node=kwargs['data_transfer_node'] if 'data_transfer_node' in kwargs else None 
-    source=kwargs['source'] if 'source' in kwargs else None
-    target=kwargs['target'] if 'target' in kwargs else None
-
-    if source is None or target is None or data_transfer_node is None:
-        raise Exception("Insufficient args passed to _rsync_get")
-    
-    target_parent=pathlib.Path(target).parent.resolve()
-    os.makedirs(target_parent,exist_ok=True)     
-
-    if data_transfer_node=="":        
-        if not os.path.exists(source):
-            raise Exception(f"Subject/session not found on data commons ({source})")
-        suffix = "/" if os.path.isdir(source) else ""
-    else:
-        is_dir_cmd=f"ssh {data_transfer_node} test -d source"
-        ret = subprocess.run(is_dir_cmd,   
-                            capture_output=False,                            
-                            shell=True,                               
-                            timeout=60)                       
-        suffix = "/" if ret.returncode==0 else ""
-
-        source=f"{data_transfer_node}:{source}"
-
-    rsync_cmd=["rsync","-ra","--ignore-missing-args", f"{source}{suffix}",f"{target}"]      
-    print(rsync_cmd)      
-    ret,out = getstatusoutput(rsync_cmd)
-    if ret!=0:
-        raise Exception(f"Failed to copy session directory: {out}")
-    if os.path.isfile(target):
-        if tarfile.is_tarfile(target):
-            print("Extracting tarfile...",end='')
-            tar=tarfile.open(target)
-            tarpath=pathlib.Path(target).parent.resolve()
-            tar.extractall(path=tarpath)
-            tar.close()
-            os.remove(target)
-            print(f"{OKGREEN}done{ENDC}")
-
-# def _rsync_put(**kwargs):
-#     data_transfer_node=kwargs['data_transfer_node'] if 'data_transfer_node' in kwargs else None 
-#     source=kwargs['source'] if 'source' in kwargs else None
-#     target=kwargs['target'] if 'target' in kwargs else None
-
-#     if source is None or target is None or data_transfer_node is None:
-#         raise Exception("Insufficient args passed to _rsync_get")
-    
-#     if os.path.isdir(source):        
-#         print("\tCreating tarfile...",end='',flush=True)
-#         normpath=os.path.normpath(source)
-#         ses=os.path.basename(normpath)
-#         sub=os.path.basename(os.path.dirname(normpath))        
-#         root=root=os.path.dirname(os.path.dirname(normpath))
-
-#         sespart=f"_{ses}" if ses[0:4]=="ses-" else ""       
-#         if sub[0:4]=="sub-":
-#             tar_to_create=f"{root}/{sub}/{sub}{sespart}.tar"
-#         else:
-#             raise Exception(f"Source to store on datacommons doesn't appear to be BIDS compliant. Expected sub-##.  ({source}) (subject={sub})")
-#         if os.path.isfile(tar_to_create):
-#             os.remove(tar_to_create)
-#         tar_cmd=f"tar -cf {tar_to_create} -C {root}/{sub} {sespart.strip('_')}"
-#         ret = subprocess.run(tar_cmd,   
-#                             capture_output=True,
-#                             text=True, 
-#                             shell=True) 
-              
-#         if ret.returncode==0:            
-#             if ses[0:4]=="ses-":
-#                 shutil.rmtree(f"{root}/{sub}/{ses}")    
-#             else:
-#                 shutil.rmtree(f"{root}/{sub}")    
-#             print(f"{OKGREEN}done{ENDC}")
-#             source=tar_to_create
-#         else:
-#             print(f"{FAIL}FAIL{ENDC} Unable to create tar file for pushing back to data commons\n{ret.stderr}\nCommand Attempted: {tar_cmd}")
-#             sys.exit(1)
-        
-
-#         #ensure target variable is a tar:
-#         normpath_target=os.path.normpath(target)
-#         ses_target=os.path.basename(normpath_target)
-#         sub_target=os.path.basename(os.path.dirname(normpath_target))        
-#         root=root=os.path.dirname(os.path.dirname(normpath_target))
-
-#         sespart_target=f"_{ses_target}" if ses_target[0:4]=="ses-" else ""       
-#         if sub_target[0:4]=="sub-":
-#             target=f"{root}/{sub_target}/{sub_target}{sespart_target}.tar"
-#         else:
-#             raise Exception(f"Target specified to store on datacommons doesn't appear to be BIDS compliant. Expected sub-##.  ({target}) (subject={sub_target})")
-
-#     else:
-#         source=source.rstrip('/')
-
-
-#     # Ensure parent directories exist on target
-#     if data_transfer_node=="":
-#         target_parent = pathlib.Path(target).parent.resolve()
-#         os.makedirs(target_parent,exist_ok=True)   
-#         #dir_path = os.path.dirname(os.path.realpath(__file__))
-#         if not os.path.exists(target_parent):
-#             raise Exception(f"Subject/session PATH not found on data commons ({target_parent})")
-#     else:   
-#         target_parent=target[0:target.rindex("/")]
-#         target=f"{data_transfer_node}:{target}"
-#         target=target.rstrip('/')
-        
-#         #f"{root}/{sub_target}/{sub_target}"
-#         print(f"Creating remote directory if missing: {target_parent}")
-#         mkdirs_cmd=["ssh",data_transfer_node, f"mkdir -p {target_parent}"]                  
-#         ret,out = getstatusoutput(mkdirs_cmd)
-#         if ret!=0:
-#             raise Exception(f"Failed to create target directory:({target}).  Received: {out}")
-
-        
-    
-#     rsync_cmd=["rsync","-ra","--ignore-missing-args", f"{source}",f"{target_parent}"]      
-#     print(f"{rsync_cmd}")  
-
-#     ret = subprocess.run(rsync_cmd,   
-#                             capture_output=True,
-#                             text=True,                             
-#                             timeout=7200) #long timeout just in case hanging for a password                          
-    
-#     if ret.returncode!=0:
-#         raise Exception(f"Failed to copy session directory: {ret.stderr}")
-#     else:
-#         if os.path.isdir(source) and len(sespart_target)>0:
-#             cleanup_cmd=f"if [ -d {target_parent}/{ses} ] && [ -f {target} ]];then rm -r {target_parent}/{ses} {target_parent}/{ses}; fi"
-#             if data_transfer_node!="":
-#                 cleanup_cmd=f"ssh {data_transfer_node} '{cleanup_cmd}'"
-            
-#             ret = subprocess.run(cleanup_cmd,   
-#                             capture_output=True,
-#                             text=True, 
-#                             shell=True,
-#                             timeout=3600) #long timeout just in case hanging for a password              
-#             if ret.returncode!=0:  
-#                 print(f"{WARNING}ERROR{ENDC} cleaning up old directory.  Now both a session directory and a tar exist.  The tar is newer.\n{ret.stderr}\nCommand Attempted:{cleanup_cmd}")
-#         else:
-#             print(f"No session directory to cleanup for this subject at target {len(target)}")    
-#         #######################
-#         ## DELETE LOCAL COPY ##
-#         #######################
-#         shutil.move(source,f"{source}.deleteme")
-#         print(f"{WARNING}Safe to remove {normpath}/{ses}{ENDC}")
-
-#     return True
-
-
-def getstatusoutput(command):
-    #print(command)    
-    process = subprocess.Popen(command, stdout=subprocess.PIPE)
-    out, _ = process.communicate()
-    return (process.returncode, out)
-
-# def push_data(stage,project,subject,session,**kwargs):
-#     print(f"\tPushing up {project.title}/{subject.title}/{session.title} ")
-#     if stage=="source":
-#         print("ERROR: Source data is read-only.  It cannot be pushed back to the data commons")
-#         return
-#     else:
-#         wd=aircrush.config['COMPUTE']['working_directory']
-
-#         ##Get the hostname of cluster hosting data commons for remote rsync
-#         ##user must have setup known_hosts for unattended rsync
-#         if aircrush.config.has_option('COMMONS','data_transfer_node'):         
-#             data_transfer_node=aircrush.config['COMMONS']['data_transfer_node']
-#             if not data_transfer_node=="":                
-#                 # if not data_transfer_node[-1]==":":  #Add a colon to the end for rsync syntax if necessary
-#                 #     data_transfer_node=f"{data_transfer_node}:"
-#                 print(f"{WARNING}The data commons is found on data transfer node {data_transfer_node}. User must have setup unattended rsync using ssh-keygen for this process to be scheduled.  If this node is local, remove the data_transfer_node option from crush.ini.{ENDC}")
-                
-#         else:
-#             data_transfer_node=""
-
-#         datacommons=aircrush.config['COMMONS']['commons_path']
-#         #Test if we are on an HCP node, use sbatch to perform rsync if so
-
-#         if stage=="derivatives":
-#             derivatives=_get_derivatives(data_transfer_node="",#get derivatives in local/(compute node)
-#                 project=project.field_path_to_exam_data,
-#                 datacommons=wd,
-#                 subject=subject.title,
-#                 session=session.title)
-
-#             if len(derivatives)==0:
-#                 print(f"\tNo derivatives found for this session")
-#             for derivative in derivatives:
-
-#                 root=f"projects/{project.field_path_to_exam_data}/datasets/derivatives/{derivative}/"
-#                 source=f"{wd}/{root}"
-#                 target=f"{datacommons}/{root}"
-#                 print(f"\tCommitting {derivative}")
-#                 ret = _rsync_put(data_transfer_node=data_transfer_node,
-#                         source=source,                            
-#                         target=target) 
-#                 if ret==True:
-#                     print(f"\tDerivative committed to data commons: {source}\n")                
-
-#             # else:
-#             #     raise Exception("WARNING: You attempted to return derivatives to the data commons but did not specify which pipelines.")
-                
-
-#         else:
-#             root=f"projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
-#             source_session_dir=f"{wd}/{root}"
-#             target_session_dir=f"{data_transfer_node}{datacommons}/{root}"
-#             print(f"Cloning ({source_session_dir}) back to data commons ({target_session_dir})")        
-#             print(f"DTN:[{data_transfer_node}]") 
-#             rsync_cmd=["rsync","-r","--ignore-missing-args", f"{source_session_dir}",f"{target_session_dir}"]                  
-#             ret,out = getstatusoutput(rsync_cmd)
-#             if ret!=0:
-#                 raise Exception(f"Failed to copy session directory: {out}")
-# def test_prereqs(parms,**kwargs):
-
-#     project=kwargs['project'] if 'project' in kwargs else ""       
-#     subject=kwargs['subject'] if 'subject' in kwargs else ""
-#     session=kwargs['session'] if 'session' in kwargs else ""
-#     workingdir=kwargs['workingdir'] if 'workingdir' in kwargs else ""
-#     datacommons=kwargs['datacommons'] if 'datacommons' in kwargs else ""
-#     pipeline=kwargs['pipeline'] if 'pipeline' in kwargs else ""
-    
-#     if "prereq-diskspace" in parms:
-#         prereq_diskspace=parms["prereq-diskspace"]
-#         if aircrush.config.has_option('COMPUTE','available_disk'):
-#             diskspace_cmd=aircrush.config['COMPUTE']['available_disk']
-#             shell_cmd=[diskspace_cmd]                  
-#             ret,out = getstatusoutput(shell_cmd)
-#             if ret!=0:
-#                 print(f"Failed to assess available diskspace. Attempted:{diskspace_cmd}, Result: {out}")
-#                 #raise Exception(f"Failed to assess available diskspace. Attempted:{diskspace_cmd}, Result: {out}")
-#                 return False
-#             else:
-#                 requirement=parse_size(prereq_diskspace)
-#                 found=parse_size(out)
-#                 if found<requirement:
-#                     print(f"[WARNING]: Prerequisite not met: Insufficient disk space to run this operation, {diskspace_cmd} required")
-#                     return False
-
-#         else:
-#             print(f"[WARNING]: A diskspace prerequisite of {prereq_diskspace} has been specified but the compute node has not been configured to assess available diskspace.  Create an entry in ~/.crush.ini in the COMPUTE section called available_disk with a one line bash command to derive available disk space")
-#     return False
-
-
-        
  
 def parameter_expansion(cmdArray,parms_to_add,**kwargs):
     print("Performing Parameter Keyword Expansion")
@@ -611,7 +149,7 @@ def parameter_expansion(cmdArray,parms_to_add,**kwargs):
     #Check for project overrides:
     overrides=project.get_overrides(task.uuid)
     if(len(overrides)>0):
-        print(f"{WARNING}Project overrides detected{ENDC}")
+        print(f"{ansi.WARNING}Project overrides detected{ansi.ENDC}")
     for k in overrides:
         v = overrides[k] if overrides[k] is not None else ""
         print(f"\t{k}={v}")
@@ -620,91 +158,7 @@ def parameter_expansion(cmdArray,parms_to_add,**kwargs):
             cmdArray.append(f"{overrides[k]}")
    
     return cmdArray
-# def ini_settings():
-    
-#     homedir=os.path.expanduser('~')
-#     crush_config=f"{homedir}/.crush.ini"
-#     if not os.path.isfile(crush_config):
-        
-#         settings={}
-#         settings['REST']={}
-#         settings['COMPUTE']={}
-#         settings['COMMONS']={}
-#         print(f"Looks like this is your first time here.  Let's get setup, settings will be stored in ~/.crush.ini")
-        
-#         conf = open(crush_config, "w") 
 
-#         settings['REST']['endpoint']=input("What is the URL of your Aircrush CMS [http://20.63.59/9/]:")
-#         if settings['REST']['endpoint'] == "":
-#             settings['REST']['endpoint']= "http://20.63.59.9/"
-
-#         settings['REST']['username']=input("Aircrush username:")
-#         while settings['REST']['username']=="":
-#             settings['REST']['username']=input("Aircrush username:")
-#         settings['REST']['password']=input("Aircrush password:")
-#         while settings['REST']['password']=="":
-#             settings['REST']['password']=input("Aircrush password:")
-
-#         hostname=os.environ.get("CC_CLUSTER")
-#         if hostname==None:
-#             hostname=socket.gethostname()
-#         settings['COMPUTE']['cluster']=input(f"Cluster name [{hostname}]")
-#         if settings['COMPUTE']['cluster']=="":
-#             settings['COMPUTE']['cluster']=hostname
-
-#         settings['COMPUTE']['account']=input("SLURM account to charge (e.g. def-username):")
-#         while settings['COMPUTE']['account']=="":
-#             settings['COMPUTE']['account']=input("SLURM account to charge (e.g. def-username):")
-        
-#         scratch=os.environ.get("SCRATCH")
-#         if scratch==None:
-#             scratch="~/scratch"
-#         settings['COMPUTE']['working_directory']=input(f"Working directory for scratch [{scratch}/aircrush]:")
-#         if settings['COMPUTE']['working_directory']=="":
-#             settings['COMPUTE']['working_directory']=f"{scratch}/aircrush"
-#         os.makedirs(settings['COMPUTE']['working_directory'])
-
-        
-#         settings['COMPUTE']['concurrency_limit']=input("Max concurrent jobs [10]:")
-#         if settings['COMPUTE']['concurrency_limit']=="":
-#             settings['COMPUTE']['concurrency_limit']=10
-
-#         settings['COMPUTE']['seconds_between_failures']=input("Seconds to wait between failures[18000](default 5 hrs, providing time for mitigation):")
-#         if settings['COMPUTE']['seconds_between_failures']=="":
-#             settings['COMPUTE']['seconds_between_failures']=18000
-        
-#         settings['COMMONS']['commons_path']=input(f"Location of data commons.  If DC is remote, provide path on that host.  (e.g. ...[HERE]/projects/project-id/datasets/source):")
-#         while settings['COMMONS']['commons_path']=="":
-#             print("\thint: /home/username/projects/def-username/shared/")
-#             settings['COMMONS']['commons_path']=input(f"Location of data commons (e.g. ...[HERE]/projects/project-id/datasets/source):")
-
-#         settings['COMMONS']['data_tranfer_node']=input(f"Data transfer node of cluster hosting data commons (leave blank if the data commons is on this cluster):")
-        
-#         settings['COMPUTE']['singularity_container_location']=input(f"Location for storing active singularity containers [{settings['COMMONS']['commons_path']}/code/containers]:")
-#         if settings['COMPUTE']['singularity_container_location']=="":
-#             settings['COMPUTE']['singularity_container_location']=f"{settings['COMMONS']['commons_path']}/code/containers"
-#         os.makedirs(settings['COMPUTE']['singularity_container_location'])
-    
-#         print("Writing file")
-#         L = [
-#             "[REST]\n",
-#             f"username={settings['REST']['username']}\n",
-#             f"password={settings['REST']['password']}\n",
-#             f"endpoint={settings['REST']['endpoint']}\n\n",
-#             "[COMPUTE]\n",
-#             f"cluster={settings['COMPUTE']['cluster']}\n",
-#             f"account={settings['COMPUTE']['account']}\n",
-#             f"working_directory={settings['COMPUTE']['working_directory']}\n",
-#             f"concurrency_limit={settings['COMPUTE']['concurrency_limit']}\n",
-#             f"seconds_between_failures={settings['COMPUTE']['seconds_between_failures']}\n"
-#             f"singularity_container_location={settings['COMPUTE']['singularity_container_location']}\n\n",
-#             "[COMMONS]\n",
-#             f"commons_path={settings['COMMONS']['commons_path']}\n",
-#             f"data_transfer_node={settings['COMMONS']['data_transfer_node']}\n"
-#             ]
-#         conf.writelines(L) 
-#         conf.close() 
-#     return AircrushConfig(crush_config)
 
 def getMultipliers(ti_uuid:str):
     ti_col=TaskInstanceCollection(cms_host=crush_host)
@@ -735,43 +189,6 @@ def derivative_dir(**kwargs):
     subject_dir=f"sub-{subject.title}" if subject is not None else ""
     return f"{workingdir}/projects/{project.field_path_to_exam_data}/datasets/derivatives/{pipeline.field_id}/{subject_dir}{session_dir}"
 
-# def create_overlay(**kwargs):
-    
-#     task=kwargs['task'] if 'task' in kwargs else None
-#     project=kwargs['project'] if 'project' in kwargs else ""        
-#     subject=kwargs['subject'] if 'subject' in kwargs else ""        
-#     session=kwargs['session'] if 'session' in kwargs else ""
-#     workingdir=kwargs['workingdir'] if 'workingdir' in kwargs else aircrush.config['COMPUTE']['working_directory']
-#     pipeline=kwargs['pipeline'] if 'pipeline' in kwargs else ""
-#     hint_overlay=kwargs['hint_overlay'] if 'hint_overlay' in kwargs else ""
-
-#     subject_dir=f"sub-{subject}"
-#     session_dir=f"ses-{session}" if session != "" else ""
-    
-#     derivative=derivative_dir(workingdir=workingdir,
-#                                 project=project,
-#                                 subject=subject,
-#                                 session=session,
-#                                 pipeline=pipeline)
-#     overlay_file=f"{derivative}/{task.field_operator}_overlay.img"
-#     if hint_overlay != "": 
-#         if os.path.isfile(overlay_file):
-#             return overlay_file
-#         print("Creating overlay file...",end='',flush=True)
-#         ret = subprocess.run(f"apptainer overlay create --size {hint_overlay} {overlay_file}",   
-#                                 capture_output=True,
-#                                 text=True, 
-#                                 shell=True,                               
-#                                 timeout=600) #Overlay should create in under 10 minutes
-              
-#         if ret.returncode==0:
-#             print(f"{OKGREEN}done{ENDC}")
-#             return overlay_file
-#         else:
-#             print(f"{FAIL}[ERROR]{ENDC} Failed creating the requested overlay file {overlay_file} of size {hint_overlay} as defined in the task using hint_overlay parameter.")
-#             raise Exception(ret.stderr)
-        
-
 def createJob(parms_to_add,**kwargs):
     
     task=kwargs['task'] if 'task' in kwargs else None
@@ -796,20 +213,13 @@ def createJob(parms_to_add,**kwargs):
             print(f"Attempting resize of memory from {parse_size(sbatch_mem_per_cpu)} ({sbatch_mem_per_cpu}) by {memory_multiplier} times multiplier.")
             sbatch_mem_per_cpu=parse_size(sbatch_mem_per_cpu) * memory_multiplier            
             sbatch_mem_per_cpu=millify(sbatch_mem_per_cpu) 
-            print(f"{OKGREEN}AUTO TUNE{ENDC}: Memory has been automatically incremented after detecting previous OOM errors.  New memory requirement is {sbatch_mem_per_cpu}")           
+            print(f"{ansi.OKGREEN}AUTO TUNE{ansi.ENDC}: Memory has been automatically incremented after detecting previous OOM errors.  New memory requirement is {sbatch_mem_per_cpu}")           
     except Exception as e:
-        print(f"{WARNING} Failed to adjust memory{ENDC} ({e})")
+        print(f"{ansi.WARNING} Failed to adjust memory{ansi.ENDC} ({e})")
         print(f"sbatch_mem_per_cpu:{sbatch_mem_per_cpu}\n sbatch_mem_per_cpu formatted:{millify(sbatch_mem_per_cpu)}")
         raise e
 
-    # try:        
-    #     if parse_size(sbatch_time) != 0:
-    #         sbatch_time=parse_size(sbatch_mem_per_cpu) * memory_multiplier
-    #         sbatch_mem_per_cpu=format_size(sbatch_mem_per_cpu) 
-    #         print("{OKGREEN}AUTO TUNE{ENDC}: Duration has been automatically incremented after detecting previous TIMEOUT errors. New Duration is {sbatch_mem_per_cpu}")           
-    # except:
-    #     pass
-
+   
     derivative=derivative_dir(workingdir=workingdir,
                                 project=project,
                                 subject=subject,
@@ -849,27 +259,6 @@ def createJob(parms_to_add,**kwargs):
         workdir=None
         workdir_command=None
     
-    # overlay_file = create_overlay(
-    #     task=task,                  
-    #     workingdir=workingdir,
-    #     project=project,
-    #     subject=subject,
-    #     session=session,
-    #     pipeline=pipeline,
-    #     hint_overlay=hint_overlay) if hint_overlay != "" else None                
-    # overlay_command = "--overlay" if overlay_file is not None else None
-    
-    # if overlay_command is not None:                    
-    #     workdir=derivative_dir(workingdir=workingdir,
-    #                 project=project,
-    #                 subject=subject,
-    #                 session=session,
-    #                 pipeline=pipeline)
-    #     workdir_command="--workdir"
-    # else:
-    #     workdir = None
-    #     workdir_command = None
-    #     os.makedirs(workdir,exist_ok=True)
     
     cmdArray=["singularity","run","--app",
     task.field_operator,
@@ -911,208 +300,23 @@ def createJob(parms_to_add,**kwargs):
     job_script = '\n'.join(L)
     conf.write(job_script) 
     conf.close() 
-    print(f"Slurm job written to {OKGREEN}{jobfile}{ENDC}")
+    print(f"Slurm job written to {ansi.OKGREEN}{jobfile}{ansi.ENDC}")
     toreturn={}
     toreturn['jobfile']=jobfile
     toreturn['stdout']=stdoutfile
     toreturn['stderr']=stderrfile
     return toreturn
 
-def get_slurm_id(stdout:str):
-    print(f"given {stdout}")
-    lines=stdout.split('\n')
-    if len(lines)>0:
-        if lines[0][:20]=="Submitted batch job ":
-            tokens=lines[0].split()            
-            jobid=tokens[-1]
-            return jobid
-    return 0
-def get_seff_completion_state(stdout:str):
-    
-    lines=stdout.split('\n')
-    for line in lines:
-        if line[:6]=="State:":
-            tokens=line.split()            
-            status=tokens[1]
-            return status            
-    return None
 
-    ########### PENDING
-# Job ID: 18982311
-# Cluster: cedar
-# User/Group: dmattie/dmattie
-# State: PENDING
-# Cores: 1
-# Efficiency not available for jobs in the PENDING state.
-    return 'COMPLETED'
-def check_running_jobs(node_uuid):
-    w=Workload(aircrush)
-    tis =w.get_running_tasks(node_uuid)
-    active_tis=len(tis)
-    reviewed_tis=active_tis
-    if active_tis>0:
-        print(f"Checking for status on {active_tis} jobs thought to be running on this compute node.")
-    for ti in tis:        
-        if tis[ti].field_jobid:
-            print(f"Checking job {tis[ti].field_jobid} ({tis[ti].title})...",end='')
-            #seff_cmd=f"/usr/bin/local/seff {tis[ti].field_jobid}"
-            seff_cmd=['seff',f"{tis[ti].field_jobid}"]           
-            try:
-                ret = subprocess.run(seff_cmd,   
-                                capture_output=True,
-                                text=True,                                
-                                timeout=60)
-    #            ret = subprocess.call(cmdArray)                
-                if ret.returncode==0:
-                    status=get_seff_completion_state(ret.stdout)                    
-                    if status=='COMPLETED':                        
-                        tis[ti].field_seff=ret.stdout
-                        if tis[ti].field_logfile and os.path.isfile(tis[ti].field_logfile):
-                            logfile = open(tis[ti].field_logfile,'r')
-
-                            log_contents = logfile.read()
-                            if len(log_contents)>2000:
-                                log_contents=f"log file has been truncated.  see output log for complete detail\n\n{log_contents[-2000:]}"                            
-                            tis[ti].body=log_contents
-
-                        #updateStatus(tis[ti],"completed")
-                        tis[ti].field_status="completed"
-                        tis[ti].upsert()  
-                        print(f"{OKGREEN}{status}{ENDC}")                        
-                    elif status=="OUT_OF_MEMORY":
-                        print(f"{FAIL}{status}{ENDC} ",end='')
-                        if tis[ti].field_logfile and os.path.isfile(tis[ti].field_logfile):
-                            logfile = open(tis[ti].field_logfile,'r')
-
-                            log_contents = logfile.read()
-                            if len(log_contents)>2000:
-                                log_contents=f"log file has been truncated.  see output log for complete detail\n\n{log_contents[-2000:]}"                            
-                            tis[ti].body=log_contents
-                                                
-                        if tis[ti].field_multiplier_memory is None:
-                            tis[ti].field_multiplier_memory=1.5
-                        else:
-                            tis[ti].field_multiplier_memory=float(tis[ti].field_multiplier_memory)+0.5
-                        print(f"\tAllocated memory was exhausted.  Extending to {tis[ti].field_multiplier_memory} times specified memory allocation.")  
-                        tis[ti].field_status="failed"
-                        tis[ti].upsert()  
-                        #updateStatus(tis[ti],"failed")  
-
-                    elif status=='FAILED' or status=="TIMEOUT" or status=="CANCELLED" or status=="NODE_FAIL":
-                        print(f"{FAIL}{status}{ENDC}",end='')
-                        if status=="TIMEOUT":
-                            if tis[ti].field_multiplier_duration is None:
-                                tis[ti].field_multiplier_duration=1.5                                
-                            else:
-                                tis[ti].field_multiplier_duration=float(tis[ti].field_multiplier_duration)+0.5
-                            print(f"\tAllocated time was exhausted.  Extending to {tis[ti].field_multiplier_duration} times specified wall time.")                        
-                        if status=="CANCELLED":
-                            #Check for Out-of-memory
-                            if _ti_oom(ret.stdout)==True:
-                                if tis[ti].field_multiplier_memory is None:
-                                    tis[ti].field_multiplier_memory=1.5
-                                else:
-                                    tis[ti].field_multiplier_memory=tis[ti].field_multiplier_memory+0.5
-                                print("\tAllocated memory was exhausted.  Extending to {tis[ti].field_multiplier_memory} times specified memory allocation.")
-                            
-                        if tis[ti].field_errorfile and os.path.isfile(tis[ti].field_errorfile):
-                            logfile = open(tis[ti].field_errorfile,'r')
-                            error_contents = logfile.read()
-                            if len(error_contents)>2000:
-                                error_contents=f"log file has been truncated.  see error log for complete detail\n\n{error_contents[-2000:]}"
-                            now = datetime.datetime.now()
-                            nowstr=now.strftime("%m/%d/%Y, %H:%M:%S")
-                            datestamp =f"##############################\n{nowstr}\n##############################"
-                            tis[ti].field_errorlog=f"{datestamp}{error_contents}{tis[ti].field_errorlog}"
-                            print("########  error log stored")         
-                                             
-                        else:
-                            print(f"Error file not found ({tis[ti].field_errorfile})")
-                        
-                        if tis[ti].field_remaining_retries is None or tis[ti].field_remaining_retries=="":
-                            tis[ti].field_remaining_retries=5
-                            tis[ti].field_seff=ret.stdout
-                            tis[ti].field_status="failed"                            
-                        else:
-                            if tis[ti].field_remaining_retries==0:
-                                tis[ti].field_seff=ret.stdout
-                                tis[ti].field_status="halted"                                
-                                print("Too many failed retries.  This job will not continue without manual intervention")
-                            else:
-                                tis[ti].field_remaining_retries-=1
-                                tis[ti].field_seff=ret.stdout
-                                tis[ti].field_status="failed"
-                        tis[ti].upsert()  
-                                
-                        print(f"##### Remaining retries: {tis[ti].field_remaining_retries}")
-                    elif status=='RUNNING' or status=='PENDING':
-                        print(f"{OKCYAN}{status}{ENDC} Nothing will be done.")                               
-                    else: #UNRECOGNIZED SEFF STATUS
-                        print(f"{WARNING}UNKNOWN SEFF STATUS ({status}){ENDC} Nothing will be done.")                               
-                reviewed_tis=reviewed_tis-1
-            except Exception as e:                
-                raise Exception(f"{FAIL}[ERROR]{ENDC} Failed to execute seff, {e}")
-    if reviewed_tis > 0:
-        print(f"{reviewed_tis} jobs not accounted for")
-    else:
-        print("All running jobs on this node accounted for and updated in CMS")
-def _ti_oom(seff_stdout):
-    lines=seff_stdout
-    for line in lines:
-        tokens=line.split(' ')
-        if len(tokens)>=3 and tokens[0]=="Memory" and tokens[1]=='Efficiency:':
-            mem_percent=tokens[2].replace('%','')
-            try:
-                mem=float(mem_percent)
-                if mem>90:
-                    return True #MAybe cancelled due to OOM - this is faster than parsing logfile
-            except:
-                continue
-    return False
-
-def validate_config():
-    passed=True
-    
-    if not aircrush.config.has_option('REST','username'):
-        print("Configuration settings incomplete, expected [REST] username")
-        passed=False
-    if not aircrush.config.has_option('REST','password'):
-        print("Configuration settings incomplete, expected [REST] password")
-        passed=False        
-    if not aircrush.config.has_option('REST','endpoint'):
-        print("Configuration settings incomplete, expected [REST] endpoint")
-        passed=False  
-
-    if not aircrush.config.has_option('COMPUTE','cluster'):
-        print("Configuration settings incomplete, expected [COMPUTE] cluster")
-        passed=False
-    if not aircrush.config.has_option('COMPUTE','account'):
-        print("Configuration settings incomplete, expected [COMPUTE] account")
-        passed=False
-    if not aircrush.config.has_option('COMPUTE','working_directory'):
-        print("Configuration settings incomplete, expected [COMPUTE] working_directory")
-        passed=False        
-    if not aircrush.config.has_option('COMPUTE','singularity_container_location'):
-        print("Configuration settings incomplete, expected [COMPUTE] singularity_container_location")
-        passed=False    
-
-    if not aircrush.config.has_option('COMMONS','commons_path'):
-        print("Configuration settings incomplete, expected [COMMONS] commons_path")
-        passed=False   
-    # if not aircrush.config.has_option('COMMONS','staging_path'):
-    #     print("Configuration settings incomplete, expected [COMMONS] staging_path")
-    #     passed=False                   
-    
-    return passed
 
 def doSomething():
     
     #nuid = "4d065840-dd33-44dc-be97-623e7d743bce" #dmattie on narval
     nuid,isready = getMyComputeNodeUUID() 
     
-    print(f"{HEADER}Updating sessions allocated to this worker{ENDC}")
-    check_running_jobs(nuid)
-    cascade_status_to_subject(nuid)
+    print(f"{ansi.HEADER}Updating sessions allocated to this worker{ansi.ENDC}")
+    sensors.check_running_jobs(nuid)
+    sensors.cascade_status_to_subject(nuid)
 
     if args.statusonly:
         return
@@ -1122,9 +326,9 @@ def doSomething():
         return   
 
     if isready==Readiness.READY:
-        print(f"{HEADER}Allocating new tasks{ENDC}")
+        print(f"{ansi.HEADER}Allocating new tasks{ansi.ENDC}")
     elif isready==Readiness.LIMITED:
-        print(f"{HEADER}Advancing currently allocated sessions{ENDC}")
+        print(f"{ansi.HEADER}Advancing currently allocated sessions{ansi.ENDC}")
     w=Workload(aircrush) #The list of things to do
     
     todo = w.get_next_task(node_uuid=nuid) #Do whatever the big brain tells us to do next
@@ -1166,7 +370,7 @@ def doSomething():
                     continue
                
                 try:    
-                    container = pullContainer(task.field_singularity_container)
+                    container = data_transfer.pullContainer(task.field_singularity_container,args.container)
                 except Exception as e:
                     print(e)
                     return
@@ -1189,22 +393,7 @@ def doSomething():
                     
                     sys.exit(1)    
 
- #########   
-                
-                # ###### Let's check for any prerequisites before we start
-                # ###### E.g. if there is a large disk requirement and that has been set as a hint, check if disk is available first
-                
-                # try:
-                #     prereq_res = test_prereqs(parms,
-                #         datacommons=datacommons,
-                #         workingdir=workingdir,
-                #         project=project,
-                #         subject=subject,
-                #         session=session,
-                #         pipeline=pipeline)                 
-                # except Exception as e:
-                #     print(e)                    
-                #     return
+ 
                 prereq_res = True
                 if prereq_res == False:
                         print_statusline(f"{project.title}:{subject.title}/{session.title} Prerequisites not met.  Attempts remaining:{task_counter}/{task_counter_limit}")                           
@@ -1216,14 +405,12 @@ def doSomething():
                 
                 print()
 
-                # pullSession(project,subject,session)
-
-                # pulldata
+              
                 print(f"Pulling any necessary data for operation") 
 
                 #pull_data("source",project,subject,session)
 
-                states,pipelines = _count_session_ti_states(session)
+                states,pipelines = sensors.count_session_ti_states(session)
 
                 count_running=states['running']
                 count_failed=states['failed']
@@ -1235,19 +422,9 @@ def doSomething():
 
                 if count_completed==0 and count_running==0 and count_processed==0 and count_limping==0:
                     print("No previous retrieval of this session from the data commons. Fetching now...")
-                    pull_data("rawdata",project,subject,session)
-                    pull_data("derivatives",project,subject,session)
-                #            
-                # for k in parms:
-                #     if parms[k]=="source":
-                #         pull_data("source",project,subject,session)
-                #     if parms[k]=="rawdata":
-                #         pull_data("rawdata",project,subject,session)
-                #     if parms[k=="#erivatives":
-                #         pull_data("derivatives",project,subject,session)
-                
-                                 
-                #messages.append(f"cmdArray:{cmdArray}")            
+                    data_transfer.pull_data("rawdata",project,subject,session)
+                    data_transfer.pull_data("derivatives",project,subject,session)
+                     
                 print("Creating SLURM job")
                 jobfiles = createJob(parms,
                     datacommons=datacommons,
@@ -1273,7 +450,7 @@ def doSomething():
                                 # stderr=subprocess.PIPE,                 
 
                 if ret.returncode==0:
-                    jobid=get_slurm_id(ret.stdout)
+                    jobid=sensors.get_slurm_id(ret.stdout)
                     print(f"SLURM assigned job id:{jobid}")
                     if jobid!=0:
                         todo.field_jobid=jobid
@@ -1318,35 +495,13 @@ def doSomething():
                 todo.body = '<br/>\n'.join(messages)
                 todo.field_errorlog=new_errors
                 todo.upsert()
-    
-               # updateStatus(todo,"failed",,new_errors)
-            
-            #Get the next thing to do
-            #todo = w.get_next_task(node_uuid=nuid) #Do whatever the big brain tells us to do next
+                
             todo=None
             
-
-
-        # op = invoke_operator(id=todo.uuid,cms_host=crush_host)
-
-
-            #op_class = getOperatorClassDefinition(todo.field_task) #use the task UUID to determine which operator to use    
-            #op = op_class(id=todo.uuid,cms_host=crush_host) #instantiate it based on task instance    
-        # op.execute(aircrush)  #Let's do this!
     else:
-        print(f"{WARNING}Nothing to do.{ENDC}")
+        print(f"{ansi.WARNING}Nothing to do.{ansi.ENDC}")
 
-    # if(todo):  #Todo is a TaskInstance        
-    #     print("-----------------------")        
-    #     op_class = getOperatorClassDefinition(todo.field_task) #use the task UUID to determine which operator to use    
-    #     op = op_class(id=todo.uuid,cms_host=crush_host) #instantiate it based on task instance    
-    #     op.execute(aircrush)  #Let's do this!
-    # else:
-    #     print("Nothing to do.")
-
-
-
-#def execute(operator:str,params:str):#**kwargs):
+   
 
 def updateStatus(task_instance,status:str,detail:str="",new_errors:str=""):
     # Valid statuses
@@ -1357,261 +512,18 @@ def updateStatus(task_instance,status:str,detail:str="",new_errors:str=""):
     task_instance.field_errorlog = new_errors
 
     if status=="failed":
-        color=f"{FAIL}"
+        color=f"{ansi.FAIL}"
         ses=task_instance.associated_session()
         sub=ses.subject()
         proj=sub.project()        
         if proj.field_treat_failed_as_terminal==True:
             task_instance.field_status="terminal"
-            print(f"{WARNING}AUTO{ENDC} Project is set to terminate sessions on failure, no re-attempts")
-        print(f"status {task_instance.title}->{FAIL}{status}{ENDC}")
+            print(f"{ansi.WARNING}AUTO{ansi.ENDC} Project is set to terminate sessions on failure, no re-attempts")
+        print(f"status {task_instance.title}->{ansi.FAIL}{status}{ansi.ENDC}")
     else:
-        print(f"status {task_instance.title}->{OKCYAN}{status}{ENDC}")    
+        print(f"status {task_instance.title}->{ansi.OKCYAN}{status}{ansi.ENDC}")    
     uuid=task_instance.upsert()
-    
-def _count_session_ti_states(session:Session):
-    states={'completed':0,'processed':0,'running':0,'failed':0,'waiting':0,'limping':0,'notstarted':0,'terminal':0}
-    pipelines={}
-
-    sub=session.subject()
-    proj=sub.project()
-
-    ti_col=TaskInstanceCollection(cms_host=crush_host,session=session.uuid)
-    tis_for_session=ti_col.get()
-    for ti in tis_for_session:
-        if tis_for_session[ti].field_status=='completed':
-            states['completed']+=1
-        elif tis_for_session[ti].field_status=='processed':
-            states['processed']+=1            
-        elif tis_for_session[ti].field_status=='running':
-            states['running']+=1
-        elif tis_for_session[ti].field_status=='failed':
-            if proj.field_treat_failed_as_terminal==False:
-                states['failed']+=1 
-            else:
-                states['terminal']+=1 
-        elif tis_for_session[ti].field_status=='waiting':
-            states['waiting']+=1
-        elif tis_for_session[ti].field_status=='limping':
-            if proj.field_treat_failed_as_terminal==False:
-                states['limping']+=1    
-            else:
-                states['terminal']+=1             
-        elif tis_for_session[ti].field_status=='terminal':
-            states['terminal']+=1
-        else:
-            states['notstarted']+=1
-
-        if tis_for_session[ti].field_pipeline:
-            pipelines[tis_for_session[ti].field_pipeline]=tis_for_session[ti].pipeline()
-    return states,pipelines
-
-
-def cascade_status_to_subject(node_uuid):
-    node_col=ComputeNodeCollection(cms_host=crush_host);
-    node=node_col.get_one(uuid=node_uuid)
-    print(f"Reviewing compute node {node.title}")
-    attached_sessions=node.allocated_sessions()
-    if aircrush.config.has_option('COMPUTE','concurrency_limit'):
-        concurrency_limit = aircrush.config['COMPUTE']['concurrency_limit']
-    else:
-        concurrency_limit=1000    
-    print(f"{UNDERLINE}({len(attached_sessions)}/{concurrency_limit}) sessions allocated to this compute node.  Updating status based on task instances...{ENDC}")
-    
-    subjects_of_attached_sessions={}
-    for session_uuid in attached_sessions:
-
-        session=attached_sessions[session_uuid]        
-
-        states,pipelines = _count_session_ti_states(session)
-
-        count_running=states['running']
-        count_failed=states['failed']
-        count_completed=states['completed']
-        count_notstarted=states['notstarted']
-        count_processed=states['processed']
-        count_waiting=states['waiting']
-        count_limping=states['limping']
-        count_terminal=states['terminal']
-        derived_status=derive_session_status(count_failed,count_running,count_completed,count_notstarted,count_processed,count_waiting,count_limping,count_terminal)        
-        session.field_status=derived_status
-        subject=session.subject()                        
-
-        subjects_of_attached_sessions[subject.uuid]=subject
-
-        project=subject.project()        
-
-        if subject == None or project == None:
-            if subject is None:
-                subject_msg=f"{WARNING}NO SUBJECT{ENDC}"
-            else:
-                subject_msg=subject.title
-
-            if project is None:
-                project_msg=f"{WARNING}NO PROJECT{ENDC}"
-            else:
-                project_msg=project.title
-
-            print(f"\tSession {session.title} is orphaned, please conduct a health check.\n\tSubject:{subject_msg}\n\tProject:{project_msg}  Skipping")
-            continue
-        print(f"Synchronizing {project.title}:{subject.title}/{session.title} with status {OKCYAN}{session.field_status}{ENDC} (failed:{count_failed} running:{count_running} completed:{count_completed} not started:{count_notstarted} processed:{count_processed} waiting:{count_waiting} limping:{count_limping} terminal:{count_terminal})")
-        if session.field_status=='processed' or session.field_status=='completed' or session.field_status=='terminal':
-            #push_data("rawdata",project,subject,session)      
-            #              
-            #push_data("derivatives",project,subject,session,pipelines=pipelines)
-            data_transfer.commit(project.title,subject.title,session.title if session is not None else "")
-            if session.field_status=='processed':
-                session.field_status='completed'
-            cn=session.field_responsible_compute_node
-            session.field_responsible_compute_node=None #Free up a slot on compute node for more
-            print(f"{subject.title}.{session.title} deallocated from {cn}.  New allocation:{session.field_responsible_compute_node}")
-
-        session.upsert()        
-    print(f"{UNDERLINE}Updating subject status based on session status...{ENDC}")
-    for subject in subjects_of_attached_sessions:
-        count_running=0
-        count_failed=0
-        count_completed=0
-        count_notstarted=0
-        count_processed=0
-        count_waiting=0
-        count_limping=0
-        count_terminal=0
-
-        ses_col=SessionCollection(cms_host=crush_host,subject=subject)
-        sessions_for_subject=ses_col.get()
-        for sess in sessions_for_subject:
-            if sessions_for_subject[sess].field_status=='completed':
-                count_completed+=1
-                continue
-            if sessions_for_subject[sess].field_status=='running':
-                count_running+=1
-                continue
-            if sessions_for_subject[sess].field_status=='failed':
-                count_failed+=1
-                continue
-            if sessions_for_subject[sess].field_status=='waiting':
-                count_waiting+=1
-                continue
-            if sessions_for_subject[sess].field_status=='limping':
-                count_limping+=1
-                continue    
-            if sessions_for_subject[sess].field_status=='terminal':
-                count_terminal+=1
-                continue
-            count_notstarted+=1
-        project=subjects_of_attached_sessions[subject].project()
-
-        derived_status=derive_subject_status(count_failed,count_running,count_completed,count_notstarted,count_processed,count_waiting,count_limping,count_terminal)
-        print(f"Subject ({project.title}/{subjects_of_attached_sessions[subject].title}) status set to {OKCYAN}{derived_status}{ENDC} (failed:{count_failed} running:{count_running} completed:{count_completed} not started:{count_notstarted} processed:{count_processed} waiting: {count_waiting}, limping:{count_limping} terminal:{count_terminal})")
-        subjects_of_attached_sessions[subject].field_status=derived_status
-        subjects_of_attached_sessions[subject].upsert()
-
-def derive_session_status(failed,running,completed,notstarted,processed,waiting,limping,terminal):
-    if terminal>0:
-        return "terminal"
-    if processed > 0 and failed==0 and running==0 and completed==0 and notstarted==0 and limping==0:
-        #All session operations are done for this subject, time to push up to data commons
-        return "processed"
-    if processed > 0 and failed==0 and running==0 and completed==0 and limping==0 and notstarted>0:
-        #All session operations are done for this subject, time to push up to data commons
-        return "waiting"     
-    if limping >0:
-        return "limping"   
-
-    if failed>0:
-        if notstarted+running+processed+completed==0:
-            return "failed"
-        else:
-            return "limping"
-
-    if running>0:
-        if failed>0:
-            return "limping"
-        if failed==0:
-            return "running"
-
-    if completed>0:
-        if notstarted==0:
-            return "completed"
-        else:
-            return "waiting"
-    if waiting>0:
-        return "waiting"
-
-    return "notstarted"
-def derive_subject_status(failed,running,completed,notstarted,processed,waiting,limping,terminal):
-    no_life_left=terminal+completed+processed
-    some_life_left=failed+running+notstarted+waiting+limping
-    
-    if some_life_left>0:
-
-        if processed > 0 and failed==0 and running==0 and completed==0 and notstarted==0 and limping==0:
-            #All session operations are done for this subject, time to push up to data commons
-            return "processed"
-        if processed > 0 and failed==0 and running==0 and completed==0 and limping==0 and notstarted>0:
-            #All session operations are done for this subject, time to push up to data commons
-            return "waiting"     
-        if limping >0:
-            return "limping"   
-
-        if failed>0:
-            if notstarted+running+processed+completed==0:
-                return "failed"
-            else:
-                return "limping"
-
-        if running>0:
-            if failed>0:
-                return "limping"
-            if failed==0:
-                return "running"
-    if no_life_left>0:
-        if completed>0:
-            if notstarted==0:
-                return "completed"
-            else:
-                return "waiting"
-        if waiting>0:
-            return "waiting"
-        if terminal>0:
-            return "terminal"
-
-    return "notstarted"
-def doSync():
-    
-    dc=DataCommons(aircrush)
-    print(f"Syncing with Data Commons {dc.commons_path}")
-    dc.initialize()
-    dc.SyncWithCMS()
-
-def purge():
-    endpoint = aircrush.config['REST']['endpoint']
-    yn = input(f"Are you sure you want to delete all task instance, sessions and subjects from {endpoint} ? [N|y]")
-    if yn=='y' or yn=='Y':
-        print("Purging task instances")
-        ti_collection = TaskInstanceCollection(cms_host=crush_host)
-        tis = ti_collection.get()
-        print(f"\tfound {len(tis)} to delete")
-        for ti in tis:
-            tis[ti].delete()
-
-       
-
-        print("Purging Subjects")
-        sub_collection=SubjectCollection(cms_host=crush_host)
-        subjects = sub_collection.get()
-        print(f"\tfound {len(subjects)} to delete")
-        for sub in subjects:
-            subjects[sub].delete()
-        
-        print("Purging sessions")
-        ses_collection = SessionCollection(cms_host=crush_host)
-        sessions = ses_collection.get()
-        print(f"\tfound {len(sessions)} to delete")
-        for ses in sessions:
-            sessions[ses].delete()
-
+ 
 def main():
 
     global aircrush,crush_host,args
@@ -1636,18 +548,13 @@ def main():
     args = parser.parse_args()
 
     print("Validating configuration")
-    aircrush=ini_settings()
-    if not validate_config():
+    aircrush=setup.ini_settings()
+    if not setup.validate_config():
         print ("Configuration incomplete")
         exit(1)
 
-
     try:
-        crush_host=Host(
-            endpoint=aircrush.config['REST']['endpoint'],
-            username=aircrush.config['REST']['username'],
-            password=aircrush.config['REST']['password']
-            )
+        crush_host=config.get_cms_host()
     except Exception as e:
         print("[ERROR] Unable to connect to CMS.  Check host and settings found in ~/.crush.ini; in section [REST].  Is the CMS accessible?")
         print(e)
@@ -1660,10 +567,10 @@ def main():
         sys.exit(1)
 
     if (args.sync):
-        doSync()
+        housekeeping.doSync()
         exit()
     if (args.purge):
-        purge()
+        housekeeping.purge()
         exit()
     
     if ready():

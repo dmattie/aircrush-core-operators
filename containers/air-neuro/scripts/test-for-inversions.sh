@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -x
 IMAGE_PATH=$1
 if [[ ! -d $IMAGE_PATH ]];then
 echo "Path to image not set or does not exist ($IMAGE_PATH)"
@@ -10,7 +10,7 @@ if [[ $PREFIX == "" ]];then
   echo "Usage: this.sh PATH_TO_IMAGES PREFIX"
   exit 2
 fi
-mkdir $IMAGE_PATH/tracts
+mkdir -p $IMAGE_PATH/tracts
 
 SPACE="."
 INVERT="$SPACE ix iy iz"
@@ -33,7 +33,7 @@ do
        swapstring="-$swap"
     fi
         
-    
+    mkdir -p "$IMAGE_PATH/tracts/"
     dti_tracker "$IMAGE_PATH/$PREFIX" "$IMAGE_PATH/tracts/$PREFIX${invstring}_${swapstring}.trk" -at 35 $invstring $swapstring -m "$IMAGE_PATH/${PREFIX}_dwi.nii"  -m2 "$IMAGE_PATH/${PREFIX}_fa.nii" -it nii
   done
 

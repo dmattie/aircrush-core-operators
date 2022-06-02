@@ -1,6 +1,6 @@
 import os
 from aircrushcore.controller.configuration import AircrushConfig
-
+import socket
 def ini_settings():
     
     homedir=os.path.expanduser('~')
@@ -15,9 +15,9 @@ def ini_settings():
         
         conf = open(crush_config, "w") 
 
-        settings['REST']['endpoint']=input("What is the URL of your Aircrush CMS [http://20.63.59/9/]:")
+        settings['REST']['endpoint']=input("What is the URL of your Aircrush CMS [http://141.109.53.209/]:")
         if settings['REST']['endpoint'] == "":
-            settings['REST']['endpoint']= "http://20.63.59.9/"
+            settings['REST']['endpoint']= "http://141.109.53.209/"
 
         settings['REST']['username']=input("Aircrush username:")
         while settings['REST']['username']=="":
@@ -86,3 +86,42 @@ def ini_settings():
         conf.writelines(L) 
         conf.close() 
     return AircrushConfig(crush_config)
+
+
+def validate_config():
+    passed=True
+
+    try: aircrush
+    except NameError: aircrush=ini_settings()
+    
+    if not aircrush.config.has_option('REST','username'):
+        print("Configuration settings incomplete, expected [REST] username")
+        passed=False
+    if not aircrush.config.has_option('REST','password'):
+        print("Configuration settings incomplete, expected [REST] password")
+        passed=False        
+    if not aircrush.config.has_option('REST','endpoint'):
+        print("Configuration settings incomplete, expected [REST] endpoint")
+        passed=False  
+
+    if not aircrush.config.has_option('COMPUTE','cluster'):
+        print("Configuration settings incomplete, expected [COMPUTE] cluster")
+        passed=False
+    if not aircrush.config.has_option('COMPUTE','account'):
+        print("Configuration settings incomplete, expected [COMPUTE] account")
+        passed=False
+    if not aircrush.config.has_option('COMPUTE','working_directory'):
+        print("Configuration settings incomplete, expected [COMPUTE] working_directory")
+        passed=False        
+    if not aircrush.config.has_option('COMPUTE','singularity_container_location'):
+        print("Configuration settings incomplete, expected [COMPUTE] singularity_container_location")
+        passed=False    
+
+    if not aircrush.config.has_option('COMMONS','commons_path'):
+        print("Configuration settings incomplete, expected [COMMONS] commons_path")
+        passed=False   
+    # if not aircrush.config.has_option('COMMONS','staging_path'):
+    #     print("Configuration settings incomplete, expected [COMMONS] staging_path")
+    #     passed=False                   
+    
+    return passed

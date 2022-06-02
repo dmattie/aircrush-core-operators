@@ -1,6 +1,17 @@
 from .setup import ini_settings
 from .color import ansi
 import os
+from ..aircrushcore.cms import Host
+
+def get_cms_host():
+    try: aircrush
+    except NameError: aircrush=ini_settings()
+    cms_host=Host(
+            endpoint=aircrush.config['REST']['endpoint'],
+            username=aircrush.config['REST']['username'],
+            password=aircrush.config['REST']['password']
+            )
+    return cms_host
 
 def get_config_dtn():
     try: aircrush

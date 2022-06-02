@@ -6,6 +6,9 @@ from .color import ansi
 from .config import *
 from aircrushcore.cms import Project,Subject,Session
 import tarfile
+from . import setup
+from . import config
+from . import sensors
 
 def commit(project:str,subject:str,session:str=""):
     sources=_get_localexam_paths(project,subject,session)
@@ -148,86 +151,86 @@ def _get_localexam_paths(project:str,subject:str,session:str):
         counter=counter+1
     return paths
 
-def _rsync_put(**kwargs):
-    data_transfer_node=kwargs['data_transfer_node'] if 'data_transfer_node' in kwargs else None 
-    source=kwargs['source'] if 'source' in kwargs else None
-    target=kwargs['target'] if 'target' in kwargs else None
+# def _rsync_put(**kwargs):
+#     data_transfer_node=kwargs['data_transfer_node'] if 'data_transfer_node' in kwargs else None 
+#     source=kwargs['source'] if 'source' in kwargs else None
+#     target=kwargs['target'] if 'target' in kwargs else None
 
-    if source is None or target is None or data_transfer_node is None:
-        raise Exception("Insufficient args passed to _rsync_get")
+#     if source is None or target is None or data_transfer_node is None:
+#         raise Exception("Insufficient args passed to _rsync_get")
     
-    if os.path.isdir(source):        
-        tarfile=_tar_dir(source)
+#     if os.path.isdir(source):        
+#         tarfile=_tar_dir(source)
 
-        #ensure target variable is a tar:
-        normpath_target=os.path.normpath(target)
-        ses_target=os.path.basename(normpath_target)
-        sub_target=os.path.basename(os.path.dirname(normpath_target))        
-        root=root=os.path.dirname(os.path.dirname(normpath_target))
+#         #ensure target variable is a tar:
+#         normpath_target=os.path.normpath(target)
+#         ses_target=os.path.basename(normpath_target)
+#         sub_target=os.path.basename(os.path.dirname(normpath_target))        
+#         root=root=os.path.dirname(os.path.dirname(normpath_target))
 
-        sespart_target=f"_{ses_target}" if ses_target[0:4]=="ses-" else ""       
-        if sub_target[0:4]=="sub-":
-            target=f"{root}/{sub_target}/{sub_target}{sespart_target}.tar"
-        else:
-            raise Exception(f"Target specified to store on datacommons doesn't appear to be BIDS compliant. Expected sub-##.  ({target}) (subject={sub_target})")
+#         sespart_target=f"_{ses_target}" if ses_target[0:4]=="ses-" else ""       
+#         if sub_target[0:4]=="sub-":
+#             target=f"{root}/{sub_target}/{sub_target}{sespart_target}.tar"
+#         else:
+#             raise Exception(f"Target specified to store on datacommons doesn't appear to be BIDS compliant. Expected sub-##.  ({target}) (subject={sub_target})")
 
-    else:
-        source=source.rstrip('/')
+#     else:
+#         source=source.rstrip('/')
 
 
-    # Ensure parent directories exist on target
-    if data_transfer_node=="":
-        target_parent = pathlib.Path(target).parent.resolve()
-        os.makedirs(target_parent,exist_ok=True)   
-        #dir_path = os.path.dirname(os.path.realpath(__file__))
-        if not os.path.exists(target_parent):
-            raise Exception(f"Subject/session PATH not found on data commons ({target_parent})")
-    else:   
-        target_parent=target[0:target.rindex("/")]
-        target=f"{data_transfer_node}:{target}"
-        target=target.rstrip('/')
+#     # Ensure parent directories exist on target
+#     if data_transfer_node=="":
+#         target_parent = pathlib.Path(target).parent.resolve()
+#         os.makedirs(target_parent,exist_ok=True)   
+#         #dir_path = os.path.dirname(os.path.realpath(__file__))
+#         if not os.path.exists(target_parent):
+#             raise Exception(f"Subject/session PATH not found on data commons ({target_parent})")
+#     else:   
+#         target_parent=target[0:target.rindex("/")]
+#         target=f"{data_transfer_node}:{target}"
+#         target=target.rstrip('/')
         
-        #f"{root}/{sub_target}/{sub_target}"
-        print(f"Creating remote directory if missing: {target_parent}")
-        mkdirs_cmd=["ssh",data_transfer_node, f"mkdir -p {target_parent}"]                  
-        ret,out = getstatusoutput(mkdirs_cmd)
-        if ret!=0:
-            raise Exception(f"Failed to create target directory:({target}).  Received: {out}")
+#         #f"{root}/{sub_target}/{sub_target}"
+#         print(f"Creating remote directory if missing: {target_parent}")
+#         mkdirs_cmd=["ssh",data_transfer_node, f"mkdir -p {target_parent}"]                  
+#         ret,out = getstatusoutput(mkdirs_cmd)
+#         if ret!=0:
+#             raise Exception(f"Failed to create target directory:({target}).  Received: {out}")
 
         
     
-    rsync_cmd=["rsync","-r","--ignore-missing-args", f"{source}",f"{target_parent}"]      
-    print(f"{rsync_cmd}")  
+#     rsync_cmd=["rsync","-r","--ignore-missing-args", f"{source}",f"{target_parent}"]      
+#     print(f"{rsync_cmd}")  
 
-    ret = subprocess.run(rsync_cmd,   
-                            capture_output=True,
-                            text=True,                             
-                            timeout=7200) #long timeout just in case hanging for a password                          
+#     ret = subprocess.run(rsync_cmd,   
+#                             capture_output=True,
+#                             text=True,                             
+#                             timeout=7200) #long timeout just in case hanging for a password                          
     
-    if ret.returncode!=0:
-        raise Exception(f"Failed to copy session directory: {ret.stderr}")
-    else:
-        if os.path.isdir(source) and len(sespart_target)>0:
-            cleanup_cmd=f"if [ -d {target_parent}/{ses} ] && [ -f {target} ]];then rm -r {target_parent}/{ses} {target_parent}/{ses}; fi"
-            if data_transfer_node!="":
-                cleanup_cmd=f"ssh {data_transfer_node} '{cleanup_cmd}'"
+#     if ret.returncode!=0:
+#         raise Exception(f"Failed to copy session directory: {ret.stderr}")
+#     else:
+#         if os.path.isdir(source) and len(sespart_target)>0:
+#             cleanup_cmd=f"if [ -d {target_parent}/{ses} ] && [ -f {target} ]];then rm -r {target_parent}/{ses} {target_parent}/{ses}; fi"
+#             if data_transfer_node!="":
+#                 cleanup_cmd=f"ssh {data_transfer_node} '{cleanup_cmd}'"
             
-            ret = subprocess.run(cleanup_cmd,   
-                            capture_output=True,
-                            text=True, 
-                            shell=True,
-                            timeout=3600) #long timeout just in case hanging for a password              
-            if ret.returncode!=0:  
-                print(f"{ansi.WARNING}ERROR{ansi.ENDC} cleaning up old directory.  Now both a session directory and a tar exist.  The tar is newer.\n{ret.stderr}\nCommand Attempted:{cleanup_cmd}")
-        else:
-            print(f"No session directory to cleanup for this subject at target {len(target)}")    
-        #######################
-        ## DELETE LOCAL COPY ##
-        #######################
-        shutil.move(source,f"{source}.deleteme")
-        print(f"{ansi.WARNING}Safe to remove {normpath}/{ses}{ansi.ENDC}")
+#             ret = subprocess.run(cleanup_cmd,   
+#                             capture_output=True,
+#                             text=True, 
+#                             shell=True,
+#                             timeout=3600) #long timeout just in case hanging for a password              
+#             if ret.returncode!=0:  
+#                 print(f"{ansi.WARNING}ERROR{ansi.ENDC} cleaning up old directory.  Now both a session directory and a tar exist.  The tar is newer.\n{ret.stderr}\nCommand Attempted:{cleanup_cmd}")
+#         else:
+#             print(f"No session directory to cleanup for this subject at target {len(target)}")    
+#         #######################
+#         ## DELETE LOCAL COPY ##
+#         #######################
+#         shutil.move(source,f"{source}.deleteme")
+#         print(f"{ansi.WARNING}Safe to remove {normpath}/{ses}{ansi.ENDC}")
 
-    return True
+#     return True
 
 def _tar_dir(dir:str):
     print(f"\nCreating tarfile from source {dir} ...",end='',flush=True)
@@ -356,3 +359,188 @@ def _get_derivatives(dtn:str,project:str,subject:str,session:str):
                 to_return.append(derivative_str[len(f"{datacommons}/projects/{project}/datasets/derivatives"):])
     print(f"\tFound {len(to_return)} derivatives")
     return to_return
+
+
+def pullContainer(uri:str,container:str=None):
+    #return "requirements.txt"   ##TODO
+    if (container):
+        
+        return container
+    try: aircrush
+    except NameError: aircrush=setup.ini_settings()
+
+    container_dir=aircrush.config['COMPUTE']['singularity_container_location']
+
+    sif = f"{container_dir}/{uri[uri.rfind('/')+1:len(uri)].replace(':','_')}.sif"
+    if os.path.isfile(sif):
+        print(f"Container exists - will not overwrite ({sif})")
+        return sif
+
+    cmdArray=["singularity","pull","--dir",container_dir,uri]
+    print(cmdArray)
+    ret = subprocess.call(cmdArray)
+    
+    if not os.path.isfile(sif):
+        raise Exception(f"Failed to pull container specified. {sif} not found")
+        
+    return sif
+
+def pull_source_data(project,subject,session):
+    # try: aircrush
+    # except NameError: aircrush=setup.ini_settings()
+
+    wd=config.get_config_wd()#aircrush.config['COMPUTE']['working_directory']
+    datacommons=get_config_datacommons()#aircrush.config['COMPUTE']['commons_path']
+    #Test if we are on an HCP node, use sbatch to perform rsync if so
+
+    root=f"/projects/{project.field_path_to_exam_data}/datasets/source"
+    
+
+    #If none of the if statements below match, the entire source will be cloned
+    print(f"start root:{datacommons}/{root}")
+    if os.path.isdir(f"{datacommons}/{root}/{subject.title}"):
+        root=f"{root}/{subject.title}"
+        if os.path.isdir(f"{datacommons}/{root}/{session.title}"):
+            root=f"{datacommons}/{root}/{session.title}"
+
+    if os.path.isdir(f"{datacommons}/{root}/sub-{subject.title}"):
+        root=f"{root}/sub-{subject.title}"
+        if os.path.isdir(f"{datacommons}/{root}/ses-{session.title}"):
+            root=f"{root}/ses-{session.title}"
+            print(f"new root:  {root}")
+        
+    source_session_dir=f"{datacommons}/{root}"
+    target_session_dir=f"{wd}/{root}"
+
+    # if os.path.isdir(target_session_dir):
+    #     #It's already there, ignore quietly
+    #     print(f"{target_session_dir} Already exists")
+    #     return
+    # else:
+    print(f"Cloning ({source_session_dir}) to local working directory ({target_session_dir})")
+    os.makedirs(target_session_dir,exist_ok=True)         
+
+    # ret = subprocess.getstatusoutput("which sbatch")
+    # if ret[0]==0:
+    #     print("sbatch exists, starting asynchronous copy")
+    # else:
+    #     print("SBATCH doesn't exist, performing synchronous copy")
+        
+    if not os.path.isdir(source_session_dir):
+        raise Exception(f"Subject/session not found on data commons ({source_session_dir})")
+    rsync_cmd=f"rsync -r --ignore-missing-args {source_session_dir} {target_session_dir}"
+    print(rsync_cmd)
+    
+    ret = subprocess.getstatusoutput(rsync_cmd)
+    if ret[0]!=0:
+        raise Exception(f"Failed to copy session directory: {ret[1]}")
+        
+def pull_data(stage,project,subject,session):
+    if stage=="source":
+        pull_source_data(project,subject,session)
+    else:
+        #wd=aircrush.config['COMPUTE']['working_directory']
+        wd=config.get_config_wd()#aircrush.config['COMPUTE']['working_directory']
+        
+        ##Get the hostname of cluster hosting data commons for remote rsync
+        ##user must have setup known_hosts for unattended rsync
+              
+        data_transfer_node=config.get_config_dtn()#aircrush.config['COMMONS']['data_transfer_node']
+        if not data_transfer_node=="":                
+            # if not data_transfer_node[-1]==":":  #Add a colon to the end for rsync syntax if necessary
+            #     data_transfer_node=f"{data_transfer_node}:"
+            print(f"{ansi.WARNING}The data commons is found on data transfer node {data_transfer_node} User must have setup unattended rsync using ssh-keygen for this process to be scheduled.  If this node is local, remove the data_transfer_node option from crush.ini{ansi.ENDC}")
+            
+       
+
+        #datacommons=aircrush.config['COMMONS']['commons_path']
+        datacommons=get_config_datacommons()#aircrush.config['COMPUTE']['commons_path']        
+        if stage =="derivatives":
+            #Look on the data commons for any derivative sub-folder containing this subject/session
+            
+            derivatives=_get_derivatives(dtn=data_transfer_node,
+                                        project=project.field_path_to_exam_data,                                       
+                                        subject=subject.title,
+                                        session=session.title)
+
+            root=f"/projects/{project.field_path_to_exam_data}/datasets/{stage}"
+            for derivative in derivatives:
+                print(f"///[{derivative}]///")
+                source=f"{datacommons}/projects/{project.field_path_to_exam_data}/datasets/{stage}/{derivative}"
+                target=f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage}/{derivative}"   
+                if sensors.exists_on_datacommons(data_transfer_node,source):
+                    _rsync_get(data_transfer_node=data_transfer_node,
+                                source=source,                            
+                                target=target)
+                else:
+                    print(f"{source} not on datacommons... skipping")
+        else:
+            foundsource=False
+
+            tarsource=f"{datacommons}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/sub-{subject.title}_ses-{session.title}.tar"
+            tartarget=f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/sub-{subject.title}_ses-{session.title}.tar"
+            if sensors.exists_on_datacommons(data_transfer_node,tarsource):
+                _rsync_get(data_transfer_node=data_transfer_node,
+                                source=tarsource,
+                                target=tartarget)  
+                foundsource=True 
+            else:         
+                source=f"{datacommons}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
+                target=f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
+                if sensors.exists_on_datacommons(data_transfer_node,source):
+                    _rsync_get(data_transfer_node=data_transfer_node,
+                                    source=source,
+                                    target=target)
+                    foundsource=True    
+
+            if foundsource==False:
+                print(f"{source} not on datacommons... skipping")
+
+
+
+
+def _rsync_get(**kwargs):
+    data_transfer_node=kwargs['data_transfer_node'] if 'data_transfer_node' in kwargs else None 
+    source=kwargs['source'] if 'source' in kwargs else None
+    target=kwargs['target'] if 'target' in kwargs else None
+
+    if source is None or target is None or data_transfer_node is None:
+        raise Exception("Insufficient args passed to _rsync_get")
+    
+    target_parent=pathlib.Path(target).parent.resolve()
+    os.makedirs(target_parent,exist_ok=True)     
+
+    if data_transfer_node=="":        
+        if not os.path.exists(source):
+            raise Exception(f"Subject/session not found on data commons ({source})")
+        suffix = "/" if os.path.isdir(source) else ""
+    else:
+        is_dir_cmd=f"ssh {data_transfer_node} test -d source"
+        ret = subprocess.run(is_dir_cmd,   
+                            capture_output=False,                            
+                            shell=True,                               
+                            timeout=60)                       
+        suffix = "/" if ret.returncode==0 else ""
+
+        source=f"{data_transfer_node}:{source}"
+
+    rsync_cmd=["rsync","-ra","--ignore-missing-args", f"{source}{suffix}",f"{target}"]      
+    print(rsync_cmd)      
+    ret,out = getstatusoutput(rsync_cmd)
+    if ret!=0:
+        raise Exception(f"Failed to copy session directory: {out}")
+    if os.path.isfile(target):
+        if tarfile.is_tarfile(target):
+            print("Extracting tarfile...",end='')
+            tar=tarfile.open(target)
+            tarpath=pathlib.Path(target).parent.resolve()
+            tar.extractall(path=tarpath)
+            tar.close()
+            os.remove(target)
+            print(f"{ansi.OKGREEN}done{ansi.ENDC}")
+
+def getstatusoutput(command):
+    #print(command)    
+    process = subprocess.Popen(command, stdout=subprocess.PIPE)
+    out, _ = process.communicate()
+    return (process.returncode, out)

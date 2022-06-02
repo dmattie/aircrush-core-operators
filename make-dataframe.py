@@ -34,7 +34,7 @@ def getmeasurements(task_details):
     else:
         try:
             tar = tarfile.open(file)
-        except Exeption as e:
+        except Exception as e:
             print(f"Error opening tarfile {file}\n{e}")
             return
 
