@@ -52,13 +52,18 @@ def get_seff_completion_state(stdout:str):
 def check_running_jobs(node_uuid,**kwargs):
     if 'aircrush' in kwargs:
         aircrush=kwargs['aircrush']
+    else:
+        aircrush=setup.ini_settings()
     if 'cms_host' in kwargs:
-        crush_host=kwargs['cms_host']        
+        crush_host=kwargs['cms_host']  
+    else:      
+        print("Unknown cms host")
+        crush_host=config.get_cms_host()
 
-    try: aircrush
-    except NameError: aircrush=setup.ini_settings()
-    try: crush_host
-    except NameError: crush_host=config.get_cms_host()
+    # try: aircrush
+    # except NameError: 
+    # try: crush_host
+    # except NameError: 
 
     w=Workload(aircrush)
     tis =w.get_running_tasks(node_uuid)
@@ -225,12 +230,13 @@ def count_session_ti_states(session:Session):
 def cascade_status_to_subject(node_uuid,**kwargs):
     if 'aircrush' in kwargs:
         aircrush=kwargs['aircrush']
+    else:
+        aircrush=setup.ini_settings()
     if 'cms_host' in kwargs:
         crush_host=kwargs['cms_host']
-    try: aircrush
-    except NameError: aircrush=setup.ini_settings()
-    try: crush_host
-    except NameError: crush_host=config.get_cms_host()
+    else:
+        print("Re-connecting")
+        crush_host=config.get_cms_host()
 
     node_col=ComputeNodeCollection(cms_host=crush_host);
     node=node_col.get_one(uuid=node_uuid)
