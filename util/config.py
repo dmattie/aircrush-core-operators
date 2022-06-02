@@ -1,7 +1,7 @@
 from .setup import ini_settings
 from .color import ansi
 import os
-from ..aircrushcore.cms import Host
+from aircrushcore.cms import Host
 
 def get_cms_host():
     try: aircrush
