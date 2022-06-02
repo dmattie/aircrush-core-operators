@@ -85,7 +85,7 @@ def ini_settings():
             ]
         conf.writelines(L) 
         conf.close() 
-    return AircrushConfig(crush_config)
+    return AircrushConfig(config_file=crush_config)
 
 
 def validate_config():
