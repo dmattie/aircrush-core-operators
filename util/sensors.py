@@ -52,6 +52,8 @@ def get_seff_completion_state(stdout:str):
 def check_running_jobs(node_uuid,**kwargs):
     if 'aircrush' in kwargs:
         aircrush=kwargs['aircrush']
+    if 'cms_host' in kwargs:
+        crush_host=kwargs['cms_host']        
 
     try: aircrush
     except NameError: aircrush=setup.ini_settings()
@@ -223,6 +225,8 @@ def count_session_ti_states(session:Session):
 def cascade_status_to_subject(node_uuid,**kwargs):
     if 'aircrush' in kwargs:
         aircrush=kwargs['aircrush']
+    if 'cms_host' in kwargs:
+        crush_host=kwargs['cms_host']
     try: aircrush
     except NameError: aircrush=setup.ini_settings()
     try: crush_host

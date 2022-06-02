@@ -315,8 +315,8 @@ def doSomething():
     nuid,isready = getMyComputeNodeUUID() 
     
     print(f"{ansi.HEADER}Updating sessions allocated to this worker{ansi.ENDC}")
-    sensors.check_running_jobs(nuid,aircrush=aircrush)
-    sensors.cascade_status_to_subject(nuid,aircrush=aircrush)
+    sensors.check_running_jobs(nuid,aircrush=aircrush,cms_host=crush_host)
+    sensors.cascade_status_to_subject(nuid,aircrush=aircrush,cms_host=crush_host)
 
     if args.statusonly:
         return
