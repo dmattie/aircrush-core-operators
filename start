@@ -410,7 +410,7 @@ def doSomething():
 
                 #pull_data("source",project,subject,session)
 
-                states,pipelines = sensors.count_session_ti_states(session)
+                states,pipelines = sensors.count_session_ti_states(session,crush_host=crush_host)
 
                 count_running=states['running']
                 count_failed=states['failed']
