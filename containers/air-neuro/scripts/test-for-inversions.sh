@@ -33,7 +33,7 @@ do
        swapstring="-$swap"
     fi
         
-    mkdir -p "$IMAGE_PATH/tracts/"
+    
     dti_tracker "$IMAGE_PATH/$PREFIX" "$IMAGE_PATH/tracts/$PREFIX${invstring}_${swapstring}.trk" -at 35 $invstring $swapstring -m "$IMAGE_PATH/${PREFIX}_dwi.nii"  -m2 "$IMAGE_PATH/${PREFIX}_fa.nii" -it nii
   done
 
