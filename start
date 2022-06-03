@@ -314,7 +314,7 @@ def doSomething():
     #nuid = "4d065840-dd33-44dc-be97-623e7d743bce" #dmattie on narval
     nuid,isready = getMyComputeNodeUUID() 
     
-    print(f"{ansi.HEADER}Updating sessions allocated to this worker{ansi.ENDC}")
+    print(f"{ansi.HEADER}Updating sessions allocated to this worker{ansi.ENDC}",flush=True)
     sensors.check_running_jobs(nuid,aircrush=aircrush,cms_host=crush_host)
     sensors.cascade_status_to_subject(nuid,aircrush=aircrush,cms_host=crush_host)
 
@@ -326,9 +326,9 @@ def doSomething():
         return   
 
     if isready==Readiness.READY:
-        print(f"{ansi.HEADER}Allocating new tasks{ansi.ENDC}")
+        print(f"{ansi.HEADER}Allocating new tasks{ansi.ENDC}",flush=True)
     elif isready==Readiness.LIMITED:
-        print(f"{ansi.HEADER}Advancing currently allocated sessions{ansi.ENDC}")
+        print(f"{ansi.HEADER}Advancing currently allocated sessions{ansi.ENDC}",flush=True)
     w=Workload(aircrush) #The list of things to do
     
     todo = w.get_next_task(node_uuid=nuid) #Do whatever the big brain tells us to do next
