@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -x
 IMAGE_PATH=$1
 if [[ ! -d $IMAGE_PATH ]];then
 echo "Path to image not set or does not exist ($IMAGE_PATH)"
@@ -10,7 +10,7 @@ if [[ $PREFIX == "" ]];then
   echo "Usage: this.sh PATH_TO_IMAGES PREFIX"
   exit 2
 fi
-mkdir $IMAGE_PATH/tracts
+mkdir -p $IMAGE_PATH/tracts
 
 SPACE="."
 INVERT="$SPACE ix iy iz"
