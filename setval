@@ -17,7 +17,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="CRUSH client command line utility. Back-end commands to set crush data")
     parser.add_argument('-set',action='store',type=str,
-        help="Specify a setting to change [ti-status|ti-memory-multiplier|ti-job|ti-retries|ti-error|ses-cn|sub-status|ses-status].")
+        help="Specify a setting to change [ti-status|ti-memory-multiplier|ti-job|ti-retries|ti-error|ses-cn|sub-status|ses-status|ti-sticky].")
     parser.add_argument('-uuid',action='store',
         help='UUID of CMS object' )
     parser.add_argument('-subject',action='store',    
@@ -61,7 +61,9 @@ def main():
             uuid=args.uuid
         set_ses_status(uuid=uuid,val=args.value)  
     elif args.set == "ti-error":
-        set_ti_error(uuid=args.uuid,val=args.value)       
+        set_ti_error(uuid=args.uuid,val=args.value)  
+    elif args.set == "ti-sticky":
+        set_ti_sticky(uuid=args.uuid)     
     else:
         print("Nothing to do")
 
@@ -71,6 +73,14 @@ def set_ti_status(uuid:str, status:str):
         ti=ti_col.get_one(uuid)        
         print(f"{ti.title}\n\tOld Status:{ti.field_status}\n\tNew Status:{status}")
         ti.field_status=status
+        ti.upsert()        
+        print("Update Complete")
+def set_ti_sticky(uuid:str):
+    ti_col=TaskInstanceCollection(cms_host=crush_host)
+    if ti_col is not None:
+        ti=ti_col.get_one(uuid)
+        print(f"{ti.title}\n\tOld Sticky:{ti.sticky}\n\tNew Sticky:{not ti.sticky}")
+        ti.sticky=not ti.sticky
         ti.upsert()        
         print("Update Complete")
 def set_ti_error(uuid:str,val:str):

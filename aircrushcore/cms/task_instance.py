@@ -27,6 +27,7 @@ class TaskInstance():
         self.field_multiplier_duration=None
         self.field_multiplier_memory=None
         self.field_queue_for_retry=None
+        self.sticky=None
     
         if 'metadata' in kwargs:
             m=kwargs['metadata']   
@@ -48,7 +49,8 @@ class TaskInstance():
             self.field_logfile=m['field_logfile'] if 'field_logfile' in m else None                
             self.field_multiplier_duration = m['field_multiplier_duration'] if 'field_multiplier_duration' in m else None
             self.field_multiplier_memory = m['field_multiplier_memory'] if 'field_multiplier_memory' in m else None
-            self.field_queue_for_retry = m['field_queue_for_retry'] if 'field_queue_for_retry' in m else None
+            self.field_queue_for_retry = m['field_queue_for_retry'] if 'field_queue_for_retry' in m else None                    
+            self.sticky=m['sticky'] if 'sticky' in m else None
                                
                 
 
@@ -98,7 +100,8 @@ class TaskInstance():
                     #         }
                     #     }                                                                   
                     # }  
-            
+            if not self.sticky == None:
+                payload['data']['attributes']['sticky']=self.sticky
             if not self.field_status == None:                
                 payload['data']['attributes']['field_status']=self.field_status
             if not self.field_errorlog ==None:

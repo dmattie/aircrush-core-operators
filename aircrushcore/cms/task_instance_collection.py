@@ -121,6 +121,7 @@ class TaskInstanceCollection():
                         "field_multiplier_duration":item['attributes']['field_multiplier_duration'],
                         "field_multiplier_memory":item['attributes']['field_multiplier_memory'],
                         "uuid":uuid,
+                        "sticky":item['attributes']['sticky'],
                         "cms_host":self.HOST                                               
                     }
                     taskinstances[item['id']]=TaskInstance(metadata=metadata)                
