@@ -8,6 +8,28 @@ from . import setup
 from . import data_transfer
 from .color import ansi
 import datetime
+import re
+
+def check_recurring_pipelines(node_uuid,**kwargs):
+    if 'aircrush' in kwargs:
+        aircrush=kwargs['aircrush']
+    else:
+        aircrush=setup.ini_settings()
+    if 'cms_host' in kwargs:
+        crush_host=kwargs['cms_host']  
+    else:              
+        crush_host=config.get_cms_host()
+
+    pass
+def is_slurm_script(jobfile:str):
+    regex = re.compile("^#SBATCH",re.IGNORECASE)
+    with open(jobfile) as f:
+        for line in f:
+            result = regex.search(line)
+            if result:
+                return True
+    return False
+
 
 def exists_on_datacommons(data_transfer_node,path):
     if data_transfer_node is None or data_transfer_node=="":

@@ -235,15 +235,15 @@ def main():
 
     parser = argparse.ArgumentParser(
         description="CRUSH client command line utility. Extract measurements from two ROI files and a tract file.")
-    parser.add_argument('-roi_start',action='store', help="ROI file (.nii) at the start of the tract",required=True)
-    parser.add_argument('-roi_end',action='store', help="ROI file (.nii) at the end of the tract",required=True)
-    parser.add_argument('-method',action='store', help="{roi|roi_end} Look at any tracts that touch the specified ROIs (roi) or just those tracts that terminate in the ROI (roi_end)",required=True)
+    parser.add_argument('-roi',action='store', help="roistart,roiend,method",required=True)
     parser.add_argument('-tract',action='store', help="Path to the tract file",required=True)
     parser.add_argument('-pipeline',action='store', help="The name of the pipeline being processed to tag the data as it is stored",required=True)  
     parser.add_argument('-crush_dir',action='store', help="The working directory to use for creating crush temporary files, typically for use with Apptainer overlays",required=True)          
     args = parser.parse_args()
+    roiargs=args.roi.split(',')
 
-    process(roi_start=args.roi_start,roi_end=args.roi_end,method=args.method,tract_file=args.tract,pipeline=args.pipeline,crush_dir=args.crush_dir)
+
+    process(roi_start=roiargs[0],roi_end=roiargs[1],method=roiargs[2],tract_file=args.tract,pipeline=args.pipeline,crush_dir=args.crush_dir)
 
 if __name__ == '__main__':
     main()

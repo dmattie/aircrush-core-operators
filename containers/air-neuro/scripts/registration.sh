@@ -42,7 +42,7 @@ TEMP=`getopt -o h: --long help,datasetdir:,subject:,session:,pipeline:,overwrite
 if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
 
 # Note the quotes around `$TEMP': they are essential!
-eval set -- "$TEMP"
+#eval set -- "$TEMP"
 
 DATASETDIR=""
 SUBJECT=""
@@ -207,11 +207,15 @@ function flirt_ref() {
 
 }
 #echo {1..10} | xargs -n 1 | xargs -I@ -P4 bash -c "$(declare -f flirt_ref) ; flirt_ref @ ; echo @ "
-
 ls vol*.n* | xargs -n1 -I@ -P$PARALLELISM bash -c "$(declare -f flirt_ref) ; flirt_ref @ $REFERENCE;"
 
+fslmerge -a reg2brain_unmasked.data.nii reg2ref.*
 
-fslmerge -a reg2brain.data.nii reg2ref.*
+#Remove anything outside of the reference image
+fslmaths $REFERENCE -bin binary_brainmask.nii
+fslmaths reg2brain_unmasked.data.nii -mul binary_brainmask.nii.gz reg2brain.data.nii
+
+###### REMOVE NON BRAIN from diffusion image
 
 if [[ ! -f "reg2brain.data.nii.gz" ]];then
     >&2 echo "ERROR: failed to complete image registration.  Expected to see a file reg2brain.data.nii produced, but didn't"

@@ -259,15 +259,26 @@ def createJob(parms_to_add,**kwargs):
         workdir=None
         workdir_command=None
     
-    
-    cmdArray=["singularity","run","--app",
-    task.field_operator,
-    overlay_command if overlay_command is not None else "",
-    overlay_file if overlay_file is not None else "",
-    workdir_command if workdir_command is not None else "",
-    workdir if workdir is not None else "",
-    bindings if bindings is not None else "",
-    container] 
+    hint_exec = parms_to_add['hint-exec'] if 'hint-exec' in parms_to_add else ""
+    if hint_exec != "":
+        cmdArray=["singularity","exec",
+        overlay_command if overlay_command is not None else "",
+        overlay_file if overlay_file is not None else "",
+        workdir_command if workdir_command is not None else "",
+        workdir if workdir is not None else "",
+        bindings if bindings is not None else "",
+        container,
+        hint_exec]         
+
+    else:   
+        cmdArray=["singularity","run","--app",
+        task.field_operator,
+        overlay_command if overlay_command is not None else "",
+        overlay_file if overlay_file is not None else "",
+        workdir_command if workdir_command is not None else "",
+        workdir if workdir is not None else "",
+        bindings if bindings is not None else "",
+        container] 
     
     cmdArray = parameter_expansion(cmdArray,parms_to_add,
         datacommons=datacommons,
@@ -279,33 +290,56 @@ def createJob(parms_to_add,**kwargs):
         task=task)  
 
     ########
+    if 'hint-internet' in parms_to_add:
+        conf = open(jobfile, "w") 
+        L = [
+            "#!/bin/bash",           
+            "module load singularity/3.8",
+            overlay_create_cmd if not overlay_create_cmd is None else "",
+            ' '.join(cmdArray),
+            ""
+        ]
+        for ll in L:
+            print(ll)
+        
+        job_script = '\n'.join(L)
+        conf.write(job_script) 
+        conf.close() 
+        print(f"NON Slurm job written to {ansi.OKGREEN}{jobfile}{ansi.ENDC}")
+        toreturn={}
+        toreturn['jobfile']=jobfile
+        toreturn['stdout']=stdoutfile
+        toreturn['stderr']=stderrfile
+        return toreturn
 
-    conf = open(jobfile, "w") 
-    L = [
-        "#!/bin/bash",
-        f"#SBATCH -e {stderrfile}",
-        f"#SBATCH -o {stdoutfile}",
-        f"#SBATCH --time {sbatch_time}" if not sbatch_time=="" else "",
-        f"#SBATCH --account {sbatch_account}" if not sbatch_account=="" else "",
-        f"#SBATCH --cpus-per-task {sbatch_cpus_per_task}" if not sbatch_cpus_per_task=="" else "",
-        f"#SBATCH --mem-per-cpu {sbatch_mem_per_cpu}" if not sbatch_mem_per_cpu=="" else "",
-        "module load singularity/3.8",
-        overlay_create_cmd if not overlay_create_cmd is None else "",
-        ' '.join(cmdArray),
-        ""
-    ]
-    for ll in L:
-        print(ll)
-    
-    job_script = '\n'.join(L)
-    conf.write(job_script) 
-    conf.close() 
-    print(f"Slurm job written to {ansi.OKGREEN}{jobfile}{ansi.ENDC}")
-    toreturn={}
-    toreturn['jobfile']=jobfile
-    toreturn['stdout']=stdoutfile
-    toreturn['stderr']=stderrfile
-    return toreturn
+    else:
+
+        conf = open(jobfile, "w") 
+        L = [
+            "#!/bin/bash",
+            f"#SBATCH -e {stderrfile}",
+            f"#SBATCH -o {stdoutfile}",
+            f"#SBATCH --time {sbatch_time}" if not sbatch_time=="" else "",
+            f"#SBATCH --account {sbatch_account}" if not sbatch_account=="" else "",
+            f"#SBATCH --cpus-per-task {sbatch_cpus_per_task}" if not sbatch_cpus_per_task=="" else "",
+            f"#SBATCH --mem-per-cpu {sbatch_mem_per_cpu}" if not sbatch_mem_per_cpu=="" else "",
+            "module load singularity/3.8",
+            overlay_create_cmd if not overlay_create_cmd is None else "",
+            ' '.join(cmdArray),
+            ""
+        ]
+        for ll in L:
+            print(ll)
+        
+        job_script = '\n'.join(L)
+        conf.write(job_script) 
+        conf.close() 
+        print(f"Slurm job written to {ansi.OKGREEN}{jobfile}{ansi.ENDC}")
+        toreturn={}
+        toreturn['jobfile']=jobfile
+        toreturn['stdout']=stdoutfile
+        toreturn['stderr']=stderrfile
+        return toreturn
 
 
 
@@ -316,6 +350,7 @@ def doSomething():
     
     print(f"{ansi.HEADER}Updating sessions allocated to this worker{ansi.ENDC}",flush=True)
     sensors.check_running_jobs(nuid,aircrush=aircrush,cms_host=crush_host)
+    # CHECK RECURRING PIPELINES
     sensors.cascade_status_to_subject(nuid,aircrush=aircrush,cms_host=crush_host)
 
     if args.statusonly:
@@ -425,7 +460,7 @@ def doSomething():
                     data_transfer.pull_data("rawdata",project,subject,session)
                     data_transfer.pull_data("derivatives",project,subject,session)
                      
-                print("Creating SLURM job")
+                print("Creating job")
                 jobfiles = createJob(parms,
                     datacommons=datacommons,
                     workingdir=workingdir,
@@ -438,51 +473,82 @@ def doSomething():
                     bindings=bindings,
                     container=container)    
     
-                sbatch_cmd=["sbatch",jobfiles['jobfile']]
-                
-                ret = subprocess.run(sbatch_cmd, 
-                                cwd=aircrush.config['COMPUTE']['working_directory'],                              
-                                capture_output=True,
-                                text=True,                                
-                                timeout=60)      
-                                #shell=True,                                       
-                                #  stdout=subprocess.PIPE,
-                                # stderr=subprocess.PIPE,                 
+                if sensors.is_slurm_script(jobfiles['jobfile']):
+                        
+                    sbatch_cmd=["sbatch",jobfiles['jobfile']]
+                    
+                    ret = subprocess.run(sbatch_cmd, 
+                                    cwd=aircrush.config['COMPUTE']['working_directory'],                              
+                                    capture_output=True,
+                                    text=True,                                
+                                    timeout=60)      
+                                    #shell=True,                                       
+                                    #  stdout=subprocess.PIPE,
+                                    # stderr=subprocess.PIPE,                 
 
-                if ret.returncode==0:
-                    jobid=sensors.get_slurm_id(ret.stdout)
-                    print(f"SLURM assigned job id:{jobid}")
-                    if jobid!=0:
-                        todo.field_jobid=jobid
-                        todo.field_seff=""
-                        todo.field_errorfile=jobfiles['stderr']
-                        todo.field_logfile=jobfiles['stdout']
+                    if ret.returncode==0:
+                        jobid=sensors.get_slurm_id(ret.stdout)
+                        print(f"SLURM assigned job id:{jobid}")
+                        if jobid!=0:
+                            todo.field_jobid=jobid
+                            todo.field_seff=""
+                            todo.field_errorfile=jobfiles['stderr']
+                            todo.field_logfile=jobfiles['stdout']
 
-                        if os.path.isfile(jobfiles['jobfile']):
-                            sbatch_contents_handle = open(jobfiles['jobfile'],'r')
-                            sbatch_contents = sbatch_contents_handle.read()
-                            messages.append(sbatch_contents)
+                            if os.path.isfile(jobfiles['jobfile']):
+                                sbatch_contents_handle = open(jobfiles['jobfile'],'r')
+                                sbatch_contents = sbatch_contents_handle.read()
+                                messages.append(sbatch_contents)
 
-                        #updateStatus(todo,"running",'<br/>\n'.join(messages),ret.stderr)
-                        todo.body = '<br/>\n'.join(messages)
-                        todo.field_errorlog=ret.stderr
-                        todo.field_status="running"
-                        todo.upsert()
+                            #updateStatus(todo,"running",'<br/>\n'.join(messages),ret.stderr)
+                            todo.body = '<br/>\n'.join(messages)
+                            todo.field_errorlog=ret.stderr
+                            todo.field_status="running"
+                            todo.upsert()
+                        else:
+                            messages.append(f"\nERROR: SLURM ID returned was unexpectedly 0.")  
+                            #updateStatus(todo,"failed",'<br/>\n'.join(messages),ret.stderr)
+                            todo.body = '<br/>\n'.join(messages)
+                            todo.field_errorlog=ret.stderr
+                            todo.field_status="failed"
+                            todo.upsert()
                     else:
-                        messages.append(f"\nERROR: SLURM ID returned was unexpectedly 0.")  
-                        #updateStatus(todo,"failed",'<br/>\n'.join(messages),ret.stderr)
+                        print(ret.stderr)
                         todo.body = '<br/>\n'.join(messages)
                         todo.field_errorlog=ret.stderr
                         todo.field_status="failed"
                         todo.upsert()
+            
+                        #updateStatus(todo,"failed",'<br/>\n'.join(messages),ret.stderr)
                 else:
-                    print(ret.stderr)
-                    todo.body = '<br/>\n'.join(messages)
-                    todo.field_errorlog=ret.stderr
-                    todo.field_status="failed"
-                    todo.upsert()
-        
-                    #updateStatus(todo,"failed",'<br/>\n'.join(messages),ret.stderr)
+                    print(f"{ansi.WARNING}Task running realtime (outside of SLURM scheduler).  This is expected to be a quick task (<2min) {ansi.ENDC} CWD={aircrush.config['COMPUTE']['working_directory']}")
+                    sbatch_cmd=["bash",jobfiles['jobfile']]
+                    
+                    ret = subprocess.run(sbatch_cmd, 
+                                    cwd=aircrush.config['COMPUTE']['working_directory'],                              
+                                    capture_output=True,
+                                    text=True)  
+                    
+                    fout = open(jobfiles['stdout'], "a")                    
+                    fout.write(ret.stdout)
+                    fout.close()  
+
+                    ferr = open(jobfiles['stderr'], "a")
+                    ferr.write(ret.stderr)
+                    ferr.close()                     
+########
+                    if ret.returncode==0:
+                        todo.body = ret.stdout
+                        todo.field_errorlog=ret.stderr
+                        todo.field_status="completed"
+                        todo.upsert()
+                    else:
+                        print(ret.stderr)
+                        todo.body = ret.stdout
+                        todo.field_errorlog=ret.stderr
+                        todo.field_status="failed"
+                        todo.upsert()
+            
             except Exception as e:
                 print(e)
                 print("An error has accurred.  Unable to proceed.  See previous messages.")

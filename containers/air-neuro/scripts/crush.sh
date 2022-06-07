@@ -2,7 +2,7 @@
 
 
 #set -e #Exit when a command fails
-set +x #echo each command before it runs
+#set -x #echo each command before it runs
 echo "Crushing..."
 SCRIPT=$( realpath $0 )
 SCRIPTPATH=$( dirname $SCRIPT )
@@ -38,42 +38,83 @@ Help()
 ############################################################
 # Process the input options. Add options as needed.        #
 ############################################################
-# Get the options
+# # Get the options
 
-TEMP=`getopt -o h: --long help,datasetdir:,subject:,session:,pipeline:,maxcores:,gradientmatrix:,overwrite,verbose,overlay:\
-             -n 'crush' -- "$@"`
+# TEMP=`getopt -o h: --long help,datasetdir:,subject:,session:,pipeline:,maxcores:,gradientmatrix:,overwrite,verbose,overlay:\
+#              -n 'crush' -- "$@"`
 
-if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
+# if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
 
-# Note the quotes around `$TEMP': they are essential!
-eval set -- "$TEMP"
+# # Note the quotes around `$TEMP': they are essential!
+# echo "xxxxxxxx $TEMP   xxxxxxxxx"
+# #eval set -- "$TEMP"
+# echo "yyyyyyyy $TEMP   yyyyyyyyy"
 
 DATASETDIR=""
 SUBJECT=""
 SESSION=""
 PIPELINE=""
 GRADIENTMATRIX=""
-MAXCORES=""
+MAXCORES=$SLURM_NTASKS
 OVERWRITE=0
 VERBOSE="N"
 OVERLAY=""
 
-while true; do
-  case "$1" in
-    -h | --help ) Help;exit 1;;
-    --datasetdir ) DATASETDIR="$2";shift 2;;     
-    --subject ) SUBJECT="$2";shift 2;;
-    --session ) SESSION="$2";shift 2;;
-    --pipeline ) PIPELINE="$2";shift 2;;
-    --gradientmatrix ) GRADIENTMATRIX="$2";shift 2;;
-    --maxcores ) MAXCORES="$2";shift 2;;
-    --overwrite ) OVERWRITE=1;shift;; 
-    --overlay ) OVERLAY="$2";shift 2;;    
-    --verbose ) VERBOSE="Y";shift;;                
-    -- ) shift; break ;;
-    * ) break ;;
-  esac
+# while true; do
+#   case "$1" in
+#     -h | --help ) Help;exit 1;;
+#     --datasetdir ) DATASETDIR="$2";shift 2;;     
+#     --subject ) SUBJECT="$2";shift 2;;
+#     --session ) SESSION="$2";shift 2;;
+#     --pipeline ) PIPELINE="$2";shift 2;;
+#     --gradientmatrix ) GRADIENTMATRIX="$2";shift 2;;
+#     --maxcores ) MAXCORES="$2";shift 2;;
+#     --overwrite ) OVERWRITE=1;shift;; 
+#     --overlay ) OVERLAY="$2";shift 2;;    
+#     --verbose ) VERBOSE="Y";shift;;                
+#     -- ) shift; break ;;
+#     * ) break ;;
+#   esac
+# done
+args=( )
+#replace long parms
+for arg; do
+    case "$arg" in
+        --help)             args+=( -h ) ;;
+        --datasetdir)       args+=( -d ) ;;
+        --subject)          args+=( -S ) ;;
+        --session)          args+=( -s ) ;;
+        --pipeline)         args+=( -p ) ;;
+        --gradientmatrix)   args+=( -g ) ;;
+        --overwrite)        args+=( -o ) ;;
+        --overlay)          args+=( -O ) ;;
+        --verbose)          args+=( -v ) ;;
+        --maxcores)         args+=( -m ) ;;
+        *)                  args+=( "$arg" ) ;;
+    esac
 done
+
+printf 'args before update : '; printf '%q ' "$@"; echo
+set -- "${args[@]}"
+printf 'args after update  : '; printf '%q ' "$@"; echo
+
+while getopts "hd:S:s:p:g:oO:v" OPTION; do
+    : "$OPTION" "$OPTARG"
+    echo "optarg : $OPTARG"
+    case $OPTION in
+    h) Help;exit 0;;
+    d) DATASETDIR="$OPTARG";;
+    S) SUBJECT="$OPTARG";;
+    s) SESSION="$OPTARG";;
+    p) PIPELINE="$OPTARG";;
+    g) GRADIENTMATRIX="$OPTARG";;
+    o) OVERWRITE=1;;
+    O) OVERLAY="$OPTARG";;
+    v) VERBOSE="Y";;
+    m) MAXCORES="$OPTARG";;
+    esac
+done
+
 
 if [[ $VERBOSE == "Y" ]];then
     set -x
@@ -83,7 +124,7 @@ if [[ $DATASETDIR == "" ]];then
     exit 1
 fi
 if [[ ! -d $DATASETDIR ]];then
-    >&2 echo "ERROR: dataset directory specified not found ($DATASETDIR)"
+    >&2 echo "ERROR: dataset directory specified not found \(${DATASETDIR}\)"
     exit 1
 fi
 if [[ $SUBJECT == "" ]];then
@@ -103,7 +144,7 @@ else
 fi
 
 if [[ $GRADIENTMATRIX != "" && ! -f $GRADIENTMATRIX ]];then
-    >&2 echo "ERROR: A gradient matrix has been specified but cannot be found ($GRADIENTMATRIX)"
+    >&2 echo "ERROR: A gradient matrix has been specified but cannot be found \($GRADIENTMATRIX\)"
     exit 1    
 fi  
 
@@ -112,14 +153,14 @@ SOURCE=$DATASETDIR/rawdata/sub-$SUBJECT/$SESSIONpath
 TARGET=$DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath
 FREESURFER=$DATASETDIR/derivatives/freesurfer/sub-$SUBJECT/$SESSIONpath
   
-if [[ ! -d $SOURCE ]];then
-    >&2 echo "ERROR: Specified source directory doesn't exist: ($SOURCE)"
-    exit 1
-fi
+# if [[ ! -d $SOURCE ]];then
+#     >&2 echo "ERROR: Specified source directory doesn\'t exist: \($SOURCE\)"
+#     exit 1
+# fi
 
-echo "Cleaning house..."
+
 if [[ $OVERWRITE -eq 1 ]];then
-
+    echo "Cleaning house..."
     rm -r --force $TARGET/crush  #Clean up old crush derived results
     rm --force $TARGET/core.* #Remove old core dumps
 
@@ -142,8 +183,8 @@ if [[ -f $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/parcellatio
    cd $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/parcellations
    tar -xf wmparc-parcellated.tar
 fi
-echo "Checking overlay..."
-if [[ -z "${APPTAINER_NAME}" ]]; then
+echo -n "Checking overlay...${APPTAINER_NAME}"
+if [[ ! -z "${APPTAINER_NAME}" ]]; then
   if [[ $OVERWRITE -eq 1 ]];then
     rm -r --force /crush
   fi
@@ -158,37 +199,81 @@ if [[ -z "${APPTAINER_NAME}" ]]; then
     echo "No overlay file detected.  It is strongly encouraged to use an overlay file to improve performance and avoid disk quotas.  See APPTAINER overlays."
   fi  
 else
+  echo "none"
   OVERLAY_PATH=""
   CRUSHPATH="$DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/crush"
 fi
-echo "Crushing..."
+#############################################################################
+echo "Crushing across $MAXCORES processes"
+#############################################################################
+allSegments=("")
+methods=("roi" "roi_end")
+segmentMap="${SCRIPTPATH}/../assets/segmentMap.csv"
+while read p; do
+  comment="^#"
+  if [[ ! $p =~ $comment ]];then
+    segment=$( echo $p|cut -d, -f1 )
+    allSegments+=( $segment )    
+  fi
+done <$segmentMap
+rm -f $TARGET/crush_iterator.csv
+echo "Writing to $TARGET/crush_iterator.csv"
 
-if [[ $MAXCORES == "" ]];then
-    python3 ${SCRIPTPATH}/lib/crush/crush.py -datasetdir $DATASETDIR \
-    -subject $SUBJECT \
-    -session "$SESSION" \
-    -pipeline $PIPELINE \
-    -overlay "$OVERLAY_PATH"
+for roi_start in "${allSegments[@]}"
+do
+  if [[ $roi_start != "" ]] && [[ -f $TARGET/parcellations/wmparc$roi_start.nii ]];then
+    for roi_end in "${allSegments[@]}"    
+    do
+      # If not empty and end is greater than start and file exists
+      # Note single brackets avoid evaluating as octal
+      if [[ $roi_end != "" ]] && [ $roi_end -gt $roi_start ] && [[ -f $TARGET/parcellations/wmparc$roi_end.nii ]];then
+        for method in "${methods[@]}"
+        do
+          if [[ $roi_start != $roi_end ]];then
+            echo "${roi_start},${roi_end},$method" >> $TARGET/crush_iterator.csv
+          fi
+        done
+      fi
+    done
+  fi
+done
+if [[ -f $TARGET/crush_qball.trk ]];then
+    TRACT=$TARGET/crush_qball.trk
 else
-    python3 ${SCRIPTPATH}/lib/crush/crush.py -datasetdir $DATASETDIR \
-    -subject $SUBJECT \
-    -session "$SESSION" \
-    -pipeline $PIPELINE \
-    -maxcores $MAXCORES \
-    -overlay "$OVERLAY_PATH"
+    TRACT=$TARGET/crush_dti.trk
 fi
+cat $TARGET/crush_iterator.csv |xargs -P $MAXCORES -I@ ${SCRIPTPATH}/lib/crush/get_tract_measurements2.py -roi @ -tract ${TRACT} -pipeline ${PIPELINE} -crush_dir ${CRUSHPATH}
 
+
+# cat $TARGET/crush_iterator.csv |xargs -I@ bash -c 'roi_start=`echo @|cut -d, -f1`;roi_end=`echo @|cut -d, -f2`;method=`echo @|cut -d, -f3`;echo python '${SCRIPTPATH}'/lib/crush/get_tract_measurements.py -roi_start '${roi_start}' -roi_end '$roi_end' -method '$method' -tract '${TRACT}' -pipeline '${PIPELINE}' -crush_dir '${CRUSHPATH}
+#exit
+##########################################################################
+# if [[ $MAXCORES == "" ]];then
+#     python3 ${SCRIPTPATH}/lib/crush/crush.py -datasetdir $DATASETDIR \
+#     -subject $SUBJECT \
+#     -session "$SESSION" \
+#     -pipeline $PIPELINE \
+#     -overlay "$OVERLAY_PATH"
+# else
+#     python3 ${SCRIPTPATH}/lib/crush/crush.py -datasetdir $DATASETDIR \
+#     -subject $SUBJECT \
+#     -session "$SESSION" \
+#     -pipeline $PIPELINE \
+#     -maxcores $MAXCORES \
+#     -overlay "$OVERLAY_PATH"
+# fi
+##########################################################################
 if [[ -f $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/parcellations/wmparc-parcellated.tar ]];then
    cd $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/parcellations
    rm *.nii
 fi
 
-echo "Consolidating..."
+echo "Consolidating"
 
 python3 ${SCRIPTPATH}/lib/crush/consolidate-measurements.py \
 -crushpath $CRUSHPATH \
 -subject $SUBJECT \
--session "$SESSION" \
+-session $SESSION \
 -pipeline $PIPELINE \
 -out $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/crush.txt
 
