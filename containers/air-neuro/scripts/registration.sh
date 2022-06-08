@@ -104,14 +104,19 @@ if [[ $TIMEPOINT != "" ]];then
         SOURCE_dwi=${DATASETDIR}/rawdata/sub-${SUBJECT}/ses-${SESSION}/dwi/sub-${SUBJECT}_ses-${SESSION}${TIMEPOINT}_dwi.nii.gz
     fi
 else
-
-
-shopt -s globstar  
-
-for eachnii in ${DATASETDIR}/rawdata/sub-${SUBJECT}${SESSIONpath}/dwi/*.nii*;do
+echo "Looking for source nii"
+for eachnii in ${DATASETDIR}/rawdata/sub-${SUBJECT}${SESSIONpath}/dwi/*.nii*
+do 
     infile=$eachnii
     break;
 done
+echo "found $infile"
+# shopt -s globstar  
+
+# for eachnii in ${DATASETDIR}/rawdata/sub-${SUBJECT}${SESSIONpath}/dwi/*.nii*;do
+#     infile=$eachnii
+#     break;
+# done
 
 SOURCE_dwi=$eachnii
 
@@ -138,8 +143,8 @@ if [[ ! -d $TARGET ]];then
 fi
 
 if [[ $OVERWRITE -eq 1 ]];then
-    rm --force $TARGET/registration/*
-    rm --force $TARGET/reg2brain*
+    rm -f $TARGET/registration/*
+    rm -f $TARGET/reg2brain*
     if [[ -d $TARGET/registration ]];then
         rmdir $TARGET/registration
     fi
@@ -147,7 +152,7 @@ fi
 
 if [[ -f $TARGET/reg2brain.data.nii ]];then
     echo "Existing registration detected ($TARGET/reg2brain.data.nii) and --overwrite not specified.  Cleaning up any residual files and Skipping registration."
-    rm --force $TARGET/registration/*
+    rm -f $TARGET/registration/*
     if [[ -d $TARGET/registration ]];then
         rmdir $TARGET/registration
     fi        
@@ -156,9 +161,9 @@ fi
 
 # Clean up any pre-existing residue
 
-rm --force $TARGET/vol*.nii.gz
-rm --force $TARGET/reg2ref.vol*.nii.gz
-rm --force $TARGET/vol*.RegTransform4D
+rm -f $TARGET/vol*.nii.gz
+rm -f $TARGET/reg2ref.vol*.nii.gz
+rm -f $TARGET/vol*.RegTransform4D
 
 #Convert reference to nii from mgz if not done already
 if [[ ! -f ${REFERENCE} && -f ${REFERENCEmgz} ]];then
@@ -197,7 +202,7 @@ fi
 function flirt_ref() {
   fbase=$(echo $1|cut -f 1 -d '.')
   REFERENCE=$2
-  echo $1
+  echo $1  
   if [[ $BET2 -eq 0 ]];then
     flirt -in $1 -ref $REFERENCE -omat $fbase.RegTransform4D -out reg2ref.$fbase.nii
   else
@@ -207,24 +212,74 @@ function flirt_ref() {
 
 }
 #echo {1..10} | xargs -n 1 | xargs -I@ -P4 bash -c "$(declare -f flirt_ref) ; flirt_ref @ ; echo @ "
-ls vol*.n* | xargs -n1 -I@ -P$PARALLELISM bash -c "$(declare -f flirt_ref) ; flirt_ref @ $REFERENCE;"
+#ls vol*.n* | xargs -n1 -I@ -P$PARALLELISM bash -c "$(declare -f flirt_ref) ; flirt_ref @ $REFERENCE;"
+ls vol*.n* | xargs -n1 -I@ -P$PARALLELISM bash -c 'fbase=`echo @|cut -f 1 -d.`;flirt -in @ -ref '$REFERENCE' -omat $fbase.RegTransform4D -out reg2ref.$fbase.nii'
 
 fslmerge -a reg2brain_unmasked.data.nii reg2ref.*
-
 #Remove anything outside of the reference image
 fslmaths $REFERENCE -bin binary_brainmask.nii
 fslmaths reg2brain_unmasked.data.nii -mul binary_brainmask.nii.gz reg2brain.data.nii
+echo "Transformed for DTI"
+#############
+#### HARDI/QBALL needs to be rearranged, all B0 images first
 
-###### REMOVE NON BRAIN from diffusion image
+BVALS=$SOURCE/dwi/bvals
+
+if [[ ! -f $BVALS ]];then
+    #Lets find a bids compliant bvals filename supporting multiple runs (we'll take the first one we find)
+    #shopt -s globstar
+    for eachbval in $SOURCE/dwi/sub-${SUBJECT}_$SESSIONpath*_dwi.bval; do
+        BVAL_FILE=$eachbval
+        break;
+    done
+fi
+
+bvals_string=`cat $BVAL_FILE`
+bvals=($bvals_string)
+#echo $bvals_string
+#echo ${bvals[0]}
+
+TARGET_FILE="reg2brain_unmasked_qball.data.nii.gz"
+B0=""
+for ((idx=0; idx<${#bvals[@]}; ++idx)); do
+    #echo "$idx" "${bvals[idx]}"
+    if [[ ${bvals[idx]} == "0" ]];then
+        echo "Found B0 at volume $idx.  Moving to the top."
+        printf -v VOL "%04d" $idx
+        B0+="registration/reg2ref.vol${VOL}.nii.gz "         
+    fi
+done
+#Now lets add high-b volumes
+HIGHB=""
+for ((idx=0; idx<${#bvals[@]}; ++idx)); do    
+    if [[ ${bvals[idx]} != "0" ]];then
+        echo "Found High-B at volume $idx.  Adding to the bottom."
+        printf -v VOL "%04d" $idx       
+        HIGHB+="registration/reg2ref.vol${VOL}.nii.gz " 
+    fi
+done
+B="$B0 $HIGHB"
+fslmerge -a $TARGET_FILE $B
+
+fslmaths $TARGET_FILE -mul binary_brainmask.nii.gz reg2brain_hardi.data.nii
+echo "Transformed for HARDI"
+
+#### END HARDI
+#############
 
 if [[ ! -f "reg2brain.data.nii.gz" ]];then
     >&2 echo "ERROR: failed to complete image registration.  Expected to see a file reg2brain.data.nii produced, but didn't"
     exit 1
 else
     #Discard residue
+    # mkdir -p registration
+    # mv vol* registration
+    # mv bet_vol* registration
+    # mv reg2ref* registration
     rm --force vol*
     rm --force bet_vol*
     rm --force reg2ref*
+
     #gunzip reg2brain.data.nii.gz
     # mkdir -p registration
     # rm --force registration/all-volumes.tar

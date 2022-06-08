@@ -12,13 +12,20 @@ SCRIPTPATH=$( dirname $SCRIPT )
 
 function f_diffusion_exists()
 {
+    diffusion_type=$1
+    if [[ $1 == 'hardi' ]];
+      diffusion_type='_hardi'
+    else
+      diffusion_type=''
+    fi
+
     shopt -s globstar  
     # for eachnii in $SOURCE/dwi/sub-*.nii*;do
     #     dwifile=$eachnii
     #     break;
     # done
-    dwifile=$TARGET/reg2brain.data.nii.gz
-    dwifile_unzipped=$TARGET/reg2brain.data.nii
+    dwifile=$TARGET/reg2brain$diffusion_type.data.nii.gz
+    dwifile_unzipped=$TARGET/reg2brain$diffusion_type.data.nii
     #     dwifile=$eachnii
     #     break;
     # done
@@ -152,11 +159,12 @@ function f_odf_recon()
 ############################################################
 function f_diffusion_recon()
 {    
-    dwifile=$( f_diffusion_exists )
+    dwifile_dti=$( f_diffusion_exists "dti" )
+    dwifile_hardi=$( f_diffusion_exists "hardi" )
    # gradientmatrix=$TARGET/gradientmatrix.txt
 
 
-    if [[ $dwifile == "FALSE" ]];then
+    if [[ $dwifile_dti == "FALSE" ]];then
         >&2 echo "ERROR: Diffusion file not found matching search pattern : ($dwifile)."        
         return 1
     fi
@@ -196,21 +204,27 @@ function f_diffusion_recon()
     if [[ $num_high_b_vals == '1' ]];then
         # ODF Recon can be used     
         echo "Performing ODF Reconstruction"      
-        res=$( f_odf_recon $dwifile $BMAX_VAL $num_high_b_vals "$@")        
-        res_code=$?
-        if [[ $res_code != 0 ]];then
-            echo $res
-            if [[ $res_code == 2 ]];then
-                return 0
-            fi        
-            >&2 echo "ERROR: odf_recon failed. Previous messages may contain a clue. Unable to proceed."            
-            return 1
+        if [[ -f $dwifile_hardi ]];then
+          res=$( f_odf_recon $dwifile_hardi $BMAX_VAL $num_high_b_vals "$@")        
+          res_code=$?
+          if [[ $res_code != 0 ]];then
+              echo $res
+              if [[ $res_code == 2 ]];then
+                  return 0
+              fi        
+              >&2 echo "ERROR: odf_recon failed. Previous messages may contain a clue. Unable to proceed."            
+              return 1
+          fi
+        else
+          echo "$dwifile_hardi not found.  Unable to process Q-Ball/HARDI.  Falling back to DTI."
         fi
+    else
+      echo "More than one shell detected, unable to process Q-Ball/HARDI.  Falling back to DTI"
     fi             
     #Lets also use DTI_RECON, we need the FA maps anyway
     echo "Performing DTI Recononstruction"
 
-    res=$( f_dti_recon $dwifile $TARGET/gradientmatrix_dti.txt $BMAX_VAL $num_high_b_vals "$@" ) 
+    res=$( f_dti_recon $dwifile_dti $TARGET/gradientmatrix_dti.txt $BMAX_VAL $num_high_b_vals "$@" ) 
     res_code=$?
     if [[ $res_code != 0 ]];then        
         if [[ $res_code == 2 ]];then            
