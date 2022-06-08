@@ -10,6 +10,7 @@ class Task():
         self.field_prerequisite_tasks=""
         self.field_operator=""
         self.field_singularity_container=""
+        self.field_manual_task=False
         self.uuid=None
         self.HOST=None
     
@@ -29,6 +30,8 @@ class Task():
                 self.field_operator=m['field_operator']
             if 'field_singularity_container' in m:
                 self.field_singularity_container=m['field_singularity_container']
+            if 'field_manual_task' in m:
+                self.field_manual_task=m['field_manual_task']
             if "cms_host" in m:
                 self.HOST=m['cms_host']    
             if 'uuid' in m:

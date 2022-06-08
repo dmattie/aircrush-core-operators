@@ -75,7 +75,8 @@ class Workload:
             print("{WARNING}No new sessions will be allocated to this node{ENDC}.  Only existing sessions will be advanced.")
        
         #Get task instances ready to run
-        filter="sort[sort_sticky][path]=sticky&sort[sort_sticky][direction]=DESC&sort[sort_sess][path]=field_associated_participant_ses.field_status&sort[sort_sess][direction]=DESC&sort[sort_filter][path]=field_status&sort[sort_filter][direction]=DESC&filter[status-filter][condition][path]=field_status&filter[status-filter][condition][operator]=IN&filter[status-filter][condition][value][1]=failed&filter[status-filter][condition][value][2]=notstarted&filter[status-filter][condition][value][3]=waiting"
+        filter="sort[sort_sticky][path]=sticky&sort[sort_sticky][direction]=DESC&sort[sort_sess][path]=field_associated_participant_ses.field_status&sort[sort_sess][direction]=DESCsort[sort_filter][path]=field_status&sort[sort_filter][direction]=DESC&filter[status-filter][condition][path]=field_status&filter[status-filter][condition][operator]=IN&filter[status-filter][condition][value][1]=failed&filter[status-filter][condition][value][2]=notstarted&filter[status-filter][condition][value][3]=waiting"
+        # filter="sort[sort_sticky][path]=sticky&sort[sort_sticky][direction]=DESC&sort[sort_sess][path]=field_associated_participant_ses.field_status&sort[sort_sess][direction]=DESCsort[sort_filter][path]=field_status&sort[sort_filter][direction]=DESC&filter[and-group][group][conjunction]=AND&filter[status-filter][condition][path]=field_status&filter[status-filter][condition][operator]=IN&filter[status-filter][condition][value][1]=failed&filter[status-filter][condition][value][2]=notstarted&filter[status-filter][condition][value][3]=waiting&filter[status-filter][condition][memberOf][and-group]&filter[manual-filter][condition][path]=field_task.field_manual_task&filter[manual-filter][condition][operator]=%3D&filter[manual-filter][condition][value]=True&filter[manual-filter][condition][memberOf][and-group]"
         #print(filter)
         tic = TaskInstanceCollection(cms_host=self.crush_host)        
         tic_col = tic.get(filter=filter)
@@ -91,10 +92,12 @@ class Workload:
 
                     print(f"Candidate task instance {ti.title}...",end='')
   
-                    tises=ti.associated_session()
+                    tises=ti.associated_session()                    
                     if tises.field_status=='terminal':
                         print(f"{WARNING}skipping{ENDC}, session is terminal.")
                         continue
+                    if ti.field_manual_task==True:
+                        print(f"{WARNING}skipping{ENDC}, manual task is pending")
                     if ti.field_status=='failed':
                         #Sometimes sbatch submissions return a non-zero exit.... but actually submitted the job successfully.
                         #to avoid running a task that may already be running, lets check the job and ensure it isn't running

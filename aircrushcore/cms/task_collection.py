@@ -87,6 +87,7 @@ class TaskCollection():
                     "field_prerequisite_tasks":prereqs,#item['relationships']['field_prerequisite_tasks']['data']['id'],
                     "field_operator":item['attributes']['field_operator'],
                     "field_singularity_container":item['attributes']['field_singularity_container'],    
+                    "field_manual_task":item['attributes']['field_manual_task'],
                     "uuid":uuid,
                     "cms_host":self.HOST                                               
                 }                        
