@@ -413,6 +413,8 @@ def derive_subject_status(failed,running,completed,notstarted,processed,waiting,
                 return "limping"
             if failed==0:
                 return "running"
+        if waiting>0:
+            return "waiting"
     if no_life_left>0:
         if completed>0:
             if notstarted==0:
