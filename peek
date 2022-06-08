@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+import argparse
+from pickle import FALSE
+from turtle import down
+from aircrushcore.cms import compute_node, compute_node_collection, session_collection, task_instance_collection
+from aircrushcore.controller.configuration import AircrushConfig
+from aircrushcore.dag import Workload
+from aircrushcore.cms import *
+from aircrushcore.datacommons.data_commons import DataCommons
+from util.setup import ini_settings
+import os
+
+def main():
+
+    global aircrush,crush_host,args
+    print("Aircrush PEEK utility")
+    parser = argparse.ArgumentParser(
+        description="CRUSH client command line utility. Back-end commands to view crush data")
+    parser.add_argument('-get',action='store',type=str,
+        help="Specify what to look at [wf-next].")
+    parser.add_argument('-cnode',action='store',type=str,
+        help="UUID of compute node to consider")
+    args = parser.parse_args()
+
+    aircrush=ini_settings()
+
+    crush_host=Host(
+        endpoint=aircrush.config['REST']['endpoint'],
+        username=aircrush.config['REST']['username'],
+        password=aircrush.config['REST']['password']
+    )
+
+    if args.get == "wf-next":
+        wf_next(args.cnode)
+
+def wf_next(cnode:str):
+    work=Workload(aircrush=aircrush,accept_new_sessions=False)
+    next=work.get_next_task(node_uuid=cnode)
+    ti_col=TaskInstanceCollection(cms_host=crush_host)
+    ti=ti_col.get_one(uuid=next)
+    print(f"Up Next: {ti.title}, uuid:{next}")
+
+if __name__ == '__main__':
+    main()
