@@ -548,6 +548,12 @@ def doSomething():
                         todo.field_errorlog=ret.stderr
                         todo.field_status="failed"
                         todo.upsert()
+                if not session == None:
+                    session.field_status=todo.field_status
+                    session.upsert()
+                if not subject == None:
+                    subject.field_status=todo.field_status
+                    subject.upsert()
             
             except Exception as e:
                 print(e)
