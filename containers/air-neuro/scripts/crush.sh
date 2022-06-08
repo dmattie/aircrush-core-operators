@@ -55,11 +55,15 @@ SUBJECT=""
 SESSION=""
 PIPELINE=""
 GRADIENTMATRIX=""
-MAXCORES=$SLURM_NTASKS
+MAXCORES=$SLURM_CPUS_PER_TASK
 OVERWRITE=0
 VERBOSE="N"
 OVERLAY=""
 
+if [[ $MAXCORES == "" ]];then
+  >&2 echo "ERROR: this job appears to be set to run on one CPU (variable SLURM_CPUS_PER_TASK unset).  This will probably fail.  Set sbatch --cpus-per-task" 
+  exit 1
+fi
 # while true; do
 #   case "$1" in
 #     -h | --help ) Help;exit 1;;
@@ -244,7 +248,10 @@ else
 fi
 cat $TARGET/crush_iterator.csv |xargs -P $MAXCORES -I@ ${SCRIPTPATH}/lib/crush/get_tract_measurements2.py -roi @ -tract ${TRACT} -pipeline ${PIPELINE} -crush_dir ${CRUSHPATH}
 
-
+if [[ ! $? -eq 0 ]];then
+  echo "FAILED, previous messages should elucidate the issue"
+  return 1
+fi
 # cat $TARGET/crush_iterator.csv |xargs -I@ bash -c 'roi_start=`echo @|cut -d, -f1`;roi_end=`echo @|cut -d, -f2`;method=`echo @|cut -d, -f3`;echo python '${SCRIPTPATH}'/lib/crush/get_tract_measurements.py -roi_start '${roi_start}' -roi_end '$roi_end' -method '$method' -tract '${TRACT}' -pipeline '${PIPELINE}' -crush_dir '${CRUSHPATH}
 #exit
 ##########################################################################
