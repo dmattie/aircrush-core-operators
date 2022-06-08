@@ -72,7 +72,7 @@ class TaskInstanceCollection():
         
 
         url=f"jsonapi/node/task_instance?{filter_uuid}{filter_pipeline}{filter_session}{filter_task}{filter}"
-        #print(url)
+        
         r = self.HOST.get(url)
         if r.status_code==200:  #We can connect to CRUSH host                       
             if len(r.json()['data'])!=0:
@@ -88,6 +88,7 @@ class TaskInstanceCollection():
             return taskinstances
         else:      
             print(r.status_code)      
+            print(r.json())
             return taskinstances
 
 

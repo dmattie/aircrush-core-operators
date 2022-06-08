@@ -150,88 +150,6 @@ def _get_localexam_paths(project:str,subject:str,session:str):
         paths[f"d{counter}"]=f"{wd}/projects/{project}/datasets/derivatives{derivative}"
         counter=counter+1
     return paths
-
-# def _rsync_put(**kwargs):
-#     data_transfer_node=kwargs['data_transfer_node'] if 'data_transfer_node' in kwargs else None 
-#     source=kwargs['source'] if 'source' in kwargs else None
-#     target=kwargs['target'] if 'target' in kwargs else None
-
-#     if source is None or target is None or data_transfer_node is None:
-#         raise Exception("Insufficient args passed to _rsync_get")
-    
-#     if os.path.isdir(source):        
-#         tarfile=_tar_dir(source)
-
-#         #ensure target variable is a tar:
-#         normpath_target=os.path.normpath(target)
-#         ses_target=os.path.basename(normpath_target)
-#         sub_target=os.path.basename(os.path.dirname(normpath_target))        
-#         root=root=os.path.dirname(os.path.dirname(normpath_target))
-
-#         sespart_target=f"_{ses_target}" if ses_target[0:4]=="ses-" else ""       
-#         if sub_target[0:4]=="sub-":
-#             target=f"{root}/{sub_target}/{sub_target}{sespart_target}.tar"
-#         else:
-#             raise Exception(f"Target specified to store on datacommons doesn't appear to be BIDS compliant. Expected sub-##.  ({target}) (subject={sub_target})")
-
-#     else:
-#         source=source.rstrip('/')
-
-
-#     # Ensure parent directories exist on target
-#     if data_transfer_node=="":
-#         target_parent = pathlib.Path(target).parent.resolve()
-#         os.makedirs(target_parent,exist_ok=True)   
-#         #dir_path = os.path.dirname(os.path.realpath(__file__))
-#         if not os.path.exists(target_parent):
-#             raise Exception(f"Subject/session PATH not found on data commons ({target_parent})")
-#     else:   
-#         target_parent=target[0:target.rindex("/")]
-#         target=f"{data_transfer_node}:{target}"
-#         target=target.rstrip('/')
-        
-#         #f"{root}/{sub_target}/{sub_target}"
-#         print(f"Creating remote directory if missing: {target_parent}")
-#         mkdirs_cmd=["ssh",data_transfer_node, f"mkdir -p {target_parent}"]                  
-#         ret,out = getstatusoutput(mkdirs_cmd)
-#         if ret!=0:
-#             raise Exception(f"Failed to create target directory:({target}).  Received: {out}")
-
-        
-    
-#     rsync_cmd=["rsync","-r","--ignore-missing-args", f"{source}",f"{target_parent}"]      
-#     print(f"{rsync_cmd}")  
-
-#     ret = subprocess.run(rsync_cmd,   
-#                             capture_output=True,
-#                             text=True,                             
-#                             timeout=7200) #long timeout just in case hanging for a password                          
-    
-#     if ret.returncode!=0:
-#         raise Exception(f"Failed to copy session directory: {ret.stderr}")
-#     else:
-#         if os.path.isdir(source) and len(sespart_target)>0:
-#             cleanup_cmd=f"if [ -d {target_parent}/{ses} ] && [ -f {target} ]];then rm -r {target_parent}/{ses} {target_parent}/{ses}; fi"
-#             if data_transfer_node!="":
-#                 cleanup_cmd=f"ssh {data_transfer_node} '{cleanup_cmd}'"
-            
-#             ret = subprocess.run(cleanup_cmd,   
-#                             capture_output=True,
-#                             text=True, 
-#                             shell=True,
-#                             timeout=3600) #long timeout just in case hanging for a password              
-#             if ret.returncode!=0:  
-#                 print(f"{ansi.WARNING}ERROR{ansi.ENDC} cleaning up old directory.  Now both a session directory and a tar exist.  The tar is newer.\n{ret.stderr}\nCommand Attempted:{cleanup_cmd}")
-#         else:
-#             print(f"No session directory to cleanup for this subject at target {len(target)}")    
-#         #######################
-#         ## DELETE LOCAL COPY ##
-#         #######################
-#         shutil.move(source,f"{source}.deleteme")
-#         print(f"{ansi.WARNING}Safe to remove {normpath}/{ses}{ansi.ENDC}")
-
-#     return True
-
 def _tar_dir(dir:str):
     print(f"\nCreating tarfile from source {dir} ...",end='',flush=True)
     print("")
@@ -467,13 +385,30 @@ def pull_data(stage,project,subject,session):
             for derivative in derivatives:
                 print(f"///[{derivative}]///")
                 source=f"{datacommons}/projects/{project.field_path_to_exam_data}/datasets/{stage}/{derivative}"
-                target=f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage}/{derivative}"   
-                if sensors.exists_on_datacommons(data_transfer_node,source):
-                    _rsync_get(data_transfer_node=data_transfer_node,
-                                source=source,                            
-                                target=target)
+                target=f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage}/{derivative}"  
+                if os.path.isfile(f"{target}.deleteme"):
+                    
+                    #if there is already a file that was left behind, use that instead
+                    #This is used when a project pipeline has been reset at a point in the pipeline using setval
+                    #and I don't want to rsync it all back from datacommons when I know the .deleteme is fine to use.
+                    #...remove this eventually   TODO
+                    
+                    print("Extracting local '.deleteme' tarfile...",end='')
+                    deleteme_target=f"{target}.deleteme"
+                    tar=tarfile.open(deleteme_target)
+                    tarpath=pathlib.Path(deleteme_target).parent.resolve()
+                    tar.extractall(path=tarpath)
+                    tar.close()
+                    os.remove(deleteme_target)
+                    print(f"{ansi.OKGREEN}local 'DELETEME' version used instead{ansi.ENDC}")
+
                 else:
-                    print(f"{source} not on datacommons... skipping")
+                    if sensors.exists_on_datacommons(data_transfer_node,source):
+                        _rsync_get(data_transfer_node=data_transfer_node,
+                                    source=source,                            
+                                    target=target)
+                    else:
+                        print(f"{source} not on datacommons... skipping")
         else:
             foundsource=False
 

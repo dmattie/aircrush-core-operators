@@ -45,7 +45,7 @@ class TaskCollection():
             filter=""
 
         url=f"jsonapi/node/task?{filter}{filter_uuid}"
-                
+            
         r = self.HOST.get(url)
         if r.status_code==200:  #We can connect to CRUSH host           
               

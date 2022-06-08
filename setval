@@ -2,6 +2,7 @@
 
 import argparse
 from pickle import FALSE
+from turtle import down
 from aircrushcore.cms import compute_node, compute_node_collection, session_collection, task_instance_collection
 from aircrushcore.controller.configuration import AircrushConfig
 from aircrushcore.dag import Workload
@@ -17,7 +18,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="CRUSH client command line utility. Back-end commands to set crush data")
     parser.add_argument('-set',action='store',type=str,
-        help="Specify a setting to change [ti-status|ti-memory-multiplier|ti-job|ti-retries|ti-error|ses-cn|sub-status|ses-status|ti-sticky].")
+        help="Specify a setting to change [ti-status|ti-memory-multiplier|ti-job|ti-retries|ti-error|ses-cn|sub-status|ses-status|ti-sticky|pipeline-reset].")
     parser.add_argument('-uuid',action='store',
         help='UUID of CMS object' )
     parser.add_argument('-subject',action='store',    
@@ -25,9 +26,10 @@ def main():
     parser.add_argument('-session',action='store',    
         help='Session of CMS object' )           
     parser.add_argument('-project',action='store',
-        help='Project of CMS object' )             
+        help='Project Name of CMS object' )             
     parser.add_argument('-value',action='store',
         help='New value')
+    parser.add_argument('-pipeline',action='store',help='Pipeline UUID')
     args = parser.parse_args()
 
     aircrush=ini_settings()
@@ -63,7 +65,9 @@ def main():
     elif args.set == "ti-error":
         set_ti_error(uuid=args.uuid,val=args.value)  
     elif args.set == "ti-sticky":
-        set_ti_sticky(uuid=args.uuid)     
+        set_ti_sticky(uuid=args.uuid) 
+    elif args.set == "pipeline-reset":
+        pipeline_reset(uuid=args.uuid,pipeline=args.pipeline,project=args.project)    
     else:
         print("Nothing to do")
 
@@ -173,7 +177,46 @@ def get_ses_uuid(proj:str,sub:str,ses:str):
             print(f"Session {ses} in {proj.title}/{subject.title} not found")
     else:
         print(f"Subject {sub} in project {proj.title} not found")
-        return None        
+        return None     
+def pipeline_reset(uuid:str,pipeline:str,project:str):
+    proj_col=ProjectCollection(cms_host=crush_host)
+    project=proj_col.get_one_by_name(project)
+    pipe_col=PipelineCollection(cms_host=crush_host)
+    pipeline=pipe_col.get_one(uuid=pipeline)
+    downstream_uuids=downstream_tasks(downstream_from_task_uuid=uuid,pipeline_uuid=pipeline.uuid)
+    print(downstream_uuids)
+    ti_filter=f"&filter[status-filter][condition][path]=field_status&filter[status-filter][condition][operator]=NOT%20IN&filter[status-filter][condition][value][1]=terminal&filter[status-filter][condition][value][2]=notstarted&filter[proj-filter][condition][path]=field_associated_participant_ses.field_participant.field_project.id&filter[proj-filter][condition][operator]=%3D&filter[proj-filter][condition][value]={project.uuid}"
+    
+    ti_col=TaskInstanceCollection(cms_host=crush_host,pipeline=pipeline.uuid)
+    tis=ti_col.get(filter=ti_filter)
+    for ti in tis:
+        if tis[ti].field_task in downstream_uuids:            
+            print(f"{tis[ti].title}\tOld Status:{tis[ti].field_status}\tNew Status:notstarted")                
+            tis[ti].field_status='notstarted'
+            tis[ti].upsert()
+        
+
+def downstream_tasks(downstream_from_task_uuid:str,pipeline_uuid:str):    
+    downstream_uuids=[downstream_from_task_uuid]
+    task_col=TaskCollection(cms_host=crush_host,pipeline=pipeline_uuid)
+    tasks=task_col.get()
+    for task in tasks:
+        if downstream_from_task_uuid is None:            
+            subdown=downstream_tasks(downstream_from_task_uuid=task,pipeline_uuid=pipeline_uuid)
+            for sub in subdown:
+                if sub not in downstream_uuids:
+                    downstream_uuids.append(sub)                
+            continue
+        prereqs=tasks[task].field_prerequisite_tasks
+        if prereqs is None:            
+            continue
+        for prereq in prereqs:
+            if prereq['id']==downstream_from_task_uuid:
+                subdown=downstream_tasks(downstream_from_task_uuid=task,pipeline_uuid=pipeline_uuid)
+                for sub in subdown:
+                    if sub not in downstream_uuids:
+                        downstream_uuids.append(sub)                                
+    return downstream_uuids
 
 if __name__ == '__main__':
     main()
