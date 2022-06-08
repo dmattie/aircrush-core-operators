@@ -96,7 +96,7 @@ class Workload:
                     if tises.field_status=='terminal':
                         print(f"{WARNING}skipping{ENDC}, session is terminal.")
                         continue
-                    if ti.field_manual_task==True:
+                    if ti.isManual()==True:
                         print(f"{WARNING}skipping{ENDC}, manual task is pending")
                     if ti.field_status=='failed':
                         #Sometimes sbatch submissions return a non-zero exit.... but actually submitted the job successfully.
