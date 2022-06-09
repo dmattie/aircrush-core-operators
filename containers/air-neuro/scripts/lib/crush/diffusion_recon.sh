@@ -64,10 +64,10 @@ function f_dti_recon()
   dwi=$1
   matrix=$2
   highb=$3
-  b0=$4
+  b0=$4  
   shift;shift;shift;shift;
   #echo "f_dti_recon extras:{$@}"
-
+  echo "DWI:$dwi\nmatrix:$matrix\nhighb:$highb\nb0:$b0"
   cd $TARGET
 
   if [[ -f $TARGET/dti_recon_out_fa.nii 
@@ -201,11 +201,12 @@ function f_diffusion_recon()
     fi   
 
     num_high_b_vals=`cat $BVALS|tr '\t' '\n'|tr ' ' '\n'|sort -u|grep -v '^0'|grep -v -e '^$'|wc -l`
+    b0=`cat $BVALS|tr '\t' '\n'|tr ' ' '\n'|grep '^0'|wc -l`
     if [[ $num_high_b_vals == '1' ]];then
         # ODF Recon can be used     
         echo "Performing ODF Reconstruction"      
         if [[ -f $dwifile_hardi ]];then
-          res=$( f_odf_recon $dwifile_hardi $BMAX_VAL $num_high_b_vals "$@")        
+          res=$( f_odf_recon $dwifile_hardi $BMAX_VAL $num_high_b_vals $b0 "$@")        
           res_code=$?
           if [[ $res_code != 0 ]];then
               echo $res
