@@ -138,6 +138,60 @@ if [[ ! -f $SOURCE_dwi ]];then
     exit 1
 fi
 
+
+#############
+#### HARDI/QBALL needs to be rearranged, all B0 images first
+
+BVALS=$RAWDATA/dwi/bvals
+
+if [[ ! -f $BVALS ]];then
+    allbvals=$RAWDATA/dwi/sub-${SUBJECT}*_dwi.bval
+    BVAL_FILE=${allbvals[0]}
+    #Lets find a bids compliant bvals filename supporting multiple runs (we'll take the first one we find)
+    #shopt -s globstar
+    #for eachbval in $RAWDATA/dwi/sub-${SUBJECT}*_dwi.bval; do
+    #    BVAL_FILE=$eachbval
+    #    break;
+    #done
+fi
+
+bvals_string=`cat $BVAL_FILE`
+bvals=($bvals_string)
+echo $bvals_string
+#echo ${bvals[0]}
+
+TARGET_FILE="reg2brain_unmasked_qball.data.nii.gz"
+B0=""
+for ((idx=0; idx<${#bvals[@]}; ++idx)); do
+    #echo "$idx" "${bvals[idx]}"
+    if [[ ${bvals[idx]} == "0" ]];then
+        echo "Found B0 at volume $idx.  Moving to the top."
+        printf -v VOL "%04d" $idx
+        B0+="registration/reg2ref.vol${VOL}.nii.gz "         
+    fi
+done
+#Now lets add high-b volumes
+HIGHB=""
+for ((idx=0; idx<${#bvals[@]}; ++idx)); do    
+    if [[ ${bvals[idx]} != "0" ]];then
+        echo "Found High-B at volume $idx.  Adding to the bottom."
+        printf -v VOL "%04d" $idx       
+        HIGHB+="registration/reg2ref.vol${VOL}.nii.gz " 
+    fi
+done
+B="$B0 $HIGHB"
+echo fslmerge -a $TARGET_FILE $B
+fslmerge -a $TARGET_FILE $B
+
+fslmaths $TARGET_FILE -mul binary_brainmask.nii.gz reg2brain_hardi.data.nii
+echo "Transformed for HARDI"
+
+#### END HARDI
+#############
+
+
+exit 0
+
 mkdir -p $TARGET
 if [[ ! -d $TARGET ]];then
     >&2 echo "ERROR: Destination derivatives directory doesn't exist or cannot be created ($TARGET)"
@@ -222,55 +276,6 @@ fslmerge -a reg2brain_unmasked.data.nii reg2ref.*
 fslmaths $REFERENCE -bin binary_brainmask.nii
 fslmaths reg2brain_unmasked.data.nii -mul binary_brainmask.nii.gz reg2brain.data.nii
 echo "Transformed for DTI"
-#############
-#### HARDI/QBALL needs to be rearranged, all B0 images first
-
-BVALS=$RAWDATA/dwi/bvals
-
-if [[ ! -f $BVALS ]];then
-    allbvals=$RAWDATA/dwi/sub-${SUBJECT}*_dwi.bval
-    BVAL_FILE=${allbvals[0]}
-    #Lets find a bids compliant bvals filename supporting multiple runs (we'll take the first one we find)
-    #shopt -s globstar
-    #for eachbval in $RAWDATA/dwi/sub-${SUBJECT}*_dwi.bval; do
-    #    BVAL_FILE=$eachbval
-    #    break;
-    #done
-fi
-
-bvals_string=`cat $BVAL_FILE`
-bvals=($bvals_string)
-echo $bvals_string
-#echo ${bvals[0]}
-
-TARGET_FILE="reg2brain_unmasked_qball.data.nii.gz"
-B0=""
-for ((idx=0; idx<${#bvals[@]}; ++idx)); do
-    #echo "$idx" "${bvals[idx]}"
-    if [[ ${bvals[idx]} == "0" ]];then
-        echo "Found B0 at volume $idx.  Moving to the top."
-        printf -v VOL "%04d" $idx
-        B0+="registration/reg2ref.vol${VOL}.nii.gz "         
-    fi
-done
-#Now lets add high-b volumes
-HIGHB=""
-for ((idx=0; idx<${#bvals[@]}; ++idx)); do    
-    if [[ ${bvals[idx]} != "0" ]];then
-        echo "Found High-B at volume $idx.  Adding to the bottom."
-        printf -v VOL "%04d" $idx       
-        HIGHB+="registration/reg2ref.vol${VOL}.nii.gz " 
-    fi
-done
-B="$B0 $HIGHB"
-echo fslmerge -a $TARGET_FILE $B
-fslmerge -a $TARGET_FILE $B
-
-fslmaths $TARGET_FILE -mul binary_brainmask.nii.gz reg2brain_hardi.data.nii
-echo "Transformed for HARDI"
-
-#### END HARDI
-#############
 
 if [[ ! -f "reg2brain.data.nii.gz" ]];then
     >&2 echo "ERROR: failed to complete image registration.  Expected to see a file reg2brain.data.nii produced, but didn't"
