@@ -112,7 +112,7 @@ function f_odf_recon()
   b0=$4  
   
 
-  shift;shift;shift;
+  shift;shift;shift;shift;
   echo "f_odf_recon extras:{$@}"
 
   echo "ODF RECON----"
