@@ -197,7 +197,7 @@ else
    gz=".gz"
 fi
 
-f_hardi_mat $GRADIENTMATRIX "dti" "$TARGET/reg2brain.data.nii$gz"
+f_hardi_mat $TARGET/gradientmatrix_dti.txt "dti" "$TARGET/reg2brain.data.nii$gz"
 res=$?
 
 if [[ $res != 0 ]];then
@@ -205,12 +205,8 @@ if [[ $res != 0 ]];then
     exit 1
 fi
 
-if [[ $GRADIENTMATRIX == "" ]];then
-    GRADIENTMATRIX=$TARGET/gradientmatrix_qball.txt     
-fi
 
-
-f_hardi_mat $GRADIENTMATRIX "qball" "$TARGET/reg2brain_hardi.data.nii$gz"
+f_hardi_mat $TARGET/gradientmatrix_qball.txt "qball" "$TARGET/reg2brain_hardi.data.nii$gz"
  
 res=$?
 
