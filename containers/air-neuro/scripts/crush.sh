@@ -193,8 +193,8 @@ if [[ -f $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/parcellatio
    fi
    
 fi
-echo -n "Checking overlay...${APPTAINER_NAME}"
-if [[ ! -z "${APPTAINER_NAME}" ]]; then
+#echo -n "Checking overlay...${APPTAINER_NAME}"
+#if [[ ! -z "${APPTAINER_NAME}" ]]; then
   if [[ $OVERWRITE -eq 1 ]];then
     rm -r --force /crush
   fi
@@ -209,12 +209,12 @@ if [[ ! -z "${APPTAINER_NAME}" ]]; then
     echo "No overlay file detected.  It is strongly encouraged to use an overlay file to improve performance and avoid disk quotas.  See APPTAINER overlays."
     exit 1
   fi  
-else
-  OVERLAY_PATH=""
-  CRUSHPATH="$DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/crush"
-  echo "No overlay file detected.  It is strongly encouraged to use an overlay file to improve performance and avoid disk quotas.  See APPTAINER overlays."
-  exit 1
-fi
+# else
+#   OVERLAY_PATH=""
+#   CRUSHPATH="$DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/crush"
+#   echo "No overlay file detected.  It is strongly encouraged to use an overlay file to improve performance and avoid disk quotas.  See APPTAINER overlays."
+#   exit 1
+# fi
 #############################################################################
 echo "Crushing across $MAXCORES processes"
 #############################################################################
