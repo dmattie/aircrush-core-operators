@@ -270,8 +270,8 @@ echo "Transformed for HARDI"
 #### END HARDI
 #############
 
-if [[ ! -f "reg2brain.data.nii.gz" ]];then
-    >&2 echo "ERROR: failed to complete image registration.  Expected to see a file reg2brain.data.nii produced, but didn't"
+if [[ ! -f "$TARGET/reg2brain.data.nii.gz" ]];then
+    >&2 echo "ERROR: failed to complete image registration.  Expected to see a file $TARGET/reg2brain.data.nii.gz produced, but didn't"
     exit 1
 else
     #Discard residue
