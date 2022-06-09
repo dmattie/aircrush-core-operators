@@ -201,11 +201,13 @@ if [[ ! -z "${APPTAINER_NAME}" ]]; then
     OVERLAY_PATH=""
     CRUSHPATH="$DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/crush"
     echo "No overlay file detected.  It is strongly encouraged to use an overlay file to improve performance and avoid disk quotas.  See APPTAINER overlays."
+    exit 1
   fi  
 else
-  echo "none"
   OVERLAY_PATH=""
   CRUSHPATH="$DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/crush"
+  echo "No overlay file detected.  It is strongly encouraged to use an overlay file to improve performance and avoid disk quotas.  See APPTAINER overlays."
+  exit 1
 fi
 #############################################################################
 echo "Crushing across $MAXCORES processes"
