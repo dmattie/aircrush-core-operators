@@ -67,7 +67,7 @@ function f_dti_recon()
   b0=$4  
   shift;shift;shift;shift;
   #echo "f_dti_recon extras:{$@}"
-  echo "DWI:$dwi\nmatrix:$matrix\nhighb:$highb\nb0:$b0"
+  echo "DTI RECON---\nDWI:$dwi\nmatrix:$matrix\nhighb:$highb\nb0:$b0"
   cd $TARGET
 
   if [[ -f $TARGET/dti_recon_out_fa.nii 
@@ -111,7 +111,8 @@ function f_odf_recon()
   shift;shift;shift;
   echo "f_odf_recon extras:{$@}"
 
-  
+  echo "ODF RECON----\nDWI:$dwi\nmatrix:$matrix\nhighb:$highb\nb0:$b0"
+
   cd $TARGET
 
   if [[ -f $TARGET/recon_out_odf.nii && -f $TARGET/recon_out_max.nii && -f $TARGET/recon_out_b0.nii && -f $TARGET/recon_out_dwi.nii ]];then
@@ -202,6 +203,8 @@ function f_diffusion_recon()
 
     num_high_b_vals=`cat $BVALS|tr '\t' '\n'|tr ' ' '\n'|sort -u|grep -v '^0'|grep -v -e '^$'|wc -l`
     b0=`cat $BVALS|tr '\t' '\n'|tr ' ' '\n'|grep '^0'|wc -l`
+    cat $BVALS
+    echo "Detected b0 volumes: $b0"
     if [[ $num_high_b_vals == '1' ]];then
         # ODF Recon can be used     
         echo "Performing ODF Reconstruction"      
