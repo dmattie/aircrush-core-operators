@@ -13,7 +13,7 @@ SCRIPTPATH=$( dirname $SCRIPT )
 function f_diffusion_exists()
 {
     diffusion_type=$1
-    if [[ $1 == 'hardi' ]];
+    if [[ $1 == 'hardi' ]];then
       diffusion_type='_hardi'
     else
       diffusion_type=''

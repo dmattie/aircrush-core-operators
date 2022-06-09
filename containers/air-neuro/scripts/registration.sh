@@ -104,21 +104,21 @@ if [[ $TIMEPOINT != "" ]];then
         SOURCE_dwi=${DATASETDIR}/rawdata/sub-${SUBJECT}/ses-${SESSION}/dwi/sub-${SUBJECT}_ses-${SESSION}${TIMEPOINT}_dwi.nii.gz
     fi
 else
-echo "Looking for source nii"
-for eachnii in ${DATASETDIR}/rawdata/sub-${SUBJECT}${SESSIONpath}/dwi/*.nii*
-do 
-    infile=$eachnii
-    break;
-done
-echo "found $infile"
-# shopt -s globstar  
+    echo "Looking for source nii"
+    for eachnii in ${DATASETDIR}/rawdata/sub-${SUBJECT}${SESSIONpath}/dwi/*.nii*
+    do 
+        infile=$eachnii
+        break;
+    done
+    echo "found $infile"
+    # shopt -s globstar  
 
-# for eachnii in ${DATASETDIR}/rawdata/sub-${SUBJECT}${SESSIONpath}/dwi/*.nii*;do
-#     infile=$eachnii
-#     break;
-# done
+    # for eachnii in ${DATASETDIR}/rawdata/sub-${SUBJECT}${SESSIONpath}/dwi/*.nii*;do
+    #     infile=$eachnii
+    #     break;
+    # done
 
-SOURCE_dwi=$eachnii
+    SOURCE_dwi=$eachnii
 
 fi
 if [[ $SESSION == "" ]];then
@@ -279,21 +279,7 @@ else
     rm --force vol*
     rm --force bet_vol*
     rm --force reg2ref*
-    rm --force core.*
-    
-    # mkdir -p registration
-    # mv vol* registration
-    # mv bet_vol* registration
-    # mv reg2ref* registration
-   
-
-    #gunzip reg2brain.data.nii.gz
-    # mkdir -p registration
-    # rm --force registration/all-volumes.tar
-    # rm --force registration/reg2ref.tar
-    # cd registration
-    # mv vol* registration;tar -cf registration/all-volumes.tar vol* --remove-files
-    # mv reg2ref* registration;tar -cf registration/reg2ref.tar reg2ref* --remove-files
+    rm --force core.*    
 
 fi
 exit 0
