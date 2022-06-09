@@ -276,10 +276,10 @@ if [[ ! -f "reg2brain.data.nii.gz" ]];then
 else
     #Discard residue
 
-    # rm --force vol*
-    # rm --force bet_vol*
-    # rm --force reg2ref*
-    # rm --force core.*
+    rm --force vol*
+    rm --force bet_vol*
+    rm --force reg2ref*
+    rm --force core.*
     
     # mkdir -p registration
     # mv vol* registration
