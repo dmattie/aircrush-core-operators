@@ -204,22 +204,21 @@ if [[ $OVERWRITE -eq 1 ]];then
     if [[ -d $TARGET/registration ]];then
         rmdir $TARGET/registration
     fi
+
+    # Clean up any pre-existing residue
+
+    rm -f $TARGET/vol*.nii.gz
+    rm -f $TARGET/reg2ref.vol*.nii.gz
+    rm -f $TARGET/vol*.RegTransform4D    
+
 fi
 
 if [[ -f $TARGET/reg2brain.data.nii ]];then
     echo "Existing registration detected ($TARGET/reg2brain.data.nii) and --overwrite not specified.  Cleaning up any residual files and Skipping registration."
-    rm -f $TARGET/registration/*
-    if [[ -d $TARGET/registration ]];then
-        rmdir $TARGET/registration
-    fi        
+    
     exit 0
 fi
 
-# Clean up any pre-existing residue
-
-rm -f $TARGET/vol*.nii.gz
-rm -f $TARGET/reg2ref.vol*.nii.gz
-rm -f $TARGET/vol*.RegTransform4D
 
 #Convert reference to nii from mgz if not done already
 if [[ ! -f ${REFERENCE} && -f ${REFERENCEmgz} ]];then
@@ -282,14 +281,17 @@ if [[ ! -f "reg2brain.data.nii.gz" ]];then
     exit 1
 else
     #Discard residue
-    # mkdir -p registration
+  
+  ##  rm --force vol*
+  ##  rm --force bet_vol*
+  ##  rm --force reg2ref*
+  ##  rm --force core.*
+
+  # mkdir -p registration
     # mv vol* registration
     # mv bet_vol* registration
     # mv reg2ref* registration
-    rm --force vol*
-    rm --force bet_vol*
-    rm --force reg2ref*
-    rm --force core.*
+
 
     #gunzip reg2brain.data.nii.gz
     # mkdir -p registration
