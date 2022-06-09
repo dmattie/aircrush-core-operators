@@ -105,13 +105,20 @@ function f_odf_recon()
     #  1: path to 3D diffusion weighted image
     #  2: high b value (e.g. 1000)
     #  3: number of b0 rows in gradient matrix
+
   dwi=$1
-  highb=$2
-  b0=$3
+  bmax=$2
+  highb=$3
+  b0=$4  
+
   shift;shift;shift;
   echo "f_odf_recon extras:{$@}"
 
-  echo "ODF RECON----\nDWI:$dwi\nmatrix:$matrix\nhighb:$highb\nb0:$b0"
+  echo "ODF RECON----"
+  echo "DWI:$dwi"
+  echo "bmax:$bmax"
+  echo "highb:$highb"
+  echo "b0:$b0"
 
   cd $TARGET
 
