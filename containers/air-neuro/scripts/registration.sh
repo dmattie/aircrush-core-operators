@@ -248,7 +248,7 @@ for ((idx=0; idx<${#bvals[@]}; ++idx)); do
     if [[ ${bvals[idx]} == "0" ]];then
         echo "Found B0 at volume $idx.  Moving to the top."
         printf -v VOL "%04d" $idx
-        B0+="registration/reg2ref.vol${VOL}.nii.gz "         
+        B0+="reg2ref.vol${VOL}.nii.gz "         
     fi
 done
 #Now lets add high-b volumes
@@ -257,7 +257,7 @@ for ((idx=0; idx<${#bvals[@]}; ++idx)); do
     if [[ ${bvals[idx]} != "0" ]];then
         echo "Found High-B at volume $idx.  Adding to the bottom."
         printf -v VOL "%04d" $idx       
-        HIGHB+="registration/reg2ref.vol${VOL}.nii.gz " 
+        HIGHB+="reg2ref.vol${VOL}.nii.gz " 
     fi
 done
 B="$B0 $HIGHB"
