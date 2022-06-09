@@ -125,10 +125,12 @@ if [[ $SESSION == "" ]];then
     REFERENCE=${DATASETDIR}/derivatives/freesurfer/sub-${SUBJECT}/mri/brainmask.nii
     REFERENCEmgz=${DATASETDIR}/derivatives/freesurfer/sub-${SUBJECT}/mri/brainmask.mgz
     TARGET=${DATASETDIR}/derivatives/$PIPELINE/sub-${SUBJECT}
+    RAWDATA=${DATASETDIR}/rawdata/sub-${SUBJECT}
 else
     REFERENCE=${DATASETDIR}/derivatives/freesurfer/sub-${SUBJECT}/ses-${SESSION}/mri/brainmask.nii
     REFERENCEmgz=${DATASETDIR}/derivatives/freesurfer/sub-${SUBJECT}/ses-${SESSION}/mri/brainmask.mgz
     TARGET=${DATASETDIR}/derivatives/$PIPELINE/sub-${SUBJECT}/ses-${SESSION}
+    RAWDATA=${DATASETDIR}/rawdata/sub-${SUBJECT}/ses-${SESSION}
 fi
 
 if [[ ! -f $SOURCE_dwi ]];then
@@ -223,20 +225,22 @@ echo "Transformed for DTI"
 #############
 #### HARDI/QBALL needs to be rearranged, all B0 images first
 
-BVALS=$SOURCE/dwi/bvals
+BVALS=$RAWDATA/dwi/bvals
 
 if [[ ! -f $BVALS ]];then
+    allbvals=$RAWDATA/dwi/sub-${SUBJECT}*_dwi.bval
+    BVAL_FILE=${allbvals[0]}
     #Lets find a bids compliant bvals filename supporting multiple runs (we'll take the first one we find)
     #shopt -s globstar
-    for eachbval in $SOURCE/dwi/sub-${SUBJECT}_$SESSIONpath*_dwi.bval; do
-        BVAL_FILE=$eachbval
-        break;
-    done
+    #for eachbval in $RAWDATA/dwi/sub-${SUBJECT}*_dwi.bval; do
+    #    BVAL_FILE=$eachbval
+    #    break;
+    #done
 fi
 
 bvals_string=`cat $BVAL_FILE`
 bvals=($bvals_string)
-#echo $bvals_string
+echo $bvals_string
 #echo ${bvals[0]}
 
 TARGET_FILE="reg2brain_unmasked_qball.data.nii.gz"
@@ -259,6 +263,7 @@ for ((idx=0; idx<${#bvals[@]}; ++idx)); do
     fi
 done
 B="$B0 $HIGHB"
+echo fslmerge -a $TARGET_FILE $B
 fslmerge -a $TARGET_FILE $B
 
 fslmaths $TARGET_FILE -mul binary_brainmask.nii.gz reg2brain_hardi.data.nii
