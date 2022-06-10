@@ -4,8 +4,7 @@ import socket
 def ini_settings():
     
     homedir=os.path.expanduser('~')
-    crush_config=f"{homedir}/.crush.ini"
-    print(f"Using {crush_config}")
+    crush_config=f"{homedir}/.crush.ini"    
     if not os.path.isfile(crush_config):
         
         settings={}
