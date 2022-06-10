@@ -367,9 +367,12 @@ def doSomething():
     w=Workload(aircrush) #The list of things to do
     
     todo = w.get_next_task(node_uuid=nuid) #Do whatever the big brain tells us to do next
-
-    tpc=1 if args.nibble else config.get_tasks_per_cycle()  #This setting configures the number of loops to make(number of jobs to launch) per run.
-
+    
+    if args.nibble:
+        tpc=1    
+    else:
+        tpc=config.get_tasks_per_cycle()  #This setting configures the number of loops to make(number of jobs to launch) per run.
+    
     while(tpc>0 and todo):
         tpc=tpc-1
         if(todo):  #Todo is a TaskInstance    
