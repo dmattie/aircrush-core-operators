@@ -47,13 +47,5 @@ class AircrushConfig():
         # if wd[0:1]=="~":
         #     wd=os.path.expanduser(wd)
         return os.path.expanduser(wd).rstrip('/')
-    def get_tasks_per_cycle(self):
-        if self.config.has_option('COMPUTE','tasks_per_cycle'):
-            tpc=self.config['COMPUTE','tasks_per_cycle']
-            if tpc.isdigit():
-                return int(tpc)
-            else:
-                raise Exception("The tasks per cycle setting is not an integer.  See ~/.crush.ini COMPUTE/tasks_per_cycle")
-        else:
-            return 1
+
     
