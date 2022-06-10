@@ -54,9 +54,9 @@ def get_config_wd():
 
 def get_tasks_per_cycle():   
     try: aircrush
-    except NameError: aircrush=ini_settings()         
+    except NameError: aircrush=ini_settings()             
     if aircrush.config.has_option('COMPUTE','tasks_per_cycle'):
-        tpc=aircrush.config['COMPUTE','tasks_per_cycle']
+        tpc=aircrush.config['COMPUTE']['tasks_per_cycle']        
         if tpc.isdigit():
             return int(tpc)
         else:
