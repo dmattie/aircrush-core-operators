@@ -367,211 +367,220 @@ def doSomething():
     w=Workload(aircrush) #The list of things to do
     
     todo = w.get_next_task(node_uuid=nuid) #Do whatever the big brain tells us to do next
-    if(todo):  #Todo is a TaskInstance    
 
-        workingdir=aircrush.config['COMPUTE']['working_directory']   
-        datacommons=aircrush.config['COMMONS']['commons_path']     
-        task_counter=1
-        task_counter_limit=50
-        while (todo): 
-            #print("----------Got one-------------")  
-            task_col =  TaskCollection(cms_host=crush_host)
-            task = task_col.get_one(uuid=todo.field_task)    
+    tpc=1 if args.nibble else config.get_tasks_per_cycle()  #This setting configures the number of loops to make(number of jobs to launch) per run.
+
+    while(tpc>0 and todo):
+        tpc=tpc-1
+        if(todo):  #Todo is a TaskInstance    
+
+            workingdir=aircrush.config['COMPUTE']['working_directory']   
+            datacommons=aircrush.config['COMMONS']['commons_path']     
+            task_counter=1
+            task_counter_limit=50
+            while (todo): 
+                #print("----------Got one-------------")  
+                task_col =  TaskCollection(cms_host=crush_host)
+                task = task_col.get_one(uuid=todo.field_task)    
 
 
 
-            messages=[]
-            now = datetime.datetime.now()
-                
-            try:
-                #updateStatus(todo,"running","","")
-                messages.append(f"Invoking operator: {task.field_operator} =====================")        
-                messages.append(f"Current date and time: {str(now)}")        
-
-                session_col = SessionCollection(cms_host=crush_host)
-                session = session_col.get_one(todo.field_associated_participant_ses)
-                pipeline = task.pipeline()
-
-                subject=None
-                project=None
-
-                if not session == None:
-                    subject = session.subject()
-                    if not subject == None:
-                        project = subject.project()
-                        
-                if project == None:
-                    print(f"ERROR: Assigned session {session.title} is orphaned or the project is unpublished")
-                    continue
-               
-                try:    
-                    container = data_transfer.pullContainer(task.field_singularity_container,args.container)
-                except Exception as e:
-                    print(e)
-                    return
-
-                bindings=""
-                if args.bind:
-                    mounts=args.bind.split() 
-                    for mount in mounts:            
-                        bindings=bindings+f"-B {mount} "
-                else:
-                    if aircrush.config.has_option('COMPUTE','bindings'):        
-                        bindings=aircrush.config['COMPUTE']['bindings']
+                messages=[]
+                now = datetime.datetime.now()
                     
-           
                 try:
-                    parms = ast.literal_eval(task.field_parameters) 
-                except:
-                    msg=f"Parameters for task {task.field_operator} are malformed. Expected valid JSON string:{task.field_parameters}"
-                    print(msg)
-                    
-                    sys.exit(1)    
+                    #updateStatus(todo,"running","","")
+                    messages.append(f"Invoking operator: {task.field_operator} =====================")        
+                    messages.append(f"Current date and time: {str(now)}")        
 
- 
-                prereq_res = True
-                if prereq_res == False:
-                        print_statusline(f"{project.title}:{subject.title}/{session.title} Prerequisites not met.  Attempts remaining:{task_counter}/{task_counter_limit}")                           
-                        if task_counter>task_counter_limit:
-                            return
-                        else:
-                            task_counter=task_counter+1
-                        continue   
+                    session_col = SessionCollection(cms_host=crush_host)
+                    session = session_col.get_one(todo.field_associated_participant_ses)
+                    pipeline = task.pipeline()
+
+                    subject=None
+                    project=None
+
+                    if not session == None:
+                        subject = session.subject()
+                        if not subject == None:
+                            project = subject.project()
+                            
+                    if project == None:
+                        print(f"ERROR: Assigned session {session.title} is orphaned or the project is unpublished")
+                        continue
                 
-                print()
+                    try:    
+                        container = data_transfer.pullContainer(task.field_singularity_container,args.container)
+                    except Exception as e:
+                        print(e)
+                        return
 
-              
-                print(f"Pulling any necessary data for operation") 
-
-                #pull_data("source",project,subject,session)
-
-                states,pipelines = sensors.count_session_ti_states(session,crush_host=crush_host)
-
-                count_running=states['running']
-                count_failed=states['failed']
-                count_completed=states['completed']
-                count_notstarted=states['notstarted']
-                count_processed=states['processed']
-                count_waiting=states['waiting']
-                count_limping=states['limping']
-
-                if count_completed==0 and count_running==0 and count_processed==0 and count_limping==0:
-                    print("No previous retrieval of this session from the data commons. Fetching now...")
-                    data_transfer.pull_data("rawdata",project,subject,session)
-                    data_transfer.pull_data("derivatives",project,subject,session)
-                     
-                print("Creating job")
-                jobfiles = createJob(parms,
-                    datacommons=datacommons,
-                    workingdir=workingdir,
-                    project=project,
-                    subject=subject,
-                    session=session,
-                    pipeline=pipeline,
-                    taskinstance_uid=todo.uuid,
-                    task=task,
-                    bindings=bindings,
-                    container=container)    
-    
-                if sensors.is_slurm_script(jobfiles['jobfile']):
+                    bindings=""
+                    if args.bind:
+                        mounts=args.bind.split() 
+                        for mount in mounts:            
+                            bindings=bindings+f"-B {mount} "
+                    else:
+                        if aircrush.config.has_option('COMPUTE','bindings'):        
+                            bindings=aircrush.config['COMPUTE']['bindings']
                         
-                    sbatch_cmd=["sbatch",jobfiles['jobfile']]
+            
+                    try:
+                        parms = ast.literal_eval(task.field_parameters) 
+                    except:
+                        msg=f"Parameters for task {task.field_operator} are malformed. Expected valid JSON string:{task.field_parameters}"
+                        print(msg)
+                        
+                        sys.exit(1)    
+
+    
+                    prereq_res = True
+                    if prereq_res == False:
+                            print_statusline(f"{project.title}:{subject.title}/{session.title} Prerequisites not met.  Attempts remaining:{task_counter}/{task_counter_limit}")                           
+                            if task_counter>task_counter_limit:
+                                return
+                            else:
+                                task_counter=task_counter+1
+                            continue   
                     
-                    ret = subprocess.run(sbatch_cmd, 
-                                    cwd=aircrush.config['COMPUTE']['working_directory'],                              
-                                    capture_output=True,
-                                    text=True,                                
-                                    timeout=60)      
-                                    #shell=True,                                       
-                                    #  stdout=subprocess.PIPE,
-                                    # stderr=subprocess.PIPE,                 
+                    print()
 
-                    if ret.returncode==0:
-                        jobid=sensors.get_slurm_id(ret.stdout)
-                        print(f"SLURM assigned job id:{jobid}")
-                        if jobid!=0:
-                            todo.field_jobid=jobid
-                            todo.field_seff=""
-                            todo.field_errorfile=jobfiles['stderr']
-                            todo.field_logfile=jobfiles['stdout']
+                
+                    print(f"Pulling any necessary data for operation") 
 
-                            if os.path.isfile(jobfiles['jobfile']):
-                                sbatch_contents_handle = open(jobfiles['jobfile'],'r')
-                                sbatch_contents = sbatch_contents_handle.read()
-                                messages.append(sbatch_contents)
+                    #pull_data("source",project,subject,session)
 
-                            #updateStatus(todo,"running",'<br/>\n'.join(messages),ret.stderr)
-                            todo.body = '<br/>\n'.join(messages)
-                            todo.field_errorlog=ret.stderr
-                            todo.field_status="running"
-                            todo.upsert()
+                    states,pipelines = sensors.count_session_ti_states(session,crush_host=crush_host)
+
+                    count_running=states['running']
+                    count_failed=states['failed']
+                    count_completed=states['completed']
+                    count_notstarted=states['notstarted']
+                    count_processed=states['processed']
+                    count_waiting=states['waiting']
+                    count_limping=states['limping']
+
+                    if count_completed==0 and count_running==0 and count_processed==0 and count_limping==0:
+                        print("No previous retrieval of this session from the data commons. Fetching now...")
+                        data_transfer.pull_data("rawdata",project,subject,session)
+                        data_transfer.pull_data("derivatives",project,subject,session)
+                        
+                    print("Creating job")
+                    jobfiles = createJob(parms,
+                        datacommons=datacommons,
+                        workingdir=workingdir,
+                        project=project,
+                        subject=subject,
+                        session=session,
+                        pipeline=pipeline,
+                        taskinstance_uid=todo.uuid,
+                        task=task,
+                        bindings=bindings,
+                        container=container)    
+        
+                    if sensors.is_slurm_script(jobfiles['jobfile']):
+                            
+                        sbatch_cmd=["sbatch",jobfiles['jobfile']]
+                        
+                        ret = subprocess.run(sbatch_cmd, 
+                                        cwd=aircrush.config['COMPUTE']['working_directory'],                              
+                                        capture_output=True,
+                                        text=True,                                
+                                        timeout=60)      
+                                        #shell=True,                                       
+                                        #  stdout=subprocess.PIPE,
+                                        # stderr=subprocess.PIPE,                 
+
+                        if ret.returncode==0:
+                            jobid=sensors.get_slurm_id(ret.stdout)
+                            print(f"SLURM assigned job id:{jobid}")
+                            if jobid!=0:
+                                todo.field_jobid=jobid
+                                todo.field_seff=""
+                                todo.field_errorfile=jobfiles['stderr']
+                                todo.field_logfile=jobfiles['stdout']
+
+                                if os.path.isfile(jobfiles['jobfile']):
+                                    sbatch_contents_handle = open(jobfiles['jobfile'],'r')
+                                    sbatch_contents = sbatch_contents_handle.read()
+                                    messages.append(sbatch_contents)
+
+                                #updateStatus(todo,"running",'<br/>\n'.join(messages),ret.stderr)
+                                todo.body = '<br/>\n'.join(messages)
+                                todo.field_errorlog=ret.stderr
+                                todo.field_status="running"
+                                todo.upsert()
+                            else:
+                                messages.append(f"\nERROR: SLURM ID returned was unexpectedly 0.")  
+                                #updateStatus(todo,"failed",'<br/>\n'.join(messages),ret.stderr)
+                                todo.body = '<br/>\n'.join(messages)
+                                todo.field_errorlog=ret.stderr
+                                todo.field_status="failed"
+                                todo.upsert()
                         else:
-                            messages.append(f"\nERROR: SLURM ID returned was unexpectedly 0.")  
-                            #updateStatus(todo,"failed",'<br/>\n'.join(messages),ret.stderr)
+                            print(ret.stderr)
                             todo.body = '<br/>\n'.join(messages)
                             todo.field_errorlog=ret.stderr
                             todo.field_status="failed"
                             todo.upsert()
-                    else:
-                        print(ret.stderr)
-                        todo.body = '<br/>\n'.join(messages)
-                        todo.field_errorlog=ret.stderr
-                        todo.field_status="failed"
-                        todo.upsert()
-            
-                        #updateStatus(todo,"failed",'<br/>\n'.join(messages),ret.stderr)
-                else:
-                    print(f"{ansi.WARNING}Task running realtime (outside of SLURM scheduler).  This is expected to be a quick task (<2min) {ansi.ENDC} CWD={aircrush.config['COMPUTE']['working_directory']}")
-                    sbatch_cmd=["bash",jobfiles['jobfile']]
-                    
-                    ret = subprocess.run(sbatch_cmd, 
-                                    cwd=aircrush.config['COMPUTE']['working_directory'],                              
-                                    capture_output=True,
-                                    text=True)  
-                    
-                    fout = open(jobfiles['stdout'], "a")                    
-                    fout.write(ret.stdout)
-                    fout.close()  
-
-                    ferr = open(jobfiles['stderr'], "a")
-                    ferr.write(ret.stderr)
-                    ferr.close()                     
-########
-                    if ret.returncode==0:
-                        todo.body = ret.stdout
-                        todo.field_errorlog=ret.stderr
-                        todo.field_status="completed"
-                        todo.upsert()
-                    else:
-                        print(ret.stderr)
-                        todo.body = ret.stdout
-                        todo.field_errorlog=ret.stderr
-                        todo.field_status="failed"
-                        todo.upsert()
-                if not session == None:
-                    session.field_status=todo.field_status
-                    session.upsert()
-                if not subject == None:
-                    subject.field_status=todo.field_status
-                    subject.upsert()
-            
-            except Exception as e:
-                print(e)
-                print("An error has accurred.  Unable to proceed.  See previous messages.")
-                if hasattr(e, 'message'):
-                    new_errors=e.message
-                else:
-                    new_errors=str(e)
-                messages.append(f"Current date and time: {str(now)}")  
-                todo.field_status="failed"
-                todo.body = '<br/>\n'.join(messages)
-                todo.field_errorlog=new_errors
-                todo.upsert()
                 
-            todo=None
-            
-    else:
-        print(f"{ansi.WARNING}Nothing to do.{ansi.ENDC}")
+                            #updateStatus(todo,"failed",'<br/>\n'.join(messages),ret.stderr)
+                    else:
+                        print(f"{ansi.WARNING}Task running realtime (outside of SLURM scheduler).  This is expected to be a quick task (<2min) {ansi.ENDC} CWD={aircrush.config['COMPUTE']['working_directory']}")
+                        sbatch_cmd=["bash",jobfiles['jobfile']]
+                        
+                        ret = subprocess.run(sbatch_cmd, 
+                                        cwd=aircrush.config['COMPUTE']['working_directory'],                              
+                                        capture_output=True,
+                                        text=True)  
+                        
+                        fout = open(jobfiles['stdout'], "a")                    
+                        fout.write(ret.stdout)
+                        fout.close()  
+
+                        ferr = open(jobfiles['stderr'], "a")
+                        ferr.write(ret.stderr)
+                        ferr.close()                     
+    ########
+                        if ret.returncode==0:
+                            todo.body = ret.stdout
+                            todo.field_errorlog=ret.stderr
+                            todo.field_status="completed"
+                            todo.upsert()
+                        else:
+                            print(ret.stderr)
+                            todo.body = ret.stdout
+                            todo.field_errorlog=ret.stderr
+                            todo.field_status="failed"
+                            todo.upsert()
+                    if not session == None:
+                        session.field_status=todo.field_status
+                        session.upsert()
+                    if not subject == None:
+                        subject.field_status=todo.field_status
+                        subject.upsert()
+                
+                except Exception as e:
+                    print(e)
+                    print("An error has accurred.  Unable to proceed.  See previous messages.")
+                    if hasattr(e, 'message'):
+                        new_errors=e.message
+                    else:
+                        new_errors=str(e)
+                    messages.append(f"Current date and time: {str(now)}")  
+                    todo.field_status="failed"
+                    todo.body = '<br/>\n'.join(messages)
+                    todo.field_errorlog=new_errors
+                    todo.upsert()
+                    
+                todo=None
+                
+        else:
+            print(f"{ansi.WARNING}Nothing to do.{ansi.ENDC}")
+
+        if tpc>0:
+            todo = w.get_next_task(node_uuid=nuid) #Do whatever the big brain tells us to do next
+
 
    
 
@@ -617,6 +626,8 @@ def main():
         help="Update the status of running jobs, do not invoke more work")
     parser.add_argument('-skiptests',action='store_true',
         help="Skip pre-req tests e.g. (available disk check, concurrency limits), etc.")
+    parser.add_argument('-nibble',action='store_true',
+        help="Perform only one task rather than the max (see ~/.crush.ini [COMPUTE] tasks_per_cycle)")
     args = parser.parse_args()
 
     print("Validating configuration")

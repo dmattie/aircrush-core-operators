@@ -67,6 +67,9 @@ def main():
     elif args.set == "ti-sticky":
         set_ti_sticky(uuid=args.uuid) 
     elif args.set == "pipeline-reset":
+        #uuid is the task uuid representing the point to reset.  It and all downstream will be reset.
+        #pipeline uuid
+        #project name
         pipeline_reset(uuid=args.uuid,pipeline=args.pipeline,project=args.project)    
     else:
         print("Nothing to do")
