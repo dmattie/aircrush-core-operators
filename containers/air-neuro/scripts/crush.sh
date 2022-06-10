@@ -186,8 +186,7 @@ fi
 if [[ -f $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/parcellations/wmparc-parcellated.tar ]];then
    cd $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/parcellations
    #If the tar file isn't already expanded, then do so
-   niis=*.nii
-   no_of_niis=${#niis[@]}
+   no_of_niis=`ls *.nii|wc -l`   
    if [[ $no_of_niis -eq 0 ]];then
        tar -xf wmparc-parcellated.tar
    fi
