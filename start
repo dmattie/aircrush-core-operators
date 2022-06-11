@@ -577,6 +577,7 @@ def doSomething():
                     todo.upsert()
                     
                 todo=None
+                print("Job submitted",flush=True)
                 
         else:
             print(f"{ansi.WARNING}Nothing to do.{ansi.ENDC}")

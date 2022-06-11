@@ -237,7 +237,7 @@ do
     do
       # If not empty and end is greater than start and file exists
       # Note single brackets avoid evaluating as octal
-      if [[ $roi_end != "" ]] && [ $roi_end -gt $roi_start ] && [[ -f $TARGET/parcellations/wmparc$roi_end.nii ]];then
+      if [[ $roi_end != "" ]] && [ $roi_end -ne $roi_start ] && [[ -f $TARGET/parcellations/wmparc$roi_end.nii ]];then
         for method in "${methods[@]}"
         do
           if [[ $roi_start != $roi_end ]];then
@@ -292,8 +292,16 @@ python3 ${SCRIPTPATH}/lib/crush/consolidate-measurements.py \
 -out $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/crush.txt
 
 if [[ $? -eq 0  ]];then
+    echo "MEASUREMENT COMPLETE"
+    python3 ${SCRIPTPATH}/lib/crush/consolidate-audit.py \
+    -measurements $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath/crush.txt \
+    -segmentmap $segmentMap
+
     cd  $DATASETDIR/derivatives/$PIPELINE/sub-$SUBJECT/$SESSIONpath
     if [[ -d crush ]];then
         tar -rf crush.tar crush --remove-files 
     fi
+else
+    echo "Consolidation failed"
 fi
+
