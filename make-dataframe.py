@@ -2,6 +2,7 @@
 
 import argparse
 import errno
+from tempfile import tempdir
 from aircrushcore.cms import Project,Subject,Session,Host
 from aircrushcore.cms.project_collection import ProjectCollection
 from aircrushcore.cms.subject_collection import SubjectCollection
@@ -14,20 +15,17 @@ import uuid
 import shutil
 
 def getmeasurements(task_details):
-    uuid=task_details[0]
-    crush_host=task_details[1]
-    dc=task_details[2]
-    target=task_details[3]
-    outputfile=task_details[4]
-    sess_coll=SessionCollection(cms_host=crush_host)
-    session=sess_coll.get_one(uuid)
-    subject=session.subject()
-    project=subject.project()
-   
+    project=task_details[0]
+    subject=task_details[1]
+    session=task_details[2]
+    dc=task_details[3]
+    target=task_details[4]
+    outputfile=task_details[5]
     
-    key=f"{subject.title}/{session.title}"
-    print(key)
-    file=f"{dc}/projects/{project.field_path_to_exam_data}/datasets/derivatives/levman/sub-{subject.title}/sub-{subject.title}_ses-{session.title}.tar"
+    
+    key=f"{subject}/{session}"
+    
+    file=f"{dc}/projects/{project}/datasets/derivatives/levman/sub-{subject}/sub-{subject}_ses-{session}.tar"
     if not os.path.isfile(file):
         print(f"File not found ({file})")
         return
@@ -43,12 +41,12 @@ def getmeasurements(task_details):
 
            
         important_files = [  tarinfo for tarinfo in tar.getmembers()
-                if tarinfo.name.startswith(f"ses-{session.title}/crush.txt")
+                if tarinfo.name.startswith(f"ses-{session}/crush.txt")
                 ]
         
-        tar.extractall(f"{target}/sub-{subject.title}",important_files)
+        tar.extractall(f"{target}/sub-{subject}",important_files)
         
-        crushfile=f"{target}/sub-{subject.title}/ses-{session.title}/crush.txt"        
+        crushfile=f"{target}/sub-{subject}/ses-{session}/crush.txt"        
         return crushfile
     return None
 
@@ -85,6 +83,7 @@ def main():
     if aircrush.get_config_dtn()!="":
         print(f"The data commons appears to be stored on another cluster according to crush.ini COMMONS/data_transfer_node setting ({aircrush.get_config_dtn()}).  This code will only work on the cluster that houses the data commons.")
         return
+    dc=aircrush.get_config_datacommons()
 
     working_dir=tmpdir(aircrush.get_config_wd())
     print(f"Staging directory: {working_dir}")
@@ -104,8 +103,10 @@ def main():
     if len(to_process)==0:
         print(f"No completed sessions found for {args.project}")
         return
+    makethese=[]
     for todo in to_process:
         print(todo[1])
+        makethese.append([todo[0],todo[1],todo[2],dc,working_dir,args.out])
     
     ################
     # Get Tracts
