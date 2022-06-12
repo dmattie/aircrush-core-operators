@@ -52,7 +52,7 @@ def main():
         for session in sessions:            
             if sessions[session].field_status=='completed':
                 cnt_completed=cnt_completed+1
-                to_process.append([session])
+                to_process.append([args.project,sessions[session].subject().title,sessions[session].title])
 
         print(f"Total sessions: {cnt_total}, completed: {cnt_completed} ({cnt_completed/cnt_total*100}%)")
     else:
@@ -64,7 +64,7 @@ def main():
     else:
         f = open(args.out, "w")
         for todo in to_process:
-            f.write(todo[0])
+            f.write(f"{todo[0]},{todo[1]},{todo[2]}\n")
         f.close()
     
 if __name__ == '__main__':
