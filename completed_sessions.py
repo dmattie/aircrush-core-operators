@@ -34,12 +34,7 @@ def main():
         username=aircrush.config['REST']['username'],
         password=aircrush.config['REST']['password']
     )
-    if aircrush.get_config_dtn()!="":
-        print(f"The data commons appears to be stored on another cluster according to crush.ini COMMONS/data_transfer_node setting ({aircrush.get_config_dtn()}).  This code will only work on the cluster that houses the data commons.")
-        return
-
-    working_dir=tmpdir(aircrush.get_config_wd())
-    print(f"Staging directory: {working_dir}")
+   
     
     ######## Get Sessions #########
     to_process=[]
@@ -57,7 +52,7 @@ def main():
         for session in sessions:            
             if sessions[session].field_status=='completed':
                 cnt_completed=cnt_completed+1
-                to_process.append([session,crush_host,aircrush.get_config_datacommons(),working_dir,args.out])
+                to_process.append([session])
 
         print(f"Total sessions: {cnt_total}, completed: {cnt_completed} ({cnt_completed/cnt_total*100}%)")
     else:
