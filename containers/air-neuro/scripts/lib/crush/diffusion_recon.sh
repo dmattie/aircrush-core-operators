@@ -64,7 +64,7 @@ function f_dti_recon()
   dwi=$1
   matrix=$2
   highb=$3
-  b0=$4  
+  b0=$4  #NOT USED SEE BELOW!!!!!!!!!!!!!!!!!!!
   shift;shift;shift;shift;
   #echo "f_dti_recon extras:{$@}"
   echo "DTI RECON---\nDWI:$dwi\nmatrix:$matrix\nhighb:$highb\nb0:$b0"
@@ -81,7 +81,7 @@ function f_dti_recon()
      fi
     return 2
   fi
-
+  b0=`cat $matrix | grep "0,0,0"|wc -l`
   dti_recon $dwi "dti_recon_out" -gm $matrix -b $highb -b0 $b0 -p 3 -sn 1 -ot nii
   res=$?   
   if [[ $res != 0 ]];then
