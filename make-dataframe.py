@@ -93,21 +93,28 @@ def main():
     to_process=[]
     infile=args.infile
     f = open(infile, "r")
+    cnt=0
     for ses in f:
         line=ses.split(',')
         to_process.append(line)
+        cnt=cnt+1
+        if cnt>4:
+            break
 
     if len(to_process)==0:
         print(f"No completed sessions found for {args.project}")
         return
     for todo in to_process:
         print(todo[1])
-    sys.exit(1)
+    
     ################
     # Get Tracts
     ################
 
-    no_of_procs = cpu_count()            
+    no_of_procs = os.getenv("SLURM_CPUS_PER_TASK")#cpu_count()    
+    if no_of_procs is None:
+        no_of_procs=1
+
     print(f"Multiprocessing {len(to_process)} tasks across {no_of_procs} CPUs")
 
     #with Pool(int(no_of_procs)) as p:
