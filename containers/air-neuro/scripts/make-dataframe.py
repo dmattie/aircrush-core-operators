@@ -137,7 +137,7 @@ def add_derived_measurements(dataframe_filename:str, segmentmap_filename:str):
                             for method in data[pipeline][subject][session][roi][roiend]:
                                 for measurement in data[pipeline][subject][session][roi][roiend][method]:   
                                     val=data[pipeline][subject][session][roi][roiend][method][measurement]                                  
-                                    f.write(f"{pipeline},{subject},{session},{roi},{roiend},{method},{measurement},{val}")    
+                                    f.write(f"{pipeline},{subject},{session},{roi},{roiend},{method},{measurement},{val}\n")    
         
     
 
