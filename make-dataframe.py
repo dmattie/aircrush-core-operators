@@ -15,6 +15,7 @@ import uuid
 import shutil
 
 def getmeasurements(task_details):
+    print(task_details)
     project=task_details[0]
     subject=task_details[1]
     session=task_details[2]
@@ -94,10 +95,10 @@ def main():
     f = open(infile, "r")
     cnt=0
     for ses in f:
-        line=ses.split(',')
+        line=ses.strip('\n').split(',')
         to_process.append(line)
         cnt=cnt+1
-        if cnt>4:
+        if cnt>2:
             break
 
     if len(to_process)==0:
@@ -120,7 +121,7 @@ def main():
 
     #with Pool(int(no_of_procs)) as p:
     #    p.map(getmeasurements,to_process)
-    results = Pool(int(no_of_procs)).map(getmeasurements,to_process)
+    results = Pool(int(no_of_procs)).map(getmeasurements,makethese)
 
     crushfiles = [result for result in results]
     

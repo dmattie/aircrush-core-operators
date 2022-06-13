@@ -7,11 +7,9 @@ from aircrushcore.cms.project_collection import ProjectCollection
 from aircrushcore.cms.subject_collection import SubjectCollection
 from aircrushcore.cms.session_collection import SessionCollection
 from aircrushcore.controller.configuration import AircrushConfig
-import os
+import os,sys
 from multiprocessing import Pool,cpu_count
-import tarfile
-import uuid
-import shutil
+import time
 
 def main():
     global crush_host
@@ -23,9 +21,6 @@ def main():
         help="output filename to create", required=True)
     args = parser.parse_args()
 
-    if os.path.exists(args.out):
-        print(f"Target already exists ({args.out})")
-        return
     ########## Get connected ##########
 
     aircrush=AircrushConfig()
@@ -62,10 +57,29 @@ def main():
         print(f"No completed sessions found for {args.project}")
         return
     else:
-        f = open(args.out, "w")
+        parentdir=os.path.dirname(args.out)
+        filename=os.path.basename(args.out)
+        #If file is already being written, wait until done
+        if os.path.exists(f"{parentdir}/.{filename}"):
+            retries=6
+            while retries>0:
+                time.sleep(10)
+                if os.path.exists(f"{parentdir}/.{filename}"):
+                    retries=retries-1
+                else:
+                    retries=0
+        if os.path.exists(f"{parentdir}/.{filename}"):
+            print("Timeout expired waiting for file lock to complete")
+            sys.exit(0)
+        
+        os.makedirs(parentdir,exist_ok=True)
+        print(f"Writing {parentdir}/{filename}")
+        f = open(f"{parentdir}/.{filename}", "w")
         for todo in to_process:
             f.write(f"{todo[0]},{todo[1]},{todo[2]}\n")
         f.close()
+        os.remove(f"{parentdir}/{filename}")
+        os.rename(f"{parentdir}/.{filename}",f"{parentdir}/{filename}")
     
 if __name__ == '__main__':
     main()
