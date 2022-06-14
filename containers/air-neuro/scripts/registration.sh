@@ -223,9 +223,9 @@ echo "Transformed for DTI"
 #############
 #### HARDI/QBALL needs to be rearranged, all B0 images first
 
-BVALS=$RAWDATA/dwi/bvals
+BVAL_FILE=$RAWDATA/dwi/bvals
 
-if [[ ! -f $BVALS ]];then
+if [[ ! -f $BVAL_FILE ]];then
     allbvals=$RAWDATA/dwi/sub-${SUBJECT}*_dwi.bval
     BVAL_FILE=${allbvals[0]}
     #Lets find a bids compliant bvals filename supporting multiple runs (we'll take the first one we find)

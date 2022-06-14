@@ -383,7 +383,7 @@ def pull_data(stage,project,subject,session):
 
             root=f"/projects/{project.field_path_to_exam_data}/datasets/{stage}"
             for derivative in derivatives:
-                print(f"///[{derivative}]///")
+                
                 source=f"{datacommons}/projects/{project.field_path_to_exam_data}/datasets/{stage}/{derivative}"
                 target=f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage}/{derivative}"  
                 if sensors.exists_on_datacommons("",target):
