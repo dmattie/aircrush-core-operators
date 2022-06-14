@@ -78,7 +78,8 @@ def main():
         for todo in to_process:
             f.write(f"{todo[0]},{todo[1]},{todo[2]}\n")
         f.close()
-        os.remove(f"{parentdir}/{filename}")
+        if os.exists(f"{parentdir}/{filename}"):
+            os.remove(f"{parentdir}/{filename}")
         os.rename(f"{parentdir}/.{filename}",f"{parentdir}/{filename}")
     
 if __name__ == '__main__':
