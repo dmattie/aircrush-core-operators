@@ -386,9 +386,7 @@ def pull_data(stage,project,subject,session):
                 
                 source=f"{datacommons}/projects/{project.field_path_to_exam_data}/datasets/{stage}/{derivative}"
                 target=f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage}/{derivative}"  
-                if sensors.exists_on_datacommons("",target):
-                        print(f"Local files exist ({target})")
-                        continue
+                
                 if os.path.isfile(f"{target}.deleteme"):
                     
                     #if there is already a file that was left behind, use that instead
@@ -406,6 +404,9 @@ def pull_data(stage,project,subject,session):
                     print(f"{ansi.OKGREEN}local 'DELETEME' version used instead{ansi.ENDC}")
 
                 else:
+                    if sensors.exists_on_datacommons("",target):
+                        print(f"Local files exist ({target})")
+                        continue
                     if sensors.exists_on_datacommons(data_transfer_node,source):                        
                         _rsync_get(data_transfer_node=data_transfer_node,
                                     source=source,                            
