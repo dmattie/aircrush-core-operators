@@ -463,11 +463,11 @@ def doSomething():
                     count_waiting=states['waiting']
                     count_limping=states['limping']
 
-                    if count_completed==0 and count_running==0 and count_processed==0 and count_limping==0:
-                        print("No previous retrieval of this session from the data commons. Fetching now...")
-                        data_transfer.pull_data("rawdata",project,subject,session)
-                        data_transfer.pull_data("derivatives",project,subject,session)
-                        
+                    #if count_completed==0 and count_running==0 and count_processed==0 and count_limping==0:
+                        #print("No previous retrieval of this session from the data commons. Fetching now...")
+                    data_transfer.pull_data("rawdata",project,subject,session)
+                    data_transfer.pull_data("derivatives",project,subject,session)
+                    
                     print("Creating job")
                     jobfiles = createJob(parms,
                         datacommons=datacommons,
