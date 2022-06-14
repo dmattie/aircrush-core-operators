@@ -205,16 +205,18 @@ if [[ $res != 0 ]];then
     exit 1
 fi
 
+if [[ -f "$TARGET/reg2brain_hardi.data.nii$gz" ]];then
+    f_hardi_mat $TARGET/gradientmatrix_qball.txt "qball" "$TARGET/reg2brain_hardi.data.nii$gz"
+    
+    res=$?
 
-f_hardi_mat $TARGET/gradientmatrix_qball.txt "qball" "$TARGET/reg2brain_hardi.data.nii$gz"
- 
-res=$?
-
-if [[ $res != 0 ]];then
-    >&2 echo "ERROR: Unable to perform hardi_mat (for hardi/q-ball reconstruction).  Unable to continue."
-    exit 1
+    if [[ $res != 0 ]];then
+        >&2 echo "ERROR: Unable to perform hardi_mat (for hardi/q-ball reconstruction).  Unable to continue."
+        exit 1
+    fi
+else
+    echo "$TARGET/reg2brain_hardi.data.nii$gz not found. HARDI reconstruction will not be possible.  Skipping."
 fi
-                        
 
 ###########################
 # RECON                   #
