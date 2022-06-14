@@ -418,7 +418,7 @@ def pull_data(stage,project,subject,session):
             tarsource=f"{datacommons}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/sub-{subject.title}_ses-{session.title}.tar"
             tartarget=f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/sub-{subject.title}_ses-{session.title}.tar"
             if sensors.exists_on_datacommons("",f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}"):
-                    print(f"Local files exist ({target})")
+                    print(f"Local files exist ({wd}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title})")
                     return
             if sensors.exists_on_datacommons(data_transfer_node,tarsource):
                 _rsync_get(data_transfer_node=data_transfer_node,
