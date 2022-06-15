@@ -165,7 +165,7 @@ def check_running_jobs(node_uuid,**kwargs):
                             print(f"Error file not found ({tis[ti].field_errorfile})")
                         
                         if tis[ti].field_remaining_retries is None or tis[ti].field_remaining_retries=="":
-                            tis[ti].field_remaining_retries=5
+                            tis[ti].field_remaining_retries=3
                             tis[ti].field_seff=ret.stdout
                             tis[ti].field_status="failed"                            
                         else:
