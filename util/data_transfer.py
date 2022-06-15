@@ -38,7 +38,7 @@ def _verify_and_remove(tarfile:str,target:str):
         host=parts[0]
         target_filename=parts[1]        
         verify_cmd=["ssh",host,"-o","PasswordAuthentication=no", f"[ -f {target_filename} ]"]     
-        print(verify_cmd)             
+        print(verify_cmd,flush=True)             
         ret = subprocess.run(verify_cmd,   
             capture_output=True,
             text=True,                             
@@ -50,7 +50,7 @@ def _verify_and_remove(tarfile:str,target:str):
             if target_filename[len(target_filename)-11:]==".inprogress":
                 final_name=target_filename[0:len(target_filename)-11]
                 move_cmd=["ssh",host,"-o","PasswordAuthentication=no", f"mv {target_filename} {final_name}"] 
-                print(move_cmd)
+                print(move_cmd,flush=True)
                 ret = subprocess.run(move_cmd,   
                     capture_output=True,
                     text=True,                             
@@ -83,7 +83,7 @@ def _verify_and_remove(tarfile:str,target:str):
         
 def _ship_tar(tarfile:str,target:str):
     rsync_cmd=["rsync","-e","ssh -o PasswordAuthentication=no","-r",tarfile,target]      
-    print(f"{rsync_cmd}")  
+    print(f"{rsync_cmd}",flush=True)  
 
     ret = subprocess.run(rsync_cmd,   
                             capture_output=True,
@@ -188,6 +188,7 @@ def _tar_dir(dir:str):
         os.remove(tar_to_create)
 
     tar_cmd=f"tar -cf {tar_to_create} -C {cwd_dir} {lastdir}"
+    print(tar_cmd, flush=True)
     ret = subprocess.run(tar_cmd,   
                         capture_output=True,
                         text=True, 
@@ -233,7 +234,7 @@ def _get_derivatives(dtn:str,project:str,subject:str,session:str):
                         timeout=600)
         result = subprocessCmd.stdout             
     else:
-        print(f"ssh {data_transfer_node} {COMMAND}")
+        print(f"ssh {data_transfer_node} {COMMAND}",flush=True)
         subprocessCmd = subprocess.run(["ssh", data_transfer_node, COMMAND],
                         shell=False,
                         capture_output=True,
@@ -347,7 +348,7 @@ def pull_source_data(project,subject,session):
     if not os.path.isdir(source_session_dir):
         raise Exception(f"Subject/session not found on data commons ({source_session_dir})")
     rsync_cmd=f"rsync -r --ignore-missing-args {source_session_dir} {target_session_dir}"
-    print(rsync_cmd)
+    print(rsync_cmd,flush=True)
     
     ret = subprocess.getstatusoutput(rsync_cmd)
     if ret[0]!=0:
@@ -467,7 +468,7 @@ def _rsync_get(**kwargs):
         source=f"{data_transfer_node}:{source}"
 
     rsync_cmd=["rsync","-ra","--ignore-missing-args", f"{source}{suffix}",f"{target}"]      
-    print(rsync_cmd)      
+    print(rsync_cmd,flush=True)      
     ret,out = getstatusoutput(rsync_cmd)
     if ret!=0:
         raise Exception(f"Failed to copy session directory: {out}")
