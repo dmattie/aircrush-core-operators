@@ -122,6 +122,10 @@ function f_odf_recon()
   echo "b0:$b0"
 
   cd $TARGET
+  if [[ ! -f $TARGET/hardi_mat_qball.dat ]];then
+    echo "WARNING: hardi_mat_qball.dat was not present.  Unable to perform ODF RECON, skipping and falling back to DTI"
+    return 0
+  fi
 
   if [[ -f $TARGET/recon_out_odf.nii && -f $TARGET/recon_out_max.nii && -f $TARGET/recon_out_b0.nii && -f $TARGET/recon_out_dwi.nii ]];then
     echo "Previous odf_recon output detected. Skipping odf_recon"
