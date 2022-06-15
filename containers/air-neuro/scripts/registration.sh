@@ -265,7 +265,11 @@ echo fslmerge -a $TARGET_FILE $B
 fslmerge -a $TARGET_FILE $B
 
 fslmaths $TARGET_FILE -mul binary_brainmask.nii.gz reg2brain_hardi.data.nii
-echo "Transformed for HARDI"
+if [[ $? -eq 0 ]];then
+    echo "Transformed for HARDI"
+else
+    echo "FAILED to mask/transform HARDI"
+fi
 
 #### END HARDI
 #############
