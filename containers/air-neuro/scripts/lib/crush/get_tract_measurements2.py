@@ -241,7 +241,7 @@ def main():
     parser.add_argument('-crush_dir',action='store', help="The working directory to use for creating crush temporary files, typically for use with Apptainer overlays",required=True)          
     args = parser.parse_args()
     roiargs=args.roi.split(',')
-
+    print(f"Processing roi_start={roiargs[0]},roi_end={roiargs[1]},method={roiargs[2]},tract_file={args.tract},pipeline={args.pipeline},crush_dir={args.crush_dir}")
 
     process(roi_start=roiargs[0],roi_end=roiargs[1],method=roiargs[2],tract_file=args.tract,pipeline=args.pipeline,crush_dir=args.crush_dir)
 
