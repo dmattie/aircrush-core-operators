@@ -248,6 +248,13 @@ do
     done
   fi
 done
+iterator_len=`wc -l $TARGET/crush_iterator.csv`
+if [[ $? -eq 0 ]];then
+ echo "Found $iterator_len ROIs to iterate"
+else
+  echo "FAILED, iterator appears incomplete ($TARGET/crush_iterator.csv).  Was parcellation task performed?"
+  return 1
+fi
 if [[ -f $TARGET/crush_qball.trk ]];then
     TRACT=$TARGET/crush_qball.trk
 else
