@@ -159,6 +159,18 @@ def parameter_expansion(cmdArray,parms_to_add,**kwargs):
    
     return cmdArray
 
+def add_time(timestr:str,multiplier:float):
+    time_components=timestr.split(":")
+    hrs=int(time_components[0])
+    min=int(time_components[1])
+    sec=int(time_components[2])
+    total_seconds=sec+min*60+hrs*60*60
+    new_total=total_seconds*multiplier
+    new_hrs=int(new_total/3600)
+    remainder=new_total % 3600
+    new_min=str(int(remainder/60)).zfill(2) if remainder/60<60 else "00"
+    remainder=remainder % 60
+    return f"{new_hrs}:{new_min.zfill(2)}:00"
 
 def getMultipliers(ti_uuid:str):
     ti_col=TaskInstanceCollection(cms_host=crush_host)
@@ -218,6 +230,16 @@ def createJob(parms_to_add,**kwargs):
         print(f"{ansi.WARNING} Failed to adjust memory{ansi.ENDC} ({e})")
         print(f"sbatch_mem_per_cpu:{sbatch_mem_per_cpu}\n sbatch_mem_per_cpu formatted:{millify(sbatch_mem_per_cpu)}")
         raise e
+
+    try:
+        if duration_multiplier is not None:
+            print(f"Attempting time increase from {sbatch_time} by {duration_multiplier}")
+            new_duration=add_time(sbatch_time,duration_multiplier)            
+            print(f"{ansi.OKGREEN}AUTO TUNE{ansi.ENDC}: Duration has been automatically incremented after detecting previous TIMEOUT errors.  New duration is {new_duration}")   
+            sbatch_time=new_duration
+    except Exception as e:
+        print(f"{ansi.WARNING} Failed to adjust duration{ansi.ENDC} ({e})\nI'll keep the old duration {sbatch_time}")
+        
 
    
     derivative=derivative_dir(workingdir=workingdir,
