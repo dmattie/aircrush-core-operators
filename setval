@@ -18,7 +18,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="CRUSH client command line utility. Back-end commands to set crush data")
     parser.add_argument('-set',action='store',type=str,
-        help="Specify a setting to change [ti-status|ti-memory-multiplier|ti-job|ti-retries|ti-error|ses-cn|sub-status|ses-status|ti-sticky|pipeline-reset].")
+        help="Specify a setting to change [ti-status|ti-memory-multiplier|ti-duration-multiplier|ti-job|ti-retries|ti-error|ses-cn|sub-status|ses-status|ti-sticky|pipeline-reset].")
     parser.add_argument('-uuid',action='store',
         help='UUID of CMS object' )
     parser.add_argument('-subject',action='store',    
@@ -44,6 +44,8 @@ def main():
         set_ti_status(uuid=args.uuid,status=args.value)
     elif args.set == "ti-memory-multiplier":
         set_ti_memory_multiplier(uuid=args.uuid,val=args.value)  
+    elif args.set == "ti-duration-multiplier":
+        set_ti_duration_multiplier(uuid=args.uuid,val=args.value)          
     elif args.set == "ti-job":
         set_ti_job(uuid=args.uuid,val=args.value)  
     elif args.set == "ti-retries":
@@ -130,7 +132,15 @@ def set_ti_memory_multiplier(uuid:str, val:str):
         print(f"{ti.title}\n\tOld Memory Multiplier:{ti.field_multiplier_memory}\n\tNew Memory Multiplier:{val}")      
         ti.field_multiplier_memory=val
         ti.upsert()        
-        print("Update Complete")        
+        print("Update Complete") 
+def set_ti_duration_multiplier(uuid:str, val:str):
+    ti_col=TaskInstanceCollection(cms_host=crush_host)
+    if ti_col is not None:
+        ti=ti_col.get_one(uuid)  
+        print(f"{ti.title}\n\tOld Duration Multiplier:{ti.field_multiplier_duration}\n\tNew Duration Multiplier:{val}")      
+        ti.field_multiplier_duration=val
+        ti.upsert()        
+        print("Update Complete")         
 def set_session_compute_node(uuid:str,val:str):
     ses_col=SessionCollection(cms_host=crush_host)
     if ses_col is not None:
