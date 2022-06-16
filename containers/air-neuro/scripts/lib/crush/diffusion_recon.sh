@@ -56,6 +56,7 @@ function f_diffusion_exists()
 ############################################################
 function f_dti_recon()
 {
+ 
     #Params:
     #  1: path to 3D diffusion weighted image
     #  2: path to gradientmatrix file
@@ -67,7 +68,7 @@ function f_dti_recon()
   b0=$4  #NOT USED SEE BELOW!!!!!!!!!!!!!!!!!!!
   shift;shift;shift;shift;
   #echo "f_dti_recon extras:{$@}"
-  echo "DTI RECON---\nDWI:$dwi\nmatrix:$matrix\nhighb:$highb\nb0:$b0"
+  >&2 echo "DTI RECON---\nDWI:$dwi\nmatrix:$matrix\nhighb:$highb\nb0:$b0"
   cd $TARGET
 
   if [[ -f $TARGET/dti_recon_out_fa.nii 
@@ -75,7 +76,7 @@ function f_dti_recon()
      && -f $TARGET/dti_recon_out_dwi.nii ]];then   
      echo "Previous dti_recon output detected.  Skipping dti_recon" 
      if [[ ! -f $TARGET/crush_dti.trk ]];then 
-       echo "No tract file detected.  Tracking $TARGET/crush_dti.trk"
+       >&2 echo "No tract file detected.  Tracking $TARGET/crush_dti.trk"
           dti_tracker "dti_recon_out" "crush_dti.trk" -m dti_recon_out_dwi.nii -it "nii" "$@"   
           return $?
      fi
@@ -113,24 +114,24 @@ function f_odf_recon()
   
 
   shift;shift;shift;shift;
-  echo "f_odf_recon extras:{$@}"
+  >&2 echo "f_odf_recon extras:{$@}"
 
-  echo "ODF RECON----"
-  echo "DWI:$dwi"
-  echo "bmax:$bmax"
-  echo "highb:$highb"
-  echo "b0:$b0"
+  >&2 echo "ODF RECON----"
+  >&2 echo "DWI:$dwi"
+  >&2 echo "bmax:$bmax"
+  >&2 echo "highb:$highb"
+  >&2 echo "b0:$b0"
 
   cd $TARGET
   if [[ ! -f $TARGET/hardi_mat_qball.dat ]];then
-    echo "WARNING: hardi_mat_qball.dat was not present.  Unable to perform ODF RECON, skipping and falling back to DTI"
+    >&2 echo "WARNING: hardi_mat_qball.dat was not present.  Unable to perform ODF RECON, skipping and falling back to DTI"
     return 0
   fi
 
   if [[ -f $TARGET/recon_out_odf.nii && -f $TARGET/recon_out_max.nii && -f $TARGET/recon_out_b0.nii && -f $TARGET/recon_out_dwi.nii ]];then
-    echo "Previous odf_recon output detected. Skipping odf_recon"
+    >&2 echo "Previous odf_recon output detected. Skipping odf_recon"
     if [[ ! -f $TARGET/crush_qball.trk ]];then
-        echo "No tract file detected.  Tracking $TARGET/crush_qball.trk"
+        >&2 echo "No tract file detected.  Tracking $TARGET/crush_qball.trk"
         echo odf_tracker "recon_out" "crush_qball.trk" -m recon_out_dwi.nii -it "nii" "$@"        
         odf_tracker "recon_out" "crush_qball.trk" -m recon_out_dwi.nii -at 35 -it "nii" "$@"        
         return $?
@@ -205,7 +206,7 @@ function f_diffusion_recon()
         #Look at bvals file and find largest integer
         BMAX_VAL=`cat $BVALS|tr '\t' '\n'|tr ' ' '\n'|sort -u|grep -v '^0'|grep -v -e '^$'|sort -nr|head -1`
         BMAX="-b $BMAX_VAL"
-        echo "Using high b value of $BMAX_VAL as per dwi/bvals file"
+        >&2 echo "Using high b value of $BMAX_VAL as per dwi/bvals file"
     else
         #Use passed value 
         BMAX_VAL=$BMAX
@@ -216,11 +217,12 @@ function f_diffusion_recon()
     num_high_b_vals=`cat $BVALS|tr '\t' '\n'|tr ' ' '\n'|sort -u|grep -v '^0'|grep -v -e '^$'|wc -l`
     b0=`cat $BVALS|tr '\t' '\n'|tr ' ' '\n'|grep '^0'|wc -l`
     cat $BVALS
-    echo "Detected b0 volumes: $b0"
+    >&2 echo "Detected b0 volumes: $b0"
     if [[ $num_high_b_vals == '1' ]];then
         # ODF Recon can be used     
         echo "Performing ODF Reconstruction"      
         if [[ -f $dwifile_hardi ]];then
+          echo "f_odf_recon $dwifile_hardi $BMAX_VAL $num_high_b_vals $b0 $@"
           res=$( f_odf_recon $dwifile_hardi $BMAX_VAL $num_high_b_vals $b0 "$@")        
           res_code=$?
           if [[ $res_code != 0 ]];then
@@ -235,11 +237,11 @@ function f_diffusion_recon()
           echo "$dwifile_hardi not found.  Unable to process Q-Ball/HARDI.  Falling back to DTI."
         fi
     else
-      echo "More than one shell detected, unable to process Q-Ball/HARDI.  Falling back to DTI"
+      >&2 echo "More than one shell detected, unable to process Q-Ball/HARDI.  Falling back to DTI"
     fi             
     #Lets also use DTI_RECON, we need the FA maps anyway
     echo "Performing DTI Recononstruction"
-
+    echo "f_dti_recon $dwifile_dti $TARGET/gradientmatrix_dti.txt $BMAX_VAL $num_high_b_vals $@"
     res=$( f_dti_recon $dwifile_dti $TARGET/gradientmatrix_dti.txt $BMAX_VAL $num_high_b_vals "$@" ) 
     res_code=$?
     if [[ $res_code != 0 ]];then        
