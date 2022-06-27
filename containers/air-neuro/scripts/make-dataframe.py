@@ -230,8 +230,8 @@ def main():
         line=ses.strip('\n').split(',')
         to_process.append(line)
         cnt=cnt+1
-        if cnt>2:
-            break
+        # if cnt>2:
+        #     break
 
     if len(to_process)==0:
         print(f"No completed sessions found for {args.project}")
