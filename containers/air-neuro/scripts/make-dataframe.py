@@ -261,10 +261,12 @@ def main():
 
     with open(args.out,"wb") as fout:
         for crushf in crushfiles:
-            
-            with open(crushf, "rb") as f:            
-                fout.write(f.read())
-    
+            if os.path.exists(crushf):
+                with open(crushf, "rb") as f:            
+                    fout.write(f.read())
+            else:
+                print(f"Missing file:{crushf}")
+        
     ################ CLEANUP ############################
     shutil.rmtree(working_dir)
 
