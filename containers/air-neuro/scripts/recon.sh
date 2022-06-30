@@ -130,7 +130,7 @@ fi
 
 shopt -s globstar  
 
-for eachnii in $SOURCE/anat/sub-*.nii*;do
+for eachnii in $SOURCE/anat/sub-*T1w.nii*;do
     infile=$eachnii
     break;
 done
