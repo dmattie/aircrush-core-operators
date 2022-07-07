@@ -306,7 +306,7 @@ def cascade_status_to_subject(node_uuid,**kwargs):
             continue
         print(f"Synchronizing {project.title}:{subject.title}/{session.title} with status {ansi.OKCYAN}{session.field_status}{ansi.ENDC} (failed:{count_failed} running:{count_running} completed:{count_completed} not started:{count_notstarted} processed:{count_processed} waiting:{count_waiting} limping:{count_limping} terminal:{count_terminal})")
         if session.field_status=='processed' or session.field_status=='completed' or session.field_status=='terminal':
-            data_transfer.commit(project.title,subject.title,session.title if session is not None else "")
+            data_transfer.commit(project.field_path_to_exam_data,subject.title,session.title if session is not None else "")
             if session.field_status=='processed':
                 session.field_status='completed'
             cn=session.field_responsible_compute_node
