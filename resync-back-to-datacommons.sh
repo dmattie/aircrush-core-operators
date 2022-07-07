@@ -17,12 +17,16 @@ do
   if [[ -f $src ]];then
       echo "syncing $src"
       if [[ $remote == "" ]];then
-          mkdir -p $dest/$derivative/sub-${subject}
+        remotesuffix=""
+        mkdir -p $dest/$derivative/sub-${subject}
+      else 
+        remotesuffix=":"
+        ssh $remote mkdir -p $dest/$derivative/sub-${subject}
 	  if [[ ! $? -eq 0 ]];then
 	    echo "Failed to make target directory"
 	    exit 1
 	  fi
-          rsync $source/$derivative/$fn $dest/$derivative/$fn
+          rsync $source/$derivative/$fn ${remote}${remotesuffix}${dest}/${derivative}/${fn}
 	  if [[ ! $? -eq 0 ]];then
             echo "rsync failed"
 	    exit 1
