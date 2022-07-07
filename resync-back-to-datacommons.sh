@@ -8,8 +8,8 @@ remote=$4
 echo "Re-committing $project/${subject}/${session}"
 
 fn="sub-${subject}/sub-${subject}_ses-${session}.tar"
-source='~/scratch/datacommons/projects/$project/datasets/derivatives/'
-dest='~/projects/rrg-jlevman/shared/projects/$project/datasets/derivatives/'
+source="~/scratch/datacommons/projects/$project/datasets/derivatives/"
+dest="~/projects/rrg-jlevman/shared/projects/$project/datasets/derivatives/"
 if [[ -f $source/levman/$fn ]];then
     if [[ $remote == "" ]];then
         echo mkdir -p $dest/levman/sub-${subject}
