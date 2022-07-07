@@ -15,4 +15,6 @@ if [[ -f $source/levman/$fn ]];then
         echo mkdir -p $dest/levman/sub-${subject}
         echo rsync $source/levman/$fn $dest/levman/$fn
     fi
+else
+   echo "Source not found ($source/levman/$fn)"
 fi
