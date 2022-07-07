@@ -108,7 +108,7 @@ if [[ ! -d "anat" ]];then
     exit 1
 fi
 
-rm --force $TARGET/freesurfer
+rm -r --force $TARGET/freesurfer
 
 if [[ $REPROCESS == "N" ]];then
     echo "Checking existence of $TARGET/mri/wmparc.mgz"
