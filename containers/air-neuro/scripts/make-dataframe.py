@@ -96,14 +96,17 @@ def add_derived_measurements(dataframe_filename:str, segmentmap_filename:str):
                         if asymmetry not in data[pipeline][subject][session]: continue                            
                         if asymmetry not in asym[pipeline][subject][session]: asym[pipeline][subject][session][asymmetry]={}
                         if roi not in asym[pipeline][subject][session]:asym[pipeline][subject][session][roi]={}
+                        if roi not in data[pipeline][subject][session]:continue
                         for roiend in data[pipeline][subject][session][roi]:
                             if roiend not in data[pipeline][subject][session][asymmetry]: continue
                             if roiend not in asym[pipeline][subject][session][asymmetry]: asym[pipeline][subject][session][asymmetry][roiend]={}
-                            if roiend not in asym[pipeline][subject][session][roi]: asym[pipeline][subject][session][roi][roiend]={}                            
+                            if roiend not in asym[pipeline][subject][session][roi]: asym[pipeline][subject][session][roi][roiend]={}
+                            if roiend not in data[pipeline][subject][session][roi]:continue
                             for method in data[pipeline][subject][session][roi][roiend]:  
                                 if method not in data[pipeline][subject][session][asymmetry][roiend]: continue
                                 if method not in asym[pipeline][subject][session][asymmetry][roiend]:asym[pipeline][subject][session][asymmetry][roiend][method]={}
-                                if method not in asym[pipeline][subject][session][roi][roiend]:asym[pipeline][subject][session][roi][roiend][method]={}                                                                                                  
+                                if method not in asym[pipeline][subject][session][roi][roiend]:asym[pipeline][subject][session][roi][roiend][method]={}
+                                if method not in data[pipeline][subject][session][roi][roiend]:continue
                                 for measurement in data[pipeline][subject][session][roi][roiend][method]:
                                     if measurement not in data[pipeline][subject][session][asymmetry][roiend][method]: continue  #If there is no counterpart to derive from... skip
                                     #print(f"roi:{roi}({data[pipeline][subject][session][roi][roiend][method][measurement]}) asymmetry:{asymmetry}({data[pipeline][subject][session][asymmetry][roiend][method][measurement]}) measurement:{measurement} ")
