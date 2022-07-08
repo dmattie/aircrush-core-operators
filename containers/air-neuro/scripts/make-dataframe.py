@@ -265,6 +265,7 @@ def main():
             print("No crush files found in completed samples")
             sys.exit(1)
         for crushf in crushfiles:
+            print(crushf)
             if os.path.exists(crushf):
                 with open(crushf, "rb") as f:            
                     fout.write(f.read())
