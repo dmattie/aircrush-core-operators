@@ -259,7 +259,7 @@ def main():
     crushfiles = [result for result in results]
     
     ################ APPEND TO DATAFRAME #################
-
+    print(f"Results:\n---------n\{results}\n------------\n")
     with open(args.out,"wb") as fout:
         if crushfiles is None:
             print("No crush files found in completed samples")
