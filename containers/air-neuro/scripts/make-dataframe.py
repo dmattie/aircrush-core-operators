@@ -172,7 +172,8 @@ def getmeasurements(task_details):
         
         tar.extractall(f"{target}/sub-{subject}",important_files)
         
-        crushfile=f"{target}/sub-{subject}/ses-{session}/crush.txt"        
+        crushfile=f"{target}/sub-{subject}/ses-{session}/crush.txt"  
+        print(f"crushfile:{crushfile}")      
         return crushfile
     return None
 
@@ -260,6 +261,9 @@ def main():
     ################ APPEND TO DATAFRAME #################
 
     with open(args.out,"wb") as fout:
+        if crushfiles is None:
+            print("No crush files found in completed samples")
+            sys.exit(1)
         for crushf in crushfiles:
             if os.path.exists(crushf):
                 with open(crushf, "rb") as f:            
