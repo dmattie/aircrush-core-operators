@@ -264,13 +264,19 @@ def main():
         if crushfiles is None:
             print("No crush files found in completed samples")
             sys.exit(1)
+        missing_count=0
         for crushf in crushfiles:
-            print(crushf)
-            if os.path.exists(crushf):
-                with open(crushf, "rb") as f:            
-                    fout.write(f.read())
+            if crushf is not None:
+                if os.path.exists(crushf):
+                    with open(crushf, "rb") as f:            
+                        fout.write(f.read())
+                else:
+                    print(f"Missing file:{crushf}")
             else:
-                print(f"Missing file:{crushf}")
+                missing_count=missing_count+1
+        if missing_count>0:
+            print(f"{missing_count} of the believed to be completed sessions did not have a crush.txt file")
+
         
     ################ CLEANUP ############################
     shutil.rmtree(working_dir)
