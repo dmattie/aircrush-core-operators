@@ -113,14 +113,15 @@ def add_derived_measurements(dataframe_filename:str, segmentmap_filename:str):
                                         
                                     v1=data[pipeline][subject][session][roi][roiend][method][measurement]                                        
                                     v2=data[pipeline][subject][session][asymmetry][roiend][method][measurement]
-                                    try:
-                                        asymidx_v1_v2=float(v1)/float(v2) if float(v2)!=0 else 0   
-                                        #asymidx_v2_v1=float(v2)/float(v1) if float(v1)!=0 else 0                                        
-                                        key=f"{measurement}-asymidx"
-                                        
-                                        asym[pipeline][subject][session][roi][roiend][method][key]=asymidx_v1_v2
-                                    except Exception as ex:
-                                        print(f"Failed to determine asymmetry {pipeline}-{subject}-{session}-{roi}-{roiend}-{method} v1:{v1} v2:{v2}\n{ex}")
+                                    if v1 is not None and v2 is not None:
+                                        try:
+                                            asymidx_v1_v2=float(v1)/float(v2) if float(v2)!=0 else 0   
+                                            #asymidx_v2_v1=float(v2)/float(v1) if float(v1)!=0 else 0                                        
+                                            key=f"{measurement}-asymidx"
+                                            
+                                            asym[pipeline][subject][session][roi][roiend][method][key]=asymidx_v1_v2
+                                        except Exception as ex:
+                                            print(f"Failed to determine asymmetry {pipeline}-{subject}-{session}-{roi}-{roiend}-{method} v1:{v1} v2:{v2}\n{ex}")
                                     
     
     for pipeline in asym:
