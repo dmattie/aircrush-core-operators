@@ -159,11 +159,11 @@ def main():
     parser.add_argument('--overwrite',action='store_true',help='Overwrite destination if it exists')
     args = parser.parse_args()
 
-    if os.path.exists(args.df):
+    if os.path.exists(f"{args.df}.asymidx"):
         if args.overwrite:
-            os.remove(args.df)
+            os.remove(f"{args.df}.asymidx")
         else:
-            print(f"Target already exists ({args.df})")
+            print(f"Target already exists ({args.df}.asymidx)")
             return    
     
     add_derived_measurements(args.df,args.segmentmap)
