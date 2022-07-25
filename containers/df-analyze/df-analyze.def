@@ -56,6 +56,13 @@ apt-get update && apt-get install -y netcat
     apt-get install -y python3-apt
 
     poetry install
+    poetry config --list
+    mkdir -p /usr/local/poetry/.poetry
+    mkdir -p /usr/local/poetry/virtualenvs
+
+    poetry config virtualenvs.path /usr/local/poetry/virtualenvs
+    cp -r $HOME/.poetry /usr/local/poetry/.poetry
+
     
     
 %runscript  
