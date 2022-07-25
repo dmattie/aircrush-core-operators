@@ -73,12 +73,12 @@ apt-get update && apt-get install -y netcat
     
 %runscript  
     export path=/usr/local/poetry/bin:$PATH
-    source /usr/local/poetry/virtualenvs/df-analyze-UGV7uGJi-py3.8/bin/activate
+    . /usr/local/poetry/virtualenvs/df-analyze-UGV7uGJi-py3.8/bin/activate
     
     #poetry config cache-dir /usr/local/poetry
     echo "Arguments received: first: $1    all:$*"
     #poetry run /df-analyze/df-analyze.py $*
-    python /df-analyze/df-analyze.py $*
+    python3 /df-analyze/df-analyze.py $*
     #/bin/bash $*
 
 
