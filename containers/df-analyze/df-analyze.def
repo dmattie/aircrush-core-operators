@@ -45,10 +45,14 @@ apt-get update && apt-get install -y netcat
     echo "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP"
     echo "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP"
     echo "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP"
+    mkdir -p /usr/local/poetry/
+    export POETRY_HOME=/usr/local/poetry
     curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
-    export PATH=$PATH:$HOME/.poetry/bin
-    ls $HOME/.poetry/bin
-    . $HOME/.poetry/env
+    #export PATH=$PATH:$HOME/.poetry/bin
+    #ls $HOME/.poetry/bin
+    #. $HOME/.poetry/env
+
+    poetry config --list
     
     cd /df-analyze
 
@@ -56,18 +60,19 @@ apt-get update && apt-get install -y netcat
     apt-get install -y python3-apt
 
     poetry install
-    poetry config --list
-    mkdir -p /usr/local/poetry/.poetry
-    mkdir -p /usr/local/poetry/virtualenvs
+    
 
-    poetry config virtualenvs.path /usr/local/poetry/virtualenvs
-    cp -r $HOME/.poetry /usr/local/poetry/.poetry
+    #mkdir -p /usr/local/poetry/
+    #mkdir -p /usr/local/poetry/virtualenvs
+    #poetry config virtualenvs.path /usr/local/poetry/virtualenvs
+    #cp -r $HOME/.poetry /usr/local/poetry/
+    #chmod u+x /usr/local/poetry/.poetry/bin/poetry
 
     
     
 %runscript  
-    
-    . $HOME/.poetry/env
+    export path=/usr/local/poetry/.poetry/bin:$PATH
+    poetry config cache-dir /usr/local/poetry
     poetry shell
     echo "Arguments received: first: $1    all:$*"
     /bin/bash $*
