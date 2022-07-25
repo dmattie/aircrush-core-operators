@@ -24,26 +24,28 @@ From: ubuntu:20.04
     apt-get install -y software-properties-common
     add-apt-repository universe
     #apt install -y python2
-    apt-get install -y python3
-
-    #apt-get install -y python3-pip
-    #pip3 install --upgrade pip
     echo "#########################################################"
     echo "#########################################################"
     echo "#########################################################"
     echo "#########################################################"
     
-    DEBIAN_FRONTEND=noninteractive curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
+    apt-get install -y python3
+
     echo "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
     echo "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
     echo "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
     echo "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+
+
+    curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
+
     
     cd /df-analyze
     poetry install
-    poetry shell
+    
     
 %runscript    
+    poetry shell
     echo "Arguments received: first: $1    all:$*"
     /bin/bash $*
 
