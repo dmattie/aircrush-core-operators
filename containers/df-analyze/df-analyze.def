@@ -20,7 +20,7 @@ From: ubuntu:20.04
     apt-get install -y git
 
     cd /
-    git pull https://github.com/stfxecutables/df-analyze.git
+    git clone https://github.com/stfxecutables/df-analyze.git
     apt-get install -y software-properties-common
     add-apt-repository universe
 
