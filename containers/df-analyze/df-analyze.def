@@ -45,6 +45,11 @@ apt-get update && apt-get install -y netcat
     echo "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP"
     echo "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP"
     echo "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP"
+
+    apt-get install -y python3-distutils
+    apt-get install -y python3-apt
+
+
     mkdir -p /usr/local/poetry/
     export POETRY_HOME=/usr/local/poetry
     curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
@@ -57,8 +62,7 @@ apt-get update && apt-get install -y netcat
     
     cd /df-analyze
 
-    apt-get install -y python3-distutils
-    apt-get install -y python3-apt
+
 
     poetry install
     
