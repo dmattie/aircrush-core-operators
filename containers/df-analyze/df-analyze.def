@@ -4,7 +4,7 @@ From: ubuntu:20.04
 
 %files
 
-    df-analyze /usr/local
+    #df-analyze /usr/local
 
 %environment
     export LC_ALL=C
