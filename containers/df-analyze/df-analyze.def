@@ -51,7 +51,8 @@ apt-get update && apt-get install -y netcat
     #export PATH=$PATH:$HOME/.poetry/bin
     #ls $HOME/.poetry/bin
     #. $HOME/.poetry/env
-
+    export PATH=$PATH:$POETRY_HOME/.poetry/bin
+    chmod u+x $POETRY_HOME/.poetry/bin/poetry
     poetry config --list
     
     cd /df-analyze
