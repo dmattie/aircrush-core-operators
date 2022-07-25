@@ -15,8 +15,7 @@ From: ubuntu:20.04
     NOW=`date`
     echo "export NOW=\"${NOW}\"" >> $SINGULARITY_ENVIRONMENT
    
-    apt-get install -y curl
-    #DEBIAN_FRONTEND=noninteractive 
+    apt-get install -y curl    
     apt-get install -y git
 
     cd /
@@ -33,8 +32,8 @@ From: ubuntu:20.04
     echo "#########################################################"
     echo "#########################################################"
     echo "#########################################################"
-
-    curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
+    
+    DEBIAN_FRONTEND=noninteractive curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
     echo "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
     echo "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
     echo "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
