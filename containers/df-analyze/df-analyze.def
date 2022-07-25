@@ -46,15 +46,16 @@ apt-get update && apt-get install -y netcat
     echo "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP"
     echo "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP"
     curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
-    source $HOME/.poetry/env
+    export PATH=$PATH:$HOME/.poetry/bin
+    ls $HOME/.poetry/bin
+    . $HOME/.poetry/env
     
     cd /df-analyze
     poetry install
     
     
 %runscript  
-    export PATH=$PATH:$HOME/.poetry/bin
-    ls $HOME/.poetry/bin
+    
     . $HOME/.poetry/env
     poetry shell
     echo "Arguments received: first: $1    all:$*"
