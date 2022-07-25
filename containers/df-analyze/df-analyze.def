@@ -57,30 +57,27 @@ apt-get update && apt-get install -y netcat
     #ls $HOME/.poetry/bin
     #. $HOME/.poetry/env
     export PATH=$PATH:$POETRY_HOME/bin
-    chmod u+x $POETRY_HOME/bin/poetry
+    chmod ugo+x $POETRY_HOME/bin/poetry
+
+    mkdir -p /usr/local/poetry/virtualenvs
+    chmod ugo+rwx /usr/local/poetry/virtualenvs
+    chmod ugo+rwx /usr/local/poetry
+    poetry config cache-dir /usr/local/poetry
+    poetry config virtualenvs.path /usr/local/poetry/virtualenvs
+
     poetry config --list
     
     cd /df-analyze
-
-
-
     poetry install
-    
-
-    #mkdir -p /usr/local/poetry/
-    #mkdir -p /usr/local/poetry/virtualenvs
-    #poetry config virtualenvs.path /usr/local/poetry/virtualenvs
-    #cp -r $HOME/.poetry /usr/local/poetry/
-    #chmod u+x /usr/local/poetry/.poetry/bin/poetry
-
-    
+       
     
 %runscript  
-    export path=/usr/local/poetry/.poetry/bin:$PATH
+    export path=/usr/local/poetry/bin:$PATH
     poetry config cache-dir /usr/local/poetry
-    poetry shell
     echo "Arguments received: first: $1    all:$*"
-    /bin/bash $*
+    poetry run /df-analyze/df-analyze.py $*
+    
+    #/bin/bash $*
 
 
 %labels
