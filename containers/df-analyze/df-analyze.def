@@ -51,6 +51,10 @@ apt-get update && apt-get install -y netcat
     . $HOME/.poetry/env
     
     cd /df-analyze
+
+    sudo apt-get install python3-distutils
+    sudo apt-get install python3-apt
+
     poetry install
     
     
