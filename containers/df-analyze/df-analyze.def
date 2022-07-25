@@ -52,8 +52,10 @@ apt-get update && apt-get install -y netcat
     poetry install
     
     
-%runscript    
-    source $HOME/.poetry/env
+%runscript  
+    export PATH=$PATH:$HOME/.poetry/bin
+    ls $HOME/.poetry/bin
+    . $HOME/.poetry/env
     poetry shell
     echo "Arguments received: first: $1    all:$*"
     /bin/bash $*
