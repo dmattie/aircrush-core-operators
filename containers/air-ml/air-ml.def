@@ -78,6 +78,9 @@ From: ubuntu:20.04
     echo "install.packages('glmnet')" >> /usr/local/r/packages.R
     echo "install.packages('data.table')" >> /usr/local/r/packages.R
     echo "install.packages('parallel')" >> /usr/local/r/packages.R    
+    echo "install.packages('lares')" >> /usr/local/r/packages.R   
+    echo "install.packages('ggstance')" >> /usr/local/r/packages.R   
+    echo "install.packages('doMC')" >> /usr/local/r/packages.R   
     
     Rscript /usr/local/r/packages.R
 
