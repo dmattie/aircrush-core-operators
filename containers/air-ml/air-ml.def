@@ -53,34 +53,35 @@ From: ubuntu:20.04
     apt install -y build-essential
 
     mkdir /usr/local/r
-    echo "install.packages('datasets')" >> /usr/local/r/packages.R
-    echo "install.packages('h2o')" >> /usr/local/r/packages.R
-    echo "install.packages('Hmisc')" >> /usr/local/r/packages.R
-    echo "install.packages('caret')" >> /usr/local/r/packages.R
-    echo "install.packages('kernlab')" >> /usr/local/r/packages.R
-    echo "install.packages('tidyverse')" >> /usr/local/r/packages.R
-    echo "install.packages('xgboost')" >> /usr/local/r/packages.R
-    echo "install.packages('Matrix')" >> /usr/local/r/packages.R
-    echo "install.packages('dplyr')" >> /usr/local/r/packages.R
-    echo "install.packages('lolR')" >> /usr/local/r/packages.R
-    echo "install.packages('ggplot2')" >> /usr/local/r/packages.R
-    echo "install.packages('factoextra')" >> /usr/local/r/packages.R
-    echo "install.packages('nnet')" >> /usr/local/r/packages.R
-    echo "install.packages('pROC')" >> /usr/local/r/packages.R
-    echo "install.packages('ggpubr')" >> /usr/local/r/packages.R
-    echo "install.packages('rpart')" >> /usr/local/r/packages.R
-    echo "install.packages('tidyr')" >> /usr/local/r/packages.R
-    echo "install.packages('tidymodels')" >> /usr/local/r/packages.R
-    echo "install.packages('car')" >> /usr/local/r/packages.R
-    echo "install.packages('mgcv')" >> /usr/local/r/packages.R    
-    echo "install.packages('randomForest')" >> /usr/local/r/packages.R
-    echo "install.packages('multcomp')" >> /usr/local/r/packages.R
-    echo "install.packages('glmnet')" >> /usr/local/r/packages.R
-    echo "install.packages('data.table')" >> /usr/local/r/packages.R
-    echo "install.packages('parallel')" >> /usr/local/r/packages.R    
-    echo "install.packages('lares')" >> /usr/local/r/packages.R   
-    echo "install.packages('ggstance')" >> /usr/local/r/packages.R   
-    echo "install.packages('doMC')" >> /usr/local/r/packages.R   
+    echo "install.packages('datasets' dependencies = TRUE)" >> /usr/local/r/packages.R
+    echo "install.packages('h2o' dependencies = TRUE)" >> /usr/local/r/packages.R
+    echo "install.packages('Hmisc' dependencies = TRUE)" >> /usr/local/r/packages.R
+    echo "install.packages('caret' dependencies = TRUE)" >> /usr/local/r/packages.R
+    echo "install.packages('kernlab' dependencies = TRUE)" >> /usr/local/r/packages.R
+    echo "install.packages('tidyverse' dependencies = TRUE)" >> /usr/local/r/packages.R
+    echo "install.packages('xgboost' dependencies = TRUE)" >> /usr/local/r/packages.R
+    echo "install.packages('Matrix' dependencies = TRUE)" >> /usr/local/r/packages.R
+    echo "install.packages('dplyr' dependencies = TRUE)" >> /usr/local/r/packages.R
+    echo "install.packages('lolR' dependencies = TRUE)" >> /usr/local/r/packages.R
+    echo "install.packages('ggplot2' dependencies = TRUE)" >> /usr/local/r/packages.R
+    echo "install.packages('factoextra' dependencies = TRUE)" >> /usr/local/r/packages.R
+    echo "install.packages('nnet' dependencies = TRUE)" >> /usr/local/r/packages.R
+    echo "install.packages('pROC' dependencies = TRUE)" >> /usr/local/r/packages.R
+    echo "install.packages('ggpubr' dependencies = TRUE)" >> /usr/local/r/packages.R
+    echo "install.packages('rpart' dependencies = TRUE)" >> /usr/local/r/packages.R
+    echo "install.packages('tidyr' dependencies = TRUE)" >> /usr/local/r/packages.R
+    echo "install.packages('tidymodels' dependencies = TRUE)" >> /usr/local/r/packages.R
+    echo "install.packages('car' dependencies = TRUE)" >> /usr/local/r/packages.R
+    echo "install.packages('mgcv' dependencies = TRUE)" >> /usr/local/r/packages.R    
+    echo "install.packages('randomForest' dependencies = TRUE)" >> /usr/local/r/packages.R
+    echo "install.packages('multcomp' dependencies = TRUE)" >> /usr/local/r/packages.R
+    echo "install.packages('glmnet' dependencies = TRUE)" >> /usr/local/r/packages.R
+    echo "install.packages('data.table' dependencies = TRUE)" >> /usr/local/r/packages.R
+    echo "install.packages('parallel' dependencies = TRUE)" >> /usr/local/r/packages.R    
+    echo "install.packages('lares' dependencies = TRUE)" >> /usr/local/r/packages.R   
+    echo "install.packages('ggstance' dependencies = TRUE)" >> /usr/local/r/packages.R   
+    echo "install.packages('doMC' dependencies = TRUE)" >> /usr/local/r/packages.R   
+    echo "install.packages('stringi' dependencies = TRUE)" >> /usr/local/r/packages.R   
     
     Rscript /usr/local/r/packages.R
 
