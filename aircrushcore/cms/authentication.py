@@ -61,6 +61,7 @@ class host_connection:
                 
                 r = self.Session.get(url)
                 self.csrf_token=r.content
+                print("Received CSRF Token")
             
             if self.logout_token=="":
                 
