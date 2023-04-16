@@ -10,6 +10,8 @@ from time import sleep
 class host_connection:
     def __init__(self,**kwargs):
         self.endpoint=kwargs['endpoint']
+        if len(self.endpoint)>0 and self.endpoint[-1]!='/':
+            self.endpoint=f"{self.endpoint}/"
         self.username=kwargs['username']
         self.password=kwargs['password']
         self.tmp=tempfile.gettempdir()
@@ -57,11 +59,9 @@ class host_connection:
             if self.csrf_token=="":
                 
                 head={"Content-type": "application/json","Accept":"*/*" }
-                url=f'{self.endpoint}/session/token'
-                
+                url=f'{self.endpoint}/session/token'                
                 r = self.Session.get(url)
-                self.csrf_token=r.content
-                print("Received CSRF Token")
+                self.csrf_token=r.content                
             
             if self.logout_token=="":
                 
@@ -69,29 +69,22 @@ class host_connection:
                 url=f"{self.endpoint}user/login?_format=json"            
                 payload='{"name":"%s","pass":"%s"}' %(self.username,self.password)            
                 
-                for iter in range(5):
-                    print(f"posting payload {payload}")                    
+                for iter in range(5):                                     
                     try:
                         r = self.Session.post(url, payload,headers=head)#, headers=head)#,auth=(u, p))
                         self.csrf_token=r.json()['csrf_token']
-                        self.logout_token=r.json()['logout_token']
-                        print("G2G")
+                        self.logout_token=r.json()['logout_token']                        
                         break
-
                     except requests.exceptions.ConnectionError as e:
                         print(f"Resource may be busy. Sleeping {iter} seconds")
                         print(e)
                         sleep(iter)
-                    except:                        
-                        print(f"Connection err. Sleeping {iter} seconds")
+                    except:                                                
                         print(f"ERROR:{r.json()['message']}")
-                        sleep(iter)
+                        break
                 if self.logout_token=="":
                     #Unable to connect
                     raise Exception(f"Unable to complete connection.")
-                    
-
-
 
             with open(picklelocation, 'wb') as f:
                 pickle.dump(self.Session, f, pickle.HIGHEST_PROTOCOL)                                
@@ -99,6 +92,7 @@ class host_connection:
 
         
         return self.Session
+    
 
             
 
