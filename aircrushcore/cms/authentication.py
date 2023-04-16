@@ -74,10 +74,12 @@ class host_connection:
                     try:
                         self.csrf_token=r.json()['csrf_token']
                         self.logout_token=r.json()['logout_token']
+                        print("G2G")
                         break
-                    except requests.exceptions.ConnectionError:
-                        print(f"Resource busy. Sleeping {iter} seconds")
-                        sleep(iter)
+                        
+                   # except requests.exceptions.ConnectionError:
+                   #     print(f"Resource busy. Sleeping {iter} seconds")
+                   #     sleep(iter)
                     except:                        
                         print(f"Connection err. Sleeping {iter} seconds")
                         print(f"ERROR:{r.json()['message']}")
