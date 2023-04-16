@@ -77,8 +77,13 @@ class host_connection:
                     except requests.exceptions.ConnectionError:
                         print(f"Resource busy. Sleeping {iter} seconds")
                         sleep(iter)
-                    except:
-                        raise Exception(f"ERROR:{r.json()['message']}")
+                    except:                        
+                        print(f"Connection err. Sleeping {iter} seconds")
+                        print(f"ERROR:{r.json()['message']}")
+                        sleep(iter)
+                if self.logout_token=="":
+                    #Unable to connect
+                    raise Exception(f"Unable to complete connection.")
                     
 
 
