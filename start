@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
 import argparse
+import warnings
+warnings.filterwarnings(action='ignore',module='asyncssh')
+
 from aircrushcore.dag import Workload
 from aircrushcore.cms import *
 from aircrushcore.common.enumerators import Readiness
@@ -23,20 +26,9 @@ from util import housekeeping
 from util.color import ansi
 
 
-
 aircrush=None
 crush_host=None
 args=None
-
-# HEADER = '\033[95m'
-# OKBLUE = '\033[94m'
-# OKCYAN = '\033[96m'
-# OKGREEN = '\033[92m'
-# WARNING = '\033[93m'
-# FAIL = '\033[91m'
-# ENDC = '\033[0m'
-# BOLD = '\033[1m'
-# UNDERLINE = '\033[4m'
 
 def ready():
     #Sense readiness to do something
@@ -634,9 +626,10 @@ def updateStatus(task_instance,status:str,detail:str="",new_errors:str=""):
 def main():
 
     global aircrush,crush_host,args
-    print("Welcome to Aircrush!")
+    print("\n###################\nWelcome to Aircrush\n###################\n")
     parser = argparse.ArgumentParser(
         description="CRUSH client command line utility. Start all tasks with this command")
+    
     parser.add_argument('-sync',action='store_true',
         help="Synchronize subjects and exams in the data commons with the CMS")
 
@@ -654,7 +647,10 @@ def main():
         help="Skip pre-req tests e.g. (available disk check, concurrency limits), etc.")
     parser.add_argument('-nibble',action='store_true',
         help="Perform only one task rather than the max (see ~/.crush.ini [COMPUTE] tasks_per_cycle)")
+    parser.add_argument('-project',action='store',type=str,
+        help='Only perform work related to the specified project, ignore all other projects')
     args = parser.parse_args()
+    print(args)
 
     print("Validating configuration")
     aircrush=setup.ini_settings()
@@ -674,10 +670,9 @@ def main():
     except:
         print("[ERROR] .ini setting now found; expected 'singularity_container_location' in section [COMPUTE]")
         sys.exit(1)
-
     if (args.sync):
-        housekeeping.doSync()
-        exit()
+            housekeeping.doSync(args.project)
+    exit()
     if (args.purge):
         housekeeping.purge()
         exit()

@@ -2,7 +2,10 @@ import configparser
 import os,sys
 import glob
 from aircrushcore.controller.configuration import AircrushConfig
-from aircrushcore.cms import Host,ProjectCollection,SubjectCollection,Subject,SessionCollection,Session
+from aircrushcore.cms import Host,ProjectCollection,SubjectCollection,Subject,SessionCollection,Session,Project
+import json
+import tarfile
+import re
 
 #from aircrushcore.cms.project_collection import ProjectCollection
 
@@ -23,14 +26,10 @@ class DataCommons():
             )
         
 
-    def initialize(self):
-        print(f"Data Commons: {self.commons_path}")
-        projects=f"{self.commons_path}/projects"
-        
+    def initialize(self):        
+        projects=f"{self.commons_path}/projects"        
         if not os.path.exists(f"{self.commons_path}/projects"):            
-            os.makedirs(projects)  
-
-        
+            os.makedirs(projects)          
         return True
 
 
@@ -52,24 +51,84 @@ class DataCommons():
                         active_projects.append(dcProject)
             return active_projects
 
+    def get_tar_subject(self,filename):
+        print(f"\t\tSubject {filename} is tarred")
+        try:
+            tar = tarfile.open(filename)  
+            #If this^^ didn't fail we will assume it's a valid file 
+          #  for member in tar.getmembers():
+          #      print(member)   
+            subject, file_extension = os.path.splitext(filename)                    
+            return os.path.basename(subject.replace('sub-','')) #os.path.basename(subject)
+        except:
+            print(f"Error reading tar file {filename}")   
+            return ""
+    def get_tar_sessions(self,filename):    
+        
+        sessions=[]    
+        pattern='^sub-[\d|\w]+\/ses-([\d|\w]+)'
+        try:
+            tar = tarfile.open(filename)  
+            #If this^^ didn't fail we will assume it's a valid file 
+            for member in tar.getnames():   
+                #print(member)
+                m=re.match(pattern,member)  
+                if m is not None:           
+                    #print(m.group(1))   
+                    sessions.append(m.group(1))
+           # subject, file_extension = os.path.splitext(filename)                    
+           # return os.path.basename(subject.replace('sub-','')) #os.path.basename(subject)
+            return sessions
+        except Exception as e: 
+            print(e)
+            print(f"Error reading sessions from tar file {filename}")   
+            return ""
     def Subjects(self,project: str):
-        subdir=f"{self.commons_path}/projects/{project}/datasets/rawdata/sub-*"
+        subdir=f"{self.commons_path}/projects/{project}/datasets/sub-*"
         print(f"\t\tLooking for subjects in {subdir}")
         subjects=glob.glob(subdir)
         
-        for index,value in enumerate(subjects):
-            subjects[index]=os.path.basename(value.replace('sub-',''))      
+        ## Some of these subjects may be in the form of TAR files
+        for index,value in enumerate(subjects):   
+            filename, file_extension = os.path.splitext(value)            
+            if file_extension=='.tar':
+                subjects[index]=self.get_tar_subject(value)
+            else:
+                subjects[index]=os.path.basename(value.replace('sub-',''))   
+             
+        subjects=[x for x in subjects if x]  #Removed empty subjects, like failed tar files
         print(f"\t\tfound {len(subjects)} subjects on disk")
         return subjects
 
     def Sessions(self,project:str,subject:str):
-        sespath = f"{self.commons_path}/projects/{project}/datasets/rawdata/sub-{subject}/ses-*"
-        sessions=glob.glob(sespath)
-        for index,value in enumerate(sessions):
-            sessions[index]=os.path.basename(value.replace('ses-','') )
-        if len(sessions)==0:
-            print(f"\t\t\tfound {len(sessions)} sessions in {sespath}")
-        return sessions
+
+        if os.path.exists( f"{self.commons_path}/projects/{project}/datasets/sub-{subject}.tar"):
+            if os.path.exists( f"{self.commons_path}/projects/{project}/datasets/sub-{subject}"):
+                print(f"\t\t[WARNING]Both Tar file and expanded equivalent found for {subject}.  Tar file will superceed existing directories")
+            sessions=self.get_tar_sessions(f"{self.commons_path}/projects/{project}/datasets/sub-{subject}.tar")
+            sessions=[x for x in sessions if x]  #Removed empty subjects, like failed tar files
+            print(f"\t\tfound {len(sessions)} sessions for {subject} (tarred)")
+            return sessions        
+        else:
+            
+            sespath = f"{self.commons_path}/projects/{project}/datasets/sub-{subject}/sub-*_ses-*.tar"
+            
+            sessions_tarred=glob.glob(sespath)
+            
+            for index,value in enumerate(sessions_tarred):
+                sessname=os.path.basename(value.replace(f"sub-{subject}_ses-",'') )                
+                sessions_tarred[index]=sessname.replace(".tar","")
+
+            sespath = f"{self.commons_path}/projects/{project}/datasets/sub-{subject}/ses-*"
+            sessions=glob.glob(sespath)
+            for index,value in enumerate(sessions):
+                sessions[index]=os.path.basename(value.replace('ses-','') )
+  
+            sessions = sessions+sessions_tarred
+
+            print(f"\t\tfound {len(sessions)} sessions for {subject}")
+            
+            return sessions 
 
     # def SyncWithCMS2(self):
 
@@ -188,18 +247,63 @@ class DataCommons():
     #             return collection[s].uuid
     #     return None
   
+    def project_exists(self,project,cms_projects):
+        for cms_project_uid in cms_projects:
+            if cms_projects[cms_project_uid].field_path_to_exam_data==project:
+                return True
+        return False
             
     def SyncWithCMS(self,**kwargs):
         republish=False
         if 'republish' in kwargs:
             republish=kwargs['republish']
-
-        print("Synchronizing CMS with data commons...")
+            
         cms_project_collection = ProjectCollection(cms_host=self.cms_host)
         cms_projects=cms_project_collection.get()
-        dcProjects = self.Projects()
-        for cms_project_uid in cms_projects:
+        
+        if 'project' in kwargs and kwargs['project'] is not None:
+            print(f"Focus limited to {kwargs['project']}")
+            dcProjects = [p for p in self.Projects() if p==kwargs['project']]
+            #dcProjects=filter(self.Projects(), kwargs['project'])
+        else:
+            dcProjects = self.Projects()
 
+        #Lets add and projects in scope found in datacommons but not found in CMS
+
+        needs_refresh=False
+        for project in dcProjects:
+            if not self.project_exists(project, cms_projects):
+                
+                print(f"{project} not found in CMS, creating...{cms_projects}")
+                
+                dataset_description_filename = f"{self.commons_path}/projects/{project}/datasets/dataset_description.json"
+                if not os.path.exists(dataset_description_filename):
+                    print(f"[WARNING] The project {project} was found in the datacommons, but a dataset_description.json file was not found.  This should exist as per the BIDS standard.  Alternatively, the project can be manually created in AirCRUSH if permissions allow.")
+                    continue
+                else:
+                    with open(dataset_description_filename) as dataset_description_f:
+                        dataset_description=json.load(dataset_description_f)
+                        # print(f"Reading for {dataset_description['Name']}")
+                        # DatasetDOI
+                        metadata={    
+                            "title":dataset_description['Name'] ,                            
+                            "field_path_to_exam_data":project,                                                         
+                            "body":dataset_description['DatasetDOI'],                            
+                            "cms_host":self.cms_host                                            
+                        }         
+
+                        new_project = Project(metadata=metadata) 
+                        new_project.upsert() 
+                        needs_refresh=True
+
+        if needs_refresh:
+            cms_projects=cms_project_collection.get()
+
+        #Lets look in CMS for projects in scope and added subjects/sessions found in datacommons but not cms
+        for cms_project_uid in cms_projects:
+            if kwargs['project'] is not None and cms_projects[cms_project_uid].field_path_to_exam_data != kwargs['project']:
+                continue
+            
             dc_project_exists=False
             for dcp in dcProjects:
                 if (dcp==cms_projects[cms_project_uid].field_path_to_exam_data):
@@ -258,7 +362,7 @@ class DataCommons():
             if refresh_needed:
                 cms_subjects = cms_subject_collection.get()
             
-            print("Looking for sessions")
+            print("\n\t\tLooking for sessions")
             for cms_subject in cms_subjects:
                 dc_sessions = self.Sessions(cms_projects[cms_project_uid].field_path_to_exam_data, cms_subjects[cms_subject].title)
                 

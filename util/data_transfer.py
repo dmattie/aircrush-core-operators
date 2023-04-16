@@ -132,15 +132,15 @@ def _get_localexam_paths(project:str,subject:str,session:str):
     session_path=f"ses-{session}" if session is not None and session !="" else ""
     session_separator="_" if session_path !="" else ""
     #print(f"[{ansi.WARNING}{session_path}{ansi.ENDC}]")
-    #print(f"{wd}/projects/{project}/datasets/rawdata/sub-{subject}/{session_path}")
-    if os.path.isdir(f"{wd}/projects/{project}/datasets/rawdata/sub-{subject}/{session_path}"):        
-        paths['raw']=f"{wd}/projects/{project}/datasets/rawdata/sub-{subject}/{session_path}"
-    elif os.path.isfile(f"{wd}/projects/{project}/datasets/rawdata/sub-{subject}/sub-{subject}{session_separator}{session_path}.tar"):
-        paths['raw']=f"{wd}/projects/{project}/datasets/rawdata/sub-{subject}/sub-{subject}{session_separator}{session_path}.tar"   
-    elif os.path.isdir(f"{wd}/projects/{project}/datasets/rawdata/sub-{subject}"):
-        paths['raw']=f"{wd}/projects/{project}/datasets/rawdata/sub-{subject}"
-    elif os.path.isfile(f"{wd}/projects/{project}/datasets/rawdata/sub-{subject}.tar"):
-        paths['raw']=f"{wd}/projects/{project}/datasets/rawdata/sub-{subject}.tar"
+    #print(f"{wd}/projects/{project}/datasets/sub-{subject}/{session_path}")
+    if os.path.isdir(f"{wd}/projects/{project}/datasets/sub-{subject}/{session_path}"):        
+        paths['raw']=f"{wd}/projects/{project}/datasets/sub-{subject}/{session_path}"
+    elif os.path.isfile(f"{wd}/projects/{project}/datasets/sub-{subject}/sub-{subject}{session_separator}{session_path}.tar"):
+        paths['raw']=f"{wd}/projects/{project}/datasets/sub-{subject}/sub-{subject}{session_separator}{session_path}.tar"   
+    elif os.path.isdir(f"{wd}/projects/{project}/datasets/sub-{subject}"):
+        paths['raw']=f"{wd}/projects/{project}/datasets/sub-{subject}"
+    elif os.path.isfile(f"{wd}/projects/{project}/datasets/sub-{subject}.tar"):
+        paths['raw']=f"{wd}/projects/{project}/datasets/sub-{subject}.tar"
     ##############
     # DERIVATIVES
     ##############
@@ -312,7 +312,7 @@ def pull_source_data(project,subject,session):
     datacommons=get_config_datacommons()#aircrush.config['COMPUTE']['commons_path']
     #Test if we are on an HCP node, use sbatch to perform rsync if so
 
-    root=f"/projects/{project.field_path_to_exam_data}/datasets/source"
+    root=f"/projects/{project.field_path_to_exam_data}/datasets/sourcedata"
     
 
     #If none of the if statements below match, the entire source will be cloned
@@ -416,11 +416,15 @@ def pull_data(stage,project,subject,session):
                         print(f"{source} not on datacommons... skipping")
         else:
             foundsource=False
+            if stage=="rawdata":
+                stage_dir="."
+            else:
+                stage_dir=stage
 
-            tarsource=f"{datacommons}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/sub-{subject.title}_ses-{session.title}.tar"
-            tartarget=f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/sub-{subject.title}_ses-{session.title}.tar"
-            if sensors.exists_on_datacommons("",f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}"):
-                    print(f"Local files exist ({wd}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title})")
+            tarsource=f"{datacommons}/projects/{project.field_path_to_exam_data}/datasets/{stage_dir}/sub-{subject.title}/sub-{subject.title}_ses-{session.title}.tar"
+            tartarget=f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage_dir}/sub-{subject.title}/sub-{subject.title}_ses-{session.title}.tar"
+            if sensors.exists_on_datacommons("",f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage_dir}/sub-{subject.title}/ses-{session.title}"):
+                    print(f"Local files exist ({wd}/projects/{project.field_path_to_exam_data}/datasets/{stage_dir}/sub-{subject.title}/ses-{session.title})")
                     return
             if sensors.exists_on_datacommons(data_transfer_node,tarsource):
                 _rsync_get(data_transfer_node=data_transfer_node,
@@ -428,8 +432,8 @@ def pull_data(stage,project,subject,session):
                                 target=tartarget)  
                 foundsource=True 
             else:         
-                source=f"{datacommons}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
-                target=f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage}/sub-{subject.title}/ses-{session.title}/"
+                source=f"{datacommons}/projects/{project.field_path_to_exam_data}/datasets/{stage_dir}/sub-{subject.title}/ses-{session.title}/"
+                target=f"{wd}/projects/{project.field_path_to_exam_data}/datasets/{stage_dir}/sub-{subject.title}/ses-{session.title}/"
                 if sensors.exists_on_datacommons(data_transfer_node,source):
                     _rsync_get(data_transfer_node=data_transfer_node,
                                     source=source,

@@ -5,11 +5,7 @@ class Project():
     def __init__(self,**kwargs):
         self.title=""                
         self.field_connection_type=""
-        self.field_host=""
-        self.field_password=""
-        self.field_path_to_crush_agent=""
         self.field_path_to_exam_data=""
-        self.field_username=""
         self.body=""
         self.uuid=""             
         self.field_activated_pipelines=""
@@ -27,12 +23,8 @@ class Project():
             self.field_host=m['field_host']      
         if 'field_password' in m:
             self.field_password=m['field_password']
-        if 'field_path_to_crush_agent' in m:            
-            self.field_path_to_crush_agent=m['field_path_to_crush_agent']
-        if 'field_path_to_crush_agent' in m:
-            self.field_path_to_exam_data=m['field_path_to_exam_data']
         if 'field_path_to_exam_data' in m:
-            self.field_path_to_crush_agent=m['field_path_to_crush_agent']
+            self.field_path_to_exam_data=m['field_path_to_exam_data']
         if 'field_username' in m:            
             self.field_username=m['field_username']                     
         if 'body' in m:
@@ -53,14 +45,8 @@ class Project():
                     "type":"node--project",    
                   #  "id":self.uuid,#self.Participants[participant].uuid,                
                     "attributes":{
-                        "title": self.title,                                                    
-                        "field_connection_type": self.field_connection_type,
-                        "field_host":self.field_host,
-                        "field_password":self.field_password,
-                        "field_path_to_crush_agent":self.field_path_to_crush_agent,
-                        "field_path_to_exam_data":self.field_path_to_exam_data,
-                        "field_username":self.field_username,
-                        "field_treat_failed_as_terminal":self.field_treat_failed_as_terminal,
+                        "title": self.title,                                        
+                        "field_path_to_exam_data":self.field_path_to_exam_data,                        
                         "body":self.body                        
                     },
                     "relationships":{}
@@ -75,6 +61,11 @@ class Project():
                     # }              
                 }
             }
+            if not self.field_treat_failed_as_terminal == '':
+                payload['data']['attributes']['field_treat_failed_as_terminal']=self.field_treat_failed_as_terminal
+            if not self.field_connection_type == '':
+                payload['data']['attributes']['field_connection_type']=self.field_connection_type                
+
             if self.field_activated_pipelines:
                 data=[]
                 for pipeline in self.field_activated_pipelines:
@@ -84,7 +75,7 @@ class Project():
                     })
                 relationship_data={"data":data}
                 payload['data']['relationships']['field_activated_pipelines']=relationship_data
-                          
+                    
             #print(json.dumps(payload))
 
             if self.uuid:   #Update existing    

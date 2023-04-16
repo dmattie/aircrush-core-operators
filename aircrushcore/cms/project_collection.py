@@ -73,10 +73,6 @@ class ProjectCollection():
 
                 metadata={    
                     "title":item['attributes']['title']  ,                            
-                    "field_host":item['attributes']['field_host'] ,   
-                    "field_username":item['attributes']['field_username'],
-                    "field_password":item['attributes']['field_password'],
-                    "field_path_to_crush_agent":item['attributes']['field_path_to_crush_agent'],
                     "field_path_to_exam_data":item['attributes']['field_path_to_exam_data'],
                     "field_treat_failed_as_terminal":item['attributes']['field_treat_failed_as_terminal'],
                     "field_activated_pipelines":activepipelines ,   

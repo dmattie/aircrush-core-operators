@@ -3,13 +3,13 @@ from aircrushcore.cms import TaskInstanceCollection,SubjectCollection,SessionCol
 from . import config
 from . import setup
 
-def doSync():
+def doSync(project):    
     try: aircrush
-    except NameError: aircrush=config.ini_settings()    
-    dc=DataCommons(aircrush)
+    except NameError: aircrush=config.ini_settings()        
+    dc=DataCommons(aircrush)    
     print(f"Syncing with Data Commons {dc.commons_path}")
     dc.initialize()
-    dc.SyncWithCMS()
+    dc.SyncWithCMS(project=project)
 
 def purge():
     try: aircrush
