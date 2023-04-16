@@ -78,8 +78,9 @@ class host_connection:
                         print("G2G")
                         break
 
-                    except requests.exceptions.ConnectionError:
-                        print(f"Resource busy. Sleeping {iter} seconds")
+                    except requests.exceptions.ConnectionError as e:
+                        print(f"Resource may be busy. Sleeping {iter} seconds")
+                        print(e)
                         sleep(iter)
                     except:                        
                         print(f"Connection err. Sleeping {iter} seconds")
