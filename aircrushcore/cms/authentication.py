@@ -70,17 +70,17 @@ class host_connection:
                 payload='{"name":"%s","pass":"%s"}' %(self.username,self.password)            
                 
                 for iter in range(5):
-                    print(f"posting payload {payload}")
-                    r = self.Session.post(url, payload,headers=head)#, headers=head)#,auth=(u, p))
+                    print(f"posting payload {payload}")                    
                     try:
+                        r = self.Session.post(url, payload,headers=head)#, headers=head)#,auth=(u, p))
                         self.csrf_token=r.json()['csrf_token']
                         self.logout_token=r.json()['logout_token']
                         print("G2G")
                         break
-                        
-                   # except requests.exceptions.ConnectionError:
-                   #     print(f"Resource busy. Sleeping {iter} seconds")
-                   #     sleep(iter)
+
+                    except requests.exceptions.ConnectionError:
+                        print(f"Resource busy. Sleeping {iter} seconds")
+                        sleep(iter)
                     except:                        
                         print(f"Connection err. Sleeping {iter} seconds")
                         print(f"ERROR:{r.json()['message']}")
