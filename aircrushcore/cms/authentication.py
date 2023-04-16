@@ -2,6 +2,7 @@ import os
 import pickle
 import requests
 import tempfile
+from time import sleep
 
 
 
@@ -67,12 +68,18 @@ class host_connection:
                 url=f"{self.endpoint}user/login?_format=json"            
                 payload='{"name":"%s","pass":"%s"}' %(self.username,self.password)            
 
-                r = self.Session.post(url, payload,headers=head)#, headers=head)#,auth=(u, p))
-                try:
-                    self.csrf_token=r.json()['csrf_token']
-                    self.logout_token=r.json()['logout_token']
-                except:
-                    raise Exception(f"ERROR:{r.json()['message']}")
+                for iter in range(5):
+                    r = self.Session.post(url, payload,headers=head)#, headers=head)#,auth=(u, p))
+                    try:
+                        self.csrf_token=r.json()['csrf_token']
+                        self.logout_token=r.json()['logout_token']
+                        break
+                    except requests.exceptions.ConnectionError:
+                        print(f"Resource busy. Sleeping {iter} seconds")
+                        sleep(iter)
+                    except:
+                        raise Exception(f"ERROR:{r.json()['message']}")
+                    
 
 
 
