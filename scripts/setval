@@ -1,0 +1,236 @@
+#!/usr/bin/env python3
+
+import argparse
+from pickle import FALSE
+from turtle import down
+from aircrushcore.cms import compute_node, compute_node_collection, session_collection, task_instance_collection
+from aircrushcore.controller.configuration import AircrushConfig
+from aircrushcore.dag import Workload
+from aircrushcore.cms import *
+from aircrushcore.datacommons.data_commons import DataCommons
+from util.setup import ini_settings
+import os
+
+def main():
+
+    global aircrush,crush_host,args
+    print("Aircrush set utility")
+    parser = argparse.ArgumentParser(
+        description="CRUSH client command line utility. Back-end commands to set crush data")
+    parser.add_argument('-set',action='store',type=str,
+        help="Specify a setting to change [ti-status|ti-memory-multiplier|ti-duration-multiplier|ti-job|ti-retries|ti-error|ses-cn|sub-status|ses-status|ti-sticky|pipeline-reset].")
+    parser.add_argument('-uuid',action='store',
+        help='UUID of CMS object' )
+    parser.add_argument('-subject',action='store',    
+        help='Subject of CMS object' )   
+    parser.add_argument('-session',action='store',    
+        help='Session of CMS object' )           
+    parser.add_argument('-project',action='store',
+        help='Project Name of CMS object' )             
+    parser.add_argument('-value',action='store',
+        help='New value')
+    parser.add_argument('-pipeline',action='store',help='Pipeline UUID')
+    args = parser.parse_args()
+
+    aircrush=ini_settings()
+
+    crush_host=Host(
+        endpoint=aircrush.config['REST']['endpoint'],
+        username=aircrush.config['REST']['username'],
+        password=aircrush.config['REST']['password']
+    )
+
+    if args.set == "ti-status":
+        set_ti_status(uuid=args.uuid,status=args.value)
+    elif args.set == "ti-memory-multiplier":
+        set_ti_memory_multiplier(uuid=args.uuid,val=args.value)  
+    elif args.set == "ti-duration-multiplier":
+        set_ti_duration_multiplier(uuid=args.uuid,val=args.value)          
+    elif args.set == "ti-job":
+        set_ti_job(uuid=args.uuid,val=args.value)  
+    elif args.set == "ti-retries":
+        set_ti_retries(uuid=args.uuid,val=args.value)                 
+    elif args.set == "ses-cn":
+        set_session_compute_node(uuid=args.uuid,val=args.value)     
+    elif args.set == "sub-status":
+        if args.uuid is None and args.subject is not None and args.project is not None:
+            uuid=get_sub_uuid(proj=args.project,sub=args.subject)
+        else:
+            uuid=args.uuid
+        set_sub_status(uuid=uuid,val=args.value)   
+    elif args.set == "ses-status":
+        if args.uuid is None and args.subject is not None and args.project is not None and args.session is not None:
+            uuid=get_ses_uuid(proj=args.project,sub=args.subject,ses=args.session)
+        else:
+            uuid=args.uuid
+        set_ses_status(uuid=uuid,val=args.value)  
+    elif args.set == "ti-error":
+        set_ti_error(uuid=args.uuid,val=args.value)  
+    elif args.set == "ti-sticky":
+        set_ti_sticky(uuid=args.uuid) 
+    elif args.set == "pipeline-reset":
+        #uuid is the task uuid representing the point to reset.  It and all downstream will be reset.
+        #pipeline uuid
+        #project name
+        pipeline_reset(uuid=args.uuid,pipeline=args.pipeline,project=args.project)    
+    else:
+        print("Nothing to do")
+
+def set_ti_status(uuid:str, status:str):
+    ti_col=TaskInstanceCollection(cms_host=crush_host)
+    if ti_col is not None:
+        ti=ti_col.get_one(uuid)        
+        print(f"{ti.title}\n\tOld Status:{ti.field_status}\n\tNew Status:{status}")
+        ti.field_status=status
+        ti.upsert()        
+        print("Update Complete")
+def set_ti_sticky(uuid:str):
+    ti_col=TaskInstanceCollection(cms_host=crush_host)
+    if ti_col is not None:
+        ti=ti_col.get_one(uuid)
+        print(f"{ti.title}\n\tOld Sticky:{ti.sticky}\n\tNew Sticky:{not ti.sticky}")
+        ti.sticky=not ti.sticky
+        ti.upsert()        
+        print("Update Complete")
+def set_ti_error(uuid:str,val:str):
+    ti_col=TaskInstanceCollection(cms_host=crush_host)
+    if ti_col is not None:
+        ti=ti_col.get_one(uuid)  
+    else:
+        print("TI collection is empty")
+        return
+    print(f"Old errorfile:{ti.field_errorfile}, this setting will not change")
+    print(f"Data read from {val}")
+    if val and os.path.isfile(val):
+        logfile = open(val,'r')
+        error_contents = logfile.read()
+        if len(error_contents)>2000:
+            error_contents=f"log file has been truncated.  see error log for complete detail\n\n{error_contents[-2000:]}"
+        ti.field_errorlog=error_contents
+        print("########  error log stored") 
+        ti.upsert()   
+def set_ti_job(uuid:str, val:str):
+    ti_col=TaskInstanceCollection(cms_host=crush_host)
+    if ti_col is not None:
+        ti=ti_col.get_one(uuid)        
+        print(f"{ti.title}\n\tOld Job:{ti.field_jobid}\n\tNew Status:{val}")
+        ti.field_jobid=val
+        ti.upsert()        
+        print("Update Complete") 
+def set_ti_retries(uuid:str, val:str):
+    ti_col=TaskInstanceCollection(cms_host=crush_host)
+    if ti_col is not None:
+        ti=ti_col.get_one(uuid)        
+        print(f"{ti.title}\n\tOld Value:{ti.field_remaining_retries}\n\tNew Value:{val}")
+        ti.field_remaining_retries=val
+        ti.upsert()        
+        print("Update Complete")                
+def set_ti_memory_multiplier(uuid:str, val:str):
+    ti_col=TaskInstanceCollection(cms_host=crush_host)
+    if ti_col is not None:
+        ti=ti_col.get_one(uuid)  
+        print(f"{ti.title}\n\tOld Memory Multiplier:{ti.field_multiplier_memory}\n\tNew Memory Multiplier:{val}")      
+        ti.field_multiplier_memory=val
+        ti.upsert()        
+        print("Update Complete") 
+def set_ti_duration_multiplier(uuid:str, val:str):
+    ti_col=TaskInstanceCollection(cms_host=crush_host)
+    if ti_col is not None:
+        ti=ti_col.get_one(uuid)  
+        print(f"{ti.title}\n\tOld Duration Multiplier:{ti.field_multiplier_duration}\n\tNew Duration Multiplier:{val}")      
+        ti.field_multiplier_duration=val
+        ti.upsert()        
+        print("Update Complete")         
+def set_session_compute_node(uuid:str,val:str):
+    ses_col=SessionCollection(cms_host=crush_host)
+    if ses_col is not None:
+        ses=ses_col.get_one(uuid)
+        print(f"{ses.title}\n\tOld ComputeNode:{ses.field_responsible_compute_node}\n\tNew ComputeNode:{val}") 
+        ses.field_responsible_compute_node=val
+        ses.upsert()     
+def set_sub_status(uuid:str,val:str):
+    sub_col=SubjectCollection(cms_host=crush_host)
+    if sub_col is not None:
+        sub = sub_col.get_one(uuid)
+        print(f"{sub.title}\n\tOld Status:{sub.field_status}\n\tNew Status:{val}") 
+        sub.field_status=val
+        sub.upsert()  
+def set_ses_status(uuid:str,val:str):
+    ses_col=SessionCollection(cms_host=crush_host)
+    if ses_col is not None:
+        ses = ses_col.get_one(uuid)
+        print(f"{ses.title} ({uuid})\n\tOld Status:{ses.field_status}\n\tNew Status:{val}") 
+        ses.field_status=val
+        ses.upsert()  
+def get_sub_uuid(proj:str,sub:str):
+    proj_col=ProjectCollection(cms_host=crush_host)
+    project=proj_col.get_one_by_name(proj)
+    sub_col=SubjectCollection(cms_host=crush_host,project=project.uuid)
+    subjects=sub_col.get(title=sub)   
+
+    if len(subjects)>0:
+        return next(iter(subjects))
+    else:
+        print(f"Subject {sub} in project {proj.title} not found")
+        return None
+def get_ses_uuid(proj:str,sub:str,ses:str):
+    proj_col=ProjectCollection(cms_host=crush_host)
+    project=proj_col.get_one_by_name(proj)
+    sub_col=SubjectCollection(cms_host=crush_host,project=project.uuid)
+    subjects=sub_col.get(title=sub)   
+
+    if len(subjects)>0:
+        subject=next(iter(subjects))
+        print(f"subject {subject}")
+        ses_col=SessionCollection(cms_host=crush_host,subject=subject)
+        sessions=ses_col.get(title=ses)
+        if len(sessions)>0:
+            return next(iter(sessions))
+        else:
+            print(f"Session {ses} in {proj.title}/{subject.title} not found")
+    else:
+        print(f"Subject {sub} in project {proj.title} not found")
+        return None     
+def pipeline_reset(uuid:str,pipeline:str,project:str):
+    proj_col=ProjectCollection(cms_host=crush_host)
+    project=proj_col.get_one_by_name(project)
+    pipe_col=PipelineCollection(cms_host=crush_host)
+    pipeline=pipe_col.get_one(uuid=pipeline)
+    downstream_uuids=downstream_tasks(downstream_from_task_uuid=uuid,pipeline_uuid=pipeline.uuid)
+    print(downstream_uuids)
+    ti_filter=f"&filter[status-filter][condition][path]=field_status&filter[status-filter][condition][operator]=NOT%20IN&filter[status-filter][condition][value][1]=terminal&filter[status-filter][condition][value][2]=notstarted&filter[proj-filter][condition][path]=field_associated_participant_ses.field_participant.field_project.id&filter[proj-filter][condition][operator]=%3D&filter[proj-filter][condition][value]={project.uuid}"
+    
+    ti_col=TaskInstanceCollection(cms_host=crush_host,pipeline=pipeline.uuid)
+    tis=ti_col.get(filter=ti_filter)
+    for ti in tis:
+        if tis[ti].field_task in downstream_uuids:            
+            print(f"{tis[ti].title}\tOld Status:{tis[ti].field_status}\tNew Status:notstarted")                
+            tis[ti].field_status='notstarted'
+            tis[ti].upsert()
+        
+
+def downstream_tasks(downstream_from_task_uuid:str,pipeline_uuid:str):    
+    downstream_uuids=[downstream_from_task_uuid]
+    task_col=TaskCollection(cms_host=crush_host,pipeline=pipeline_uuid)
+    tasks=task_col.get()
+    for task in tasks:
+        if downstream_from_task_uuid is None:            
+            subdown=downstream_tasks(downstream_from_task_uuid=task,pipeline_uuid=pipeline_uuid)
+            for sub in subdown:
+                if sub not in downstream_uuids:
+                    downstream_uuids.append(sub)                
+            continue
+        prereqs=tasks[task].field_prerequisite_tasks
+        if prereqs is None:            
+            continue
+        for prereq in prereqs:
+            if prereq['id']==downstream_from_task_uuid:
+                subdown=downstream_tasks(downstream_from_task_uuid=task,pipeline_uuid=pipeline_uuid)
+                for sub in subdown:
+                    if sub not in downstream_uuids:
+                        downstream_uuids.append(sub)                                
+    return downstream_uuids
+
+if __name__ == '__main__':
+    main()
+

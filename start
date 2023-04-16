@@ -1,0 +1,687 @@
+#!/usr/bin/env python3
+
+import argparse
+import warnings
+warnings.filterwarnings(action='ignore',module='asyncssh')
+
+from aircrushcore.dag import Workload
+from aircrushcore.cms import *
+from aircrushcore.common.enumerators import Readiness
+
+from os.path import exists,dirname
+import os,sys
+import importlib
+import getpass
+import datetime
+import ast
+import subprocess
+import argparse
+from humanfriendly import parse_size
+from util.conversion import millify
+from util import sensors
+from util import data_transfer
+from util import setup
+from util import config
+from util import housekeeping
+from util.color import ansi
+
+
+aircrush=None
+crush_host=None
+args=None
+
+def ready():
+    #Sense readiness to do something
+    return True
+
+def print_statusline(msg: str):
+    last_msg_length = len(print_statusline.last_msg) if hasattr(print_statusline, 'last_msg') else 0
+    print(' ' * last_msg_length, end='\r')
+    print(msg, end='\r')
+    sys.stdout.flush()  # Some say they needed this, I didn't.
+    print_statusline.last_msg = msg
+       
+def getOperatorClassDefinition(task_uuid:str):
+    
+    #This function uses the task uuid to load the associated operator module 
+    #and return a class defintion
+
+    task = TaskCollection(cms_host=crush_host).get_one(task_uuid) #fetch task definition
+    operator=task.field_operator #identify the operator to execute
+    module=f"{task.field_operator}_operator" #build filename for dynamic load
+    operator_module=importlib.import_module(f"operators.{module}")  #dynamically import identified operator
+    op_class=getattr(operator_module,operator) #get class defintion    
+    return op_class
+
+def getMyComputeNodeUUID():
+
+    cluster=aircrush.config['COMPUTE']['cluster']
+    account=aircrush.config['COMPUTE']['account']    
+    working_dir=aircrush.config['COMPUTE']['working_directory'] #os.environ.get("SCRATCH")    
+    username=getpass.getuser()
+
+
+    metadata={
+        "title":f"{cluster}/{username}",
+        "field_host":cluster,
+        "field_username":username,
+        "field_password":"",
+        "field_working_directory":working_dir,        
+        "cms_host":crush_host,
+        "aircrush":aircrush   
+    }
+
+    #Look for known match in cms and create if not there
+    cn_col = ComputeNodeCollection(cms_host=crush_host)
+    matching_cn = cn_col.get(filter=f"&filter[field_username][value]={username}&filter[field_host][value]={cluster}")
+
+    for match in matching_cn:          
+        metadata['uuid']=match
+        break
+
+    n = ComputeNode(metadata=metadata)    
+    nuid=n.upsert()
+    
+    #Is this node ready for work?    
+    if args.statusonly:
+        return nuid,True
+    
+    readystate=n.isReady(skip_tests=args.skiptests)    
+    return nuid,readystate
+
+
+
+
+ 
+def parameter_expansion(cmdArray,parms_to_add,**kwargs):
+    print("Performing Parameter Keyword Expansion")
+    project=None
+    subject=None
+    session=None
+    workingdir=""
+    datacommons=""
+    pipeline=""   
+    task=None 
+    if 'project' in kwargs:
+        project=kwargs['project']
+    if 'subject' in kwargs:
+        subject=kwargs['subject']
+    if 'session' in kwargs:
+        session=kwargs['session']
+    if 'workingdir' in kwargs:
+        workingdir=kwargs['workingdir']
+    if 'datacommons' in kwargs:
+        datacommons=kwargs['datacommons']
+    if 'pipeline' in kwargs:
+        pipeline=kwargs['pipeline']
+    if 'task' in kwargs:
+        task=kwargs['task']
+ 
+    try:
+        for k in parms_to_add:   
+
+            parm= parms_to_add[k]
+            if parm is not None:
+                parm = parm.replace("#workingdir",workingdir)
+                parm = parm.replace("#datacommons",datacommons)
+                parm = parm.replace("#pipeline",pipeline.field_id)
+                parm = parm.replace("#subject",subject.title)
+                parm = parm.replace("#session",session.title)
+                parm = parm.replace('#project',project.field_path_to_exam_data)
+                parm = parm.replace('#datasetdir',f"{workingdir}/projects/{project.field_path_to_exam_data}/datasets/")
+
+            if not k[0:7]=="sbatch-" and not k[0:5]=="hint-":
+                cmdArray.append(f"--{k}")
+                if parm is not None:
+                    cmdArray.append(parm) 
+    except Exception as e:
+        print(f"Parameter expansion failed. {e}")
+        raise e
+
+    #Check for project overrides:
+    overrides=project.get_overrides(task.uuid)
+    if(len(overrides)>0):
+        print(f"{ansi.WARNING}Project overrides detected{ansi.ENDC}")
+    for k in overrides:
+        v = overrides[k] if overrides[k] is not None else ""
+        print(f"\t{k}={v}")
+        cmdArray.append(f"--{k}")
+        if overrides[k] is not None:
+            cmdArray.append(f"{overrides[k]}")
+   
+    return cmdArray
+
+def add_time(timestr:str,multiplier:float):
+    time_components=timestr.split(":")
+    hrs=int(time_components[0])
+    min=int(time_components[1])
+    sec=int(time_components[2])
+    total_seconds=sec+min*60+hrs*60*60
+    new_total=total_seconds*multiplier
+    new_hrs=int(new_total/3600)
+    remainder=new_total % 3600
+    new_min=str(int(remainder/60)).zfill(2) if remainder/60<60 else "00"
+    remainder=remainder % 60
+    return f"{new_hrs}:{new_min.zfill(2)}:00"
+
+def getMultipliers(ti_uuid:str):
+    ti_col=TaskInstanceCollection(cms_host=crush_host)
+    if ti_col is not None:
+        ti=ti_col.get_one(ti_uuid)
+        if ti is not None:
+            if ti.field_multiplier_duration is None:
+                dur=None
+            else:
+                dur=float(ti.field_multiplier_duration)
+
+            if ti.field_multiplier_memory is None:
+                mem=None
+            else:
+                mem=float(ti.field_multiplier_memory)      
+            return dur, mem
+    return None,None
+    
+def derivative_dir(**kwargs):
+    
+    project=kwargs['project'] if 'project' in kwargs else ""        
+    subject=kwargs['subject'] if 'subject' in kwargs else ""        
+    session=kwargs['session'] if 'session' in kwargs else ""
+    workingdir=kwargs['workingdir'] if 'workingdir' in kwargs else aircrush.config['COMPUTE']['working_directory']
+    pipeline=kwargs['pipeline'] if 'pipeline' in kwargs else ""
+    
+    session_dir=f"/ses-{session.title}" if session is not None else ""
+    subject_dir=f"sub-{subject.title}" if subject is not None else ""
+    return f"{workingdir}/projects/{project.field_path_to_exam_data}/datasets/derivatives/{pipeline.field_id}/{subject_dir}{session_dir}"
+
+def createJob(parms_to_add,**kwargs):
+    
+    task=kwargs['task'] if 'task' in kwargs else None
+    taskinstance_uid=kwargs['taskinstance_uid'] if 'taskinstance_uid' in kwargs else None
+    project=kwargs['project'] if 'project' in kwargs else ""        
+    subject=kwargs['subject'] if 'subject' in kwargs else ""        
+    session=kwargs['session'] if 'session' in kwargs else ""
+    workingdir=kwargs['workingdir'] if 'workingdir' in kwargs else aircrush.config['COMPUTE']['working_directory']
+    datacommons=kwargs['datacommons'] if 'datacommons' in kwargs else aircrush.config['COMPUTE']['commons_path']
+    pipeline=kwargs['pipeline'] if 'pipeline' in kwargs else ""
+    bindings=kwargs['bindings'] if 'bindings' in kwargs else ""
+    container=kwargs['container'] if 'container' in kwargs else ""
+
+    sbatch_time = parms_to_add['sbatch-time'] if 'sbatch-time' in parms_to_add else ""
+    sbatch_account = aircrush.config['COMPUTE']['account']
+    sbatch_cpus_per_task = parms_to_add['sbatch-cpus-per-task'] if 'sbatch-cpus-per-task' in parms_to_add else ""
+    sbatch_mem_per_cpu = parms_to_add['sbatch-mem-per-cpu'] if 'sbatch-mem-per-cpu' in parms_to_add else ""
+
+    duration_multiplier,memory_multiplier=getMultipliers(taskinstance_uid)
+    try:        
+        if parse_size(sbatch_mem_per_cpu) != 0 and memory_multiplier is not None:
+            print(f"Attempting resize of memory from {parse_size(sbatch_mem_per_cpu)} ({sbatch_mem_per_cpu}) by {memory_multiplier} times multiplier.")
+            sbatch_mem_per_cpu=parse_size(sbatch_mem_per_cpu) * memory_multiplier            
+            sbatch_mem_per_cpu=millify(sbatch_mem_per_cpu) 
+            print(f"{ansi.OKGREEN}AUTO TUNE{ansi.ENDC}: Memory has been automatically incremented after detecting previous OOM errors.  New memory requirement is {sbatch_mem_per_cpu}")           
+    except Exception as e:
+        print(f"{ansi.WARNING} Failed to adjust memory{ansi.ENDC} ({e})")
+        print(f"sbatch_mem_per_cpu:{sbatch_mem_per_cpu}\n sbatch_mem_per_cpu formatted:{millify(sbatch_mem_per_cpu)}")
+        raise e
+
+    try:
+        if duration_multiplier is not None:
+            print(f"Attempting time increase from {sbatch_time} by {duration_multiplier}")
+            new_duration=add_time(sbatch_time,duration_multiplier)            
+            print(f"{ansi.OKGREEN}AUTO TUNE{ansi.ENDC}: Duration has been automatically incremented after detecting previous TIMEOUT errors.  New duration is {new_duration}")   
+            sbatch_time=new_duration
+    except Exception as e:
+        print(f"{ansi.WARNING} Failed to adjust duration{ansi.ENDC} ({e})\nI'll keep the old duration {sbatch_time}")
+        
+
+   
+    derivative=derivative_dir(workingdir=workingdir,
+                                project=project,
+                                subject=subject,
+                                session=session,
+                                pipeline=pipeline)
+    os.makedirs(derivative,exist_ok=True)
+    os.makedirs(f"{workingdir}/jobs/{project.field_path_to_exam_data}/{subject.title}",exist_ok=True)
+
+    attempt=1
+    
+    session_dir = f"{session.title}_" if session is not None else ""
+    
+    basefile=f"{workingdir}/jobs/{project.field_path_to_exam_data}/{subject.title}/{session_dir}{taskinstance_uid}_{attempt}"
+
+    while os.path.isfile(f"{basefile}.sl"):
+        attempt+=1
+        basefile=f"{workingdir}/jobs/{project.field_path_to_exam_data}/{subject.title}/{session_dir}{taskinstance_uid}_{attempt}"
+
+    jobfile=f"{basefile}.sl"
+    stdoutfile=f"{basefile}.out"
+    stderrfile=f"{basefile}.err"
+
+    ########
+
+    hint_overlay = parms_to_add['hint-overlay'] if 'hint-overlay' in parms_to_add else ""  
+    if hint_overlay != "":
+        overlay_file=f"{derivative}/{task.field_operator}_overlay.img"
+        overlay_create_cmd=f"if [[ ! -f {overlay_file} ]];then\n\tapptainer overlay create --size {hint_overlay} {overlay_file}\nfi"
+        overlay_command="--overlay"
+        workdir=f"{derivative}/temp"
+        workdir_command="--workdir"
+        os.makedirs(workdir,exist_ok=True)
+    else:
+        overlay_file=None
+        overlay_create_cmd=None
+        overlay_command=None
+        workdir=None
+        workdir_command=None
+    
+    hint_exec = parms_to_add['hint-exec'] if 'hint-exec' in parms_to_add else ""
+    if hint_exec != "":
+        cmdArray=["singularity","exec",
+        overlay_command if overlay_command is not None else "",
+        overlay_file if overlay_file is not None else "",
+        workdir_command if workdir_command is not None else "",
+        workdir if workdir is not None else "",
+        bindings if bindings is not None else "",
+        container,
+        hint_exec]         
+
+    else:   
+        cmdArray=["singularity","run","--app",
+        task.field_operator,
+        overlay_command if overlay_command is not None else "",
+        overlay_file if overlay_file is not None else "",
+        workdir_command if workdir_command is not None else "",
+        workdir if workdir is not None else "",
+        bindings if bindings is not None else "",
+        container] 
+    
+    cmdArray = parameter_expansion(cmdArray,parms_to_add,
+        datacommons=datacommons,
+        workingdir=workingdir,
+        project=project,
+        subject=subject,
+        session=session,
+        pipeline=pipeline,
+        task=task)  
+
+    ########
+    if 'hint-internet' in parms_to_add:
+        conf = open(jobfile, "w") 
+        L = [
+            "#!/bin/bash",           
+            "module load singularity/3.8",
+            overlay_create_cmd if not overlay_create_cmd is None else "",
+            ' '.join(cmdArray),
+            ""
+        ]
+        for ll in L:
+            print(ll)
+        
+        job_script = '\n'.join(L)
+        conf.write(job_script) 
+        conf.close() 
+        print(f"NON Slurm job written to {ansi.OKGREEN}{jobfile}{ansi.ENDC}")
+        toreturn={}
+        toreturn['jobfile']=jobfile
+        toreturn['stdout']=stdoutfile
+        toreturn['stderr']=stderrfile
+        return toreturn
+
+    else:
+
+        conf = open(jobfile, "w") 
+        L = [
+            "#!/bin/bash",
+            f"#SBATCH -e {stderrfile}",
+            f"#SBATCH -o {stdoutfile}",
+            f"#SBATCH --time {sbatch_time}" if not sbatch_time=="" else "",
+            f"#SBATCH --account {sbatch_account}" if not sbatch_account=="" else "",
+            f"#SBATCH --cpus-per-task {sbatch_cpus_per_task}" if not sbatch_cpus_per_task=="" else "",
+            f"#SBATCH --mem-per-cpu {sbatch_mem_per_cpu}" if not sbatch_mem_per_cpu=="" else "",
+            "module load singularity/3.8",
+            overlay_create_cmd if not overlay_create_cmd is None else "",
+            ' '.join(cmdArray),
+            ""
+        ]
+        for ll in L:
+            print(ll)
+        
+        job_script = '\n'.join(L)
+        conf.write(job_script) 
+        conf.close() 
+        print(f"Slurm job written to {ansi.OKGREEN}{jobfile}{ansi.ENDC}")
+        toreturn={}
+        toreturn['jobfile']=jobfile
+        toreturn['stdout']=stdoutfile
+        toreturn['stderr']=stderrfile
+        return toreturn
+
+
+
+def doSomething():
+    
+    #nuid = "4d065840-dd33-44dc-be97-623e7d743bce" #dmattie on narval
+    nuid,isready = getMyComputeNodeUUID() 
+    
+    print(f"{ansi.HEADER}Updating sessions allocated to this worker{ansi.ENDC}",flush=True)
+    sensors.check_running_jobs(nuid,aircrush=aircrush,cms_host=crush_host)
+    # CHECK RECURRING PIPELINES
+    sensors.cascade_status_to_subject(nuid,aircrush=aircrush,cms_host=crush_host)
+
+    if args.statusonly:
+        return
+
+    if isready==Readiness.NOT_READY:
+        print("This worker node is not ready to do more.")
+        return   
+
+    if isready==Readiness.READY:
+        print(f"{ansi.HEADER}Allocating new tasks{ansi.ENDC}",flush=True)
+    elif isready==Readiness.LIMITED:
+        print(f"{ansi.HEADER}Advancing currently allocated sessions{ansi.ENDC}",flush=True)
+    w=Workload(aircrush) #The list of things to do
+    
+    todo = w.get_next_task(node_uuid=nuid) #Do whatever the big brain tells us to do next
+    
+    if args.nibble:
+        tpc=1    
+    else:
+        tpc=config.get_tasks_per_cycle()  #This setting configures the number of loops to make(number of jobs to launch) per run.
+    
+    while(tpc>0 and todo):
+        tpc=tpc-1
+        if(todo):  #Todo is a TaskInstance    
+
+            workingdir=aircrush.config['COMPUTE']['working_directory']   
+            datacommons=aircrush.config['COMMONS']['commons_path']     
+            task_counter=1
+            task_counter_limit=50
+            while (todo): 
+                #print("----------Got one-------------")  
+                task_col =  TaskCollection(cms_host=crush_host)
+                task = task_col.get_one(uuid=todo.field_task)    
+
+
+
+                messages=[]
+                now = datetime.datetime.now()
+                    
+                try:
+                    #updateStatus(todo,"running","","")
+                    messages.append(f"Invoking operator: {task.field_operator} =====================")        
+                    messages.append(f"Current date and time: {str(now)}")        
+
+                    session_col = SessionCollection(cms_host=crush_host)
+                    session = session_col.get_one(todo.field_associated_participant_ses)
+                    pipeline = task.pipeline()
+
+                    subject=None
+                    project=None
+
+                    if not session == None:
+                        subject = session.subject()
+                        if not subject == None:
+                            project = subject.project()
+                            
+                    if project == None:
+                        print(f"ERROR: Assigned session {session.title} is orphaned or the project is unpublished")
+                        continue
+                
+                    try:    
+                        container = data_transfer.pullContainer(task.field_singularity_container,args.container)
+                    except Exception as e:
+                        print(e)
+                        return
+
+                    bindings=""
+                    if args.bind:
+                        mounts=args.bind.split() 
+                        for mount in mounts:            
+                            bindings=bindings+f"-B {mount} "
+                    else:
+                        if aircrush.config.has_option('COMPUTE','bindings'):        
+                            bindings=aircrush.config['COMPUTE']['bindings']
+                        
+            
+                    try:
+                        parms = ast.literal_eval(task.field_parameters) 
+                    except:
+                        msg=f"Parameters for task {task.field_operator} are malformed. Expected valid JSON string:{task.field_parameters}"
+                        print(msg)
+                        
+                        sys.exit(1)    
+
+    
+                    prereq_res = True
+                    if prereq_res == False:
+                            print_statusline(f"{project.title}:{subject.title}/{session.title} Prerequisites not met.  Attempts remaining:{task_counter}/{task_counter_limit}")                           
+                            if task_counter>task_counter_limit:
+                                return
+                            else:
+                                task_counter=task_counter+1
+                            continue   
+                    
+                    print()
+
+                
+                    print(f"Pulling any necessary data for operation") 
+
+                    #pull_data("source",project,subject,session)
+
+                    states,pipelines = sensors.count_session_ti_states(session,crush_host=crush_host)
+
+                    count_running=states['running']
+                    count_failed=states['failed']
+                    count_completed=states['completed']
+                    count_notstarted=states['notstarted']
+                    count_processed=states['processed']
+                    count_waiting=states['waiting']
+                    count_limping=states['limping']
+
+                    #if count_completed==0 and count_running==0 and count_processed==0 and count_limping==0:
+                        #print("No previous retrieval of this session from the data commons. Fetching now...")
+                    data_transfer.pull_data("rawdata",project,subject,session)
+                    data_transfer.pull_data("derivatives",project,subject,session)
+                    
+                    print("Creating job")
+                    jobfiles = createJob(parms,
+                        datacommons=datacommons,
+                        workingdir=workingdir,
+                        project=project,
+                        subject=subject,
+                        session=session,
+                        pipeline=pipeline,
+                        taskinstance_uid=todo.uuid,
+                        task=task,
+                        bindings=bindings,
+                        container=container)    
+        
+                    if sensors.is_slurm_script(jobfiles['jobfile']):
+                            
+                        sbatch_cmd=["sbatch",jobfiles['jobfile']]
+                        
+                        ret = subprocess.run(sbatch_cmd, 
+                                        cwd=aircrush.config['COMPUTE']['working_directory'],                              
+                                        capture_output=True,
+                                        text=True,                                
+                                        timeout=60)      
+                                        #shell=True,                                       
+                                        #  stdout=subprocess.PIPE,
+                                        # stderr=subprocess.PIPE,                 
+
+                        if ret.returncode==0:
+                            jobid=sensors.get_slurm_id(ret.stdout)
+                            print(f"SLURM assigned job id:{jobid}")
+                            if jobid!=0:
+                                todo.field_jobid=jobid
+                                todo.field_seff=""
+                                todo.field_errorfile=jobfiles['stderr']
+                                todo.field_logfile=jobfiles['stdout']
+
+                                if os.path.isfile(jobfiles['jobfile']):
+                                    sbatch_contents_handle = open(jobfiles['jobfile'],'r')
+                                    sbatch_contents = sbatch_contents_handle.read()
+                                    messages.append(sbatch_contents)
+
+                                #updateStatus(todo,"running",'<br/>\n'.join(messages),ret.stderr)
+                                todo.body = '<br/>\n'.join(messages)
+                                todo.field_errorlog=ret.stderr
+                                todo.field_status="running"
+                                todo.upsert()
+                            else:
+                                messages.append(f"\nERROR: SLURM ID returned was unexpectedly 0.")  
+                                #updateStatus(todo,"failed",'<br/>\n'.join(messages),ret.stderr)
+                                todo.body = '<br/>\n'.join(messages)
+                                todo.field_errorlog=ret.stderr
+                                todo.field_status="failed"
+                                todo.upsert()
+                        else:
+                            print(ret.stderr)
+                            todo.body = '<br/>\n'.join(messages)
+                            todo.field_errorlog=ret.stderr
+                            todo.field_status="failed"
+                            todo.upsert()
+                
+                            #updateStatus(todo,"failed",'<br/>\n'.join(messages),ret.stderr)
+                    else:
+                        print(f"{ansi.WARNING}Task running realtime (outside of SLURM scheduler).  This is expected to be a quick task (<2min) {ansi.ENDC} CWD={aircrush.config['COMPUTE']['working_directory']}")
+                        sbatch_cmd=["bash",jobfiles['jobfile']]
+                        
+                        ret = subprocess.run(sbatch_cmd, 
+                                        cwd=aircrush.config['COMPUTE']['working_directory'],                              
+                                        capture_output=True,
+                                        text=True)  
+                        
+                        fout = open(jobfiles['stdout'], "a")                    
+                        fout.write(ret.stdout)
+                        fout.close()  
+
+                        ferr = open(jobfiles['stderr'], "a")
+                        ferr.write(ret.stderr)
+                        ferr.close()                     
+    ########
+                        if ret.returncode==0:
+                            todo.body = ret.stdout
+                            todo.field_errorlog=ret.stderr
+                            todo.field_status="completed"
+                            todo.upsert()
+                        else:
+                            print(ret.stderr)
+                            todo.body = ret.stdout
+                            todo.field_errorlog=ret.stderr
+                            todo.field_status="failed"
+                            todo.upsert()
+                    if not session == None:
+                        session.field_status=todo.field_status
+                        session.upsert()
+                    if not subject == None:
+                        subject.field_status=todo.field_status
+                        subject.upsert()
+                
+                except Exception as e:
+                    print(e)
+                    print("An error has accurred.  Unable to proceed.  See previous messages.")
+                    if hasattr(e, 'message'):
+                        new_errors=e.message
+                    else:
+                        new_errors=str(e)
+                    messages.append(f"Current date and time: {str(now)}")  
+                    todo.field_status="failed"
+                    todo.body = '<br/>\n'.join(messages)
+                    todo.field_errorlog=new_errors
+                    todo.upsert()
+                    
+                todo=None
+                print("Job submitted",flush=True)
+                
+        else:
+            print(f"{ansi.WARNING}Nothing to do.{ansi.ENDC}")
+
+        if tpc>0:
+            todo = w.get_next_task(node_uuid=nuid) #Do whatever the big brain tells us to do next
+
+
+   
+
+def updateStatus(task_instance,status:str,detail:str="",new_errors:str=""):
+    # Valid statuses
+    ###########################
+    # notstarted,running,failed,completed
+    task_instance.field_status=status        
+    task_instance.body = detail
+    task_instance.field_errorlog = new_errors
+
+    if status=="failed":
+        color=f"{ansi.FAIL}"
+        ses=task_instance.associated_session()
+        sub=ses.subject()
+        proj=sub.project()        
+        if proj.field_treat_failed_as_terminal==True:
+            task_instance.field_status="terminal"
+            print(f"{ansi.WARNING}AUTO{ansi.ENDC} Project is set to terminate sessions on failure, no re-attempts")
+        print(f"status {task_instance.title}->{ansi.FAIL}{status}{ansi.ENDC}")
+    else:
+        print(f"status {task_instance.title}->{ansi.OKCYAN}{status}{ansi.ENDC}")    
+    uuid=task_instance.upsert()
+ 
+def main():
+
+    global aircrush,crush_host,args
+    print("\n###################\nWelcome to Aircrush\n###################\n")
+    parser = argparse.ArgumentParser(
+        description="CRUSH client command line utility. Start all tasks with this command")
+    
+    parser.add_argument('-sync',action='store_true',
+        help="Synchronize subjects and exams in the data commons with the CMS")
+
+    parser.add_argument('-container',action='store',type=str,
+        help="Specify a local container to override whatever the pipeline task intends to use.")
+    parser.add_argument('-purge',action='store_true',
+        help='Permanently remove all task instances, sessions, and subjects from the CMS' )
+    parser.add_argument('-republish',action='store_true',
+        help='For any objects in CMS that are unpublished, re-publish them if they probably should be')
+    parser.add_argument('-bind',action='store',type=str,
+        help='A comma separated list of directories that should be bound to the singularity container so files are accessible to the container')
+    parser.add_argument('-statusonly',action='store_true',
+        help="Update the status of running jobs, do not invoke more work")
+    parser.add_argument('-skiptests',action='store_true',
+        help="Skip pre-req tests e.g. (available disk check, concurrency limits), etc.")
+    parser.add_argument('-nibble',action='store_true',
+        help="Perform only one task rather than the max (see ~/.crush.ini [COMPUTE] tasks_per_cycle)")
+    parser.add_argument('-project',action='store',type=str,
+        help='Only perform work related to the specified project, ignore all other projects')
+    args = parser.parse_args()
+    print(args)
+
+    print("Validating configuration")
+    aircrush=setup.ini_settings()
+    if not setup.validate_config():
+        print ("Configuration incomplete")
+        exit(1)
+
+    try:
+        crush_host=config.get_cms_host()
+    except Exception as e:
+        print("[ERROR] Unable to connect to CMS.  Check host and settings found in ~/.crush.ini; in section [REST].  Is the CMS accessible?")
+        print(e)
+        sys.exit(1)
+
+    try:
+        os.putenv('AIRCRUSH_CONTAINERS',aircrush.config['COMPUTE']['singularity_container_location'])
+    except:
+        print("[ERROR] .ini setting now found; expected 'singularity_container_location' in section [COMPUTE]")
+        sys.exit(1)
+    if (args.sync):
+            housekeeping.doSync(args.project)
+    exit()
+    if (args.purge):
+        housekeeping.purge()
+        exit()
+    
+    if ready():
+        doSomething()
+
+if __name__ == '__main__':
+    main()
+
+
+   
