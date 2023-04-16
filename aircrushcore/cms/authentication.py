@@ -68,8 +68,9 @@ class host_connection:
                 head={"Content-type": "application/vnd.api+json" }
                 url=f"{self.endpoint}user/login?_format=json"            
                 payload='{"name":"%s","pass":"%s"}' %(self.username,self.password)            
-
+                
                 for iter in range(5):
+                    print(f"posting payload {payload}")
                     r = self.Session.post(url, payload,headers=head)#, headers=head)#,auth=(u, p))
                     try:
                         self.csrf_token=r.json()['csrf_token']
