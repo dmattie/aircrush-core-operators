@@ -672,7 +672,7 @@ def main():
         sys.exit(1)
     if (args.sync):
             housekeeping.doSync(args.project)
-    exit()
+    
     if (args.purge):
         housekeeping.purge()
         exit()
