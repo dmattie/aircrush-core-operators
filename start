@@ -3,7 +3,7 @@
 import argparse
 import warnings
 warnings.filterwarnings(action='ignore',module='asyncssh')
-
+import logging
 from aircrushcore.dag import Workload
 from aircrushcore.cms import *
 from aircrushcore.common.enumerators import Readiness
@@ -355,7 +355,9 @@ def createJob(parms_to_add,**kwargs):
         toreturn['stderr']=stderrfile
         return toreturn
 
-
+def verbose(str):
+    if (args.verbose):
+        logging.debug(str)
 
 def doSomething():
     
@@ -622,7 +624,7 @@ def updateStatus(task_instance,status:str,detail:str="",new_errors:str=""):
     else:
         print(f"status {task_instance.title}->{ansi.OKCYAN}{status}{ansi.ENDC}")    
     uuid=task_instance.upsert()
- 
+
 def main():
 
     global aircrush,crush_host,args
@@ -641,6 +643,8 @@ def main():
         help='For any objects in CMS that are unpublished, re-publish them if they probably should be')
     parser.add_argument('-bind',action='store',type=str,
         help='A comma separated list of directories that should be bound to the singularity container so files are accessible to the container')
+    parser.add_argument('-verbose',action='store_true',
+        help='Increase verbosity of output')
     parser.add_argument('-statusonly',action='store_true',
         help="Update the status of running jobs, do not invoke more work")
     parser.add_argument('-skiptests',action='store_true',
@@ -650,12 +654,11 @@ def main():
     parser.add_argument('-project',action='store',type=str,
         help='Only perform work related to the specified project, ignore all other projects')
     args = parser.parse_args()
-    print(args)
 
-    print("Validating configuration")
+    verbose("Validating configuration")
     aircrush=setup.ini_settings()
     if not setup.validate_config():
-        print ("Configuration incomplete")
+        verbose("Configuration incomplete")
         exit(1)
 
     try:
@@ -671,13 +674,16 @@ def main():
         print("[ERROR] .ini setting now found; expected 'singularity_container_location' in section [COMPUTE]")
         sys.exit(1)
     if (args.sync):
+            verbose("housekeeping.doSync()")
             housekeeping.doSync(args.project)
     
     if (args.purge):
+        verbose("housekeeping.purge()")
         housekeeping.purge()
         exit()
     
     if ready():
+        verbose("doSomething")
         doSomething()
 
 if __name__ == '__main__':
