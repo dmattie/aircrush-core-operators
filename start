@@ -8,6 +8,7 @@ from aircrushcore.dag import Workload
 from aircrushcore.cms import *
 from aircrushcore.common.enumerators import Readiness
 
+
 from os.path import exists,dirname
 import os,sys
 import importlib
@@ -331,6 +332,7 @@ def createJob(parms_to_add,**kwargs):
         conf = open(jobfile, "w") 
         L = [
             "#!/bin/bash",
+            f"#SBATCH --job-name {subject.title}/{session.title}/{task.field_operator}"
             f"#SBATCH -e {stderrfile}",
             f"#SBATCH -o {stdoutfile}",
             f"#SBATCH --time {sbatch_time}" if not sbatch_time=="" else "",
@@ -355,9 +357,6 @@ def createJob(parms_to_add,**kwargs):
         toreturn['stderr']=stderrfile
         return toreturn
 
-def verbose(str):
-    if (args.verbose):
-        logging.debug(str)
 
 def doSomething():
     
@@ -653,12 +652,17 @@ def main():
         help="Perform only one task rather than the max (see ~/.crush.ini [COMPUTE] tasks_per_cycle)")
     parser.add_argument('-project',action='store',type=str,
         help='Only perform work related to the specified project, ignore all other projects')
+    parser.add_argument('-renderpipeline',action='store',type=str,
+        help='Display a visual representation of a specified pipeline')
     args = parser.parse_args()
+    if (args.verbose):
+        logging.basicConfig(level=logging.DEBUG)    
+        logging.debug('Verbosity turned on')
 
-    verbose("Validating configuration")
+    logging.debug("Validating configuration")
     aircrush=setup.ini_settings()
     if not setup.validate_config():
-        verbose("Configuration incomplete")
+        logging.debug("Configuration incomplete")
         exit(1)
 
     try:
@@ -673,17 +677,24 @@ def main():
     except:
         print("[ERROR] .ini setting now found; expected 'singularity_container_location' in section [COMPUTE]")
         sys.exit(1)
+    if (args.renderpipeline):
+            logging.debug("render_pipeline")
+            housekeeping.render_pipeline(args.renderpipeline)
+    
+
+            
+            return
     if (args.sync):
-            verbose("housekeeping.doSync()")
+            logging.debug("housekeeping.doSync()")
             housekeeping.doSync(args.project)
     
     if (args.purge):
-        verbose("housekeeping.purge()")
+        logging.debug("housekeeping.purge()")
         housekeeping.purge()
-        exit()
+        return
     
     if ready():
-        verbose("doSomething")
+        logging.debug("doSomething")
         doSomething()
 
 if __name__ == '__main__':

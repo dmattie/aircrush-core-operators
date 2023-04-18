@@ -3,6 +3,7 @@ from .task import Task
 import traceback
 import uuid
 import asyncio, asyncssh, sys
+import logging
 class TaskCollection():
 
     def __init__(self,**kwargs):    
@@ -45,6 +46,7 @@ class TaskCollection():
             filter=""
 
         url=f"jsonapi/node/task?{filter}{filter_uuid}"
+        logging.debug(url)
             
         r = self.HOST.get(url)
         if r.status_code==200:  #We can connect to CRUSH host           

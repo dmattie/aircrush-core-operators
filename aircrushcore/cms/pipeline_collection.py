@@ -3,6 +3,7 @@ from .pipeline import Pipeline
 import traceback
 import uuid
 import asyncio, asyncssh, sys
+import logging
 class PipelineCollection():
 
     def __init__(self,**kwargs):    
@@ -21,6 +22,15 @@ class PipelineCollection():
             return x
         else:
             return None
+    def get_one_by_id(self,pipeline_id:str):
+        filter_string=f"filter[field_id][value]={pipeline_id}"
+        logging.debug(filter_string)
+        col=self.get(filter=filter_string)
+
+        if(len(col)>0):
+            logging.debug(f"Length of pipeline collection found:{len(col)}")
+            p = col[list(col)[0]]
+            return p
             
     def get(self,**kwargs):
         pipelines={}    
@@ -30,8 +40,14 @@ class PipelineCollection():
             filter_uuid=f"&filter[id][value]={uuid}"
         else:
             filter_uuid=""    
+        
+        if 'filter' in kwargs:
+            filter_arg=kwargs['filter']        
+            
+        else:
+            filter_arg=""
 
-        url=f"jsonapi/node/pipeline?{filter_uuid}"
+        url=f"jsonapi/node/pipeline?{filter_uuid}{filter_arg}"
         
         r = self.HOST.get(url)
         if r.status_code==200:  #We can connect to CRUSH host           

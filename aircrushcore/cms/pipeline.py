@@ -1,4 +1,3 @@
-
 class Pipeline():
     
     def __init__(self,**kwargs):
@@ -31,6 +30,10 @@ class Pipeline():
                 self.uuid=m['uuid']
         if "cms_host" in m:
             self.HOST=m['cms_host']      
+    def __repr__(self):
+        to_return=self.title
+        to_return+=f"\n\t{self.field_id}"
+        return to_return
 
     def upsert(self):
 
