@@ -200,7 +200,7 @@ class TaskInstance():
         return pipeline
     def isManual(self):
         task = TaskCollection(cms_host=self.HOST).get_one(uuid=self.field_task)
-        if task.field_manual_task==True:
+        if task is not None and task.field_manual_task==True:
             return True
         else:
             return False
