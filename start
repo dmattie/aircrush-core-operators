@@ -681,12 +681,13 @@ def main():
     if (args.x):
         w=Workload(aircrush) #The list of things to do
         tic=TaskInstanceCollection(cms_host=crush_host)
-        ti=tic.get_one(uuid='91474596-cf27-46e4-b3ae-a10d9915e363')
+        ti=tic.get_one(uuid='bb6cfc85-0aba-4c0a-bcf7-f3c7fe69d468')
         #print(ti)
         sc=SessionCollection(cms_host=crush_host)
-        session=sc.get_one(uuid='cc5bc00c-df17-4f1c-a40e-496c9e09aa8d')
+        session=sc.get_one(uuid='1813b650-c609-44e5-9ce7-eca815b4aedc')
         #print(session)
-        has_dependencies=w.has_unmet_pipeline_dependencies(ti,session)
+        #has_dependencies=w.has_unmet_pipeline_dependencies(ti,session)
+        has_dependencies=w.unmet_dependencies(ti)
         print(has_dependencies)
 
         exit(0)

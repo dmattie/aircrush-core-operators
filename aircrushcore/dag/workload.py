@@ -223,18 +223,22 @@ class Workload:
             logging.debug(f"Found {len(tc_col)} tasks for this pipeline")
             for task in tc_col:                
                 #Need to create new taskinstance collection for teach task
-                tic_per_task=TaskInstanceCollection(cms_host=self.crush_host, task=task,session=session)
+                tic_per_task=TaskInstanceCollection(cms_host=self.crush_host, task=task,session=session.uuid)
                 ti_per_task_col=tic_per_task.get()
+
                 #thinknig out loud, maybe we write a function on session All_tis_created()
                 if len(ti_per_task_col)==0:
 
                     #Ti not created yet for this task, so pipeline must not have finished
+                    logging.debug("Found task for pipeline dependency without TI.  Must not be completed")                                    
                     return True
                 else:
-                    #There should be only one it it was created at all
-                    #Let's see if it was finished
-                    if ti_per_task_col[0].field_status!="processed" and ti_per_task_col[0].field_status!="completed":
-                        return True
+                    for ti_per_task_col_uuid in ti_per_task_col:                    
+                        #There should be only one it it was created at all
+                        #Let's see if it was finished                        
+                        if ti_per_task_col[ti_per_task_col_uuid].field_status!="processed" and ti_per_task_col[ti_per_task_col_uuid].field_status!="completed":
+                            logging.debug("Found incomplete TI for subtask of dependent pipeline")
+                            return True
                     
                 
                 
@@ -249,7 +253,8 @@ class Workload:
         # Check for any pipeline dependencies and ensure those have completed for this sub/ses
         ######
         if self.has_unmet_pipeline_dependencies(task,session):
-            return False
+            logging.info(f"Candidate TI ({candidate_ti.title}) Has unmet pipeline dependencies")
+            return True
 
         ########
         # Check for any task dependencies and ensure those have completed for this sub/ses
