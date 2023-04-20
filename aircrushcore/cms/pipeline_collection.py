@@ -77,6 +77,10 @@ class PipelineCollection():
             
                 uuid=item['id']
 
+                prereqs=[]
+                for pre in item['relationships']['field_pipeline_dependencies']['data']:
+                    prereqs.append(pre)
+
                 metadata={    
                     "title":item['attributes']['title']  ,                            
                     "field_author":item['attributes']['field_author'],   
@@ -84,6 +88,7 @@ class PipelineCollection():
                     "body":item['attributes']['body'],
                     "field_id":item['attributes']['field_id'],
                     "field_plugin_warnings":item['attributes']['field_plugin_warnings'],
+                    "field_pipeline_dependencies":prereqs,
                     "uuid":uuid,
                     "cms_host":self.HOST                                               
                 }

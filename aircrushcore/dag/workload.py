@@ -2,11 +2,12 @@ from aircrushcore.cms.task_instance_collection import TaskInstanceCollection
 from aircrushcore.cms.task_instance import TaskInstance
 from aircrushcore.controller.configuration import AircrushConfig
 #from aircrushcore.cms.host import Host
-from aircrushcore.cms import Host,Task,TaskCollection,ComputeNodeCollection,ComputeNode,SessionCollection,ProjectCollection,SubjectCollection
+from aircrushcore.cms import Host,Task,TaskCollection,ComputeNodeCollection,ComputeNode,SessionCollection,ProjectCollection,SubjectCollection,PipelineCollection,Pipeline
 from aircrushcore.compute.compute_node_connection import ComputeNodeConnection
 from aircrushcore.compute.compute import Compute
 import subprocess
 import urllib
+import logging
 
 HEADER = '\033[95m'
 OKBLUE = '\033[94m'
@@ -20,12 +21,12 @@ UNDERLINE = '\033[4m'
 
 class Workload:
     def __init__(self,aircrush:AircrushConfig):            
-        self.aircrush=aircrush 
+        self.aircrush=aircrush        
         self.crush_host=Host(
             endpoint=aircrush.config['REST']['endpoint'],
             username=aircrush.config['REST']['username'],
             password=aircrush.config['REST']['password']
-            )  
+        )  
         try:
             self.concurrency_limit=int(aircrush.config['COMPUTE']['concurrency_limit'])
         except Exception as e:
@@ -179,12 +180,75 @@ class Workload:
         out, _ = process.communicate()
         return (process.returncode, out)
 
+    def has_unmet_pipeline_dependencies(self,task,session):
+        #Take a given task, get it's pipeline, and see if that pipeline has incomplete prerequisites
+        #if it does, check for completion on the specified session
+        pipeline=task.pipeline()
+        logging.debug(f"Check for unmet pipeline dependencies for task {task} in session {session} belonging to pipeline {pipeline}")
+        logging.debug(f"Dependencies: {pipeline.field_pipeline_dependencies}")
+        for dependency in pipeline.field_pipeline_dependencies:
+            #Let's try the speedy test first, if we find an incomplete already instantiated, return true   
+            # 
+            # Collect the pipeline dependency 
+            logging.debug(f"digging into dependency {dependency}")
+            pipe_coll_obj=PipelineCollection(cms_host=self.crush_host)
+            dependency_object=pipe_coll_obj.get_one(uuid=dependency['id'])
+            if dependency_object is None:
+                #Orphaned dependency
+                print("WARNING:Pipeline of task has a dependency that may be orphaned")
+                return False
+            logging.debug(dependency_object)
+            
+
+            logging.debug(f"Investigating pipeline {dependency}")         
+            tic=TaskInstanceCollection(cms_host=self.crush_host,pipeline=dependency_object.field_id, session=session)
+            filter="&filter[status-filter][condition][path]=field_status&filter[status-filter][condition][operator]=NOT%20IN&filter[status-filter][condition][value][1]=completed&filter[status-filter][condition][value][2]=processed"
+            tic_col=tic.get(filter=filter)
+            
+            if len(tic_col)>0:
+                #There is an outstanding task instance not yet complete
+                
+                logging.debug(f"Quick check: task {task.title} with instance {tic_col} is completed for this session")
+                return True      
+            logging.debug(f"Long check for incomplete task instances of pipeline dependency: {pipeline}")
+            # Task instances are created on demand so may not exist yet.  
+            # Lets see if all tasks are accounted for   
+            tc=TaskCollection(cms_host=self.crush_host,pipeline=dependency_object.uuid)
+            tc_col=tc.get()
+            logging.debug(f"Found {len(tc_col)} tasks for this pipeline")
+            for task in tc_col:                
+                #Need to create new taskinstance collection for teach task
+                tic_per_task=TaskInstanceCollection(cms_host=self.crush_host, task=task,session=session)
+                ti_per_task_col=tic_per_task.get()
+                #thinknig out loud, maybe we write a function on session All_tis_created()
+                if len(ti_per_task_col)==0:
+
+                    #Ti not created yet for this task, so pipeline must not have finished
+                    return True
+                else:
+                    #There should be only one it it was created at all
+                    #Let's see if it was finished
+                    if ti_per_task_col[0].field_status!="processed" and ti_per_task_col[0].field_status!="completed":
+                        return True
+                    
+                
+                
+        return False
     def unmet_dependencies(self,candidate_ti:TaskInstance):
         task=candidate_ti.task_definition()
         session=candidate_ti.associated_session()
         if session is None:
             raise Exception(f"{FAIL}[ERROR]{ENDC} Task instance appears to be orphaned.  No associated session.")
-             
+
+        ########
+        # Check for any pipeline dependencies and ensure those have completed for this sub/ses
+        ######
+        if self.has_unmet_pipeline_dependencies(task,session):
+            return False
+
+        ########
+        # Check for any task dependencies and ensure those have completed for this sub/ses
+        ########
         session_uuid=session.uuid
         for prereq_task in task.field_prerequisite_tasks:
             #for the given task, find dependent tasks with incomplete task instances 

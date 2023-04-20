@@ -654,13 +654,13 @@ def main():
         help='Only perform work related to the specified project, ignore all other projects')
     parser.add_argument('-renderpipeline',action='store',type=str,
         help='Display a visual representation of a specified pipeline')
+    parser.add_argument('-x',action='store_true',help='Beta Test')
     args = parser.parse_args()
     if (args.verbose):
         logging.basicConfig(level=logging.DEBUG)    
         logging.debug('Verbosity turned on')
 
-    logging.debug("Validating configuration")
-    aircrush=setup.ini_settings()
+    aircrush=setup.ini_settings()    
     if not setup.validate_config():
         logging.debug("Configuration incomplete")
         exit(1)
@@ -677,6 +677,20 @@ def main():
     except:
         print("[ERROR] .ini setting now found; expected 'singularity_container_location' in section [COMPUTE]")
         sys.exit(1)
+
+    if (args.x):
+        w=Workload(aircrush) #The list of things to do
+        tic=TaskInstanceCollection(cms_host=crush_host)
+        ti=tic.get_one(uuid='91474596-cf27-46e4-b3ae-a10d9915e363')
+        #print(ti)
+        sc=SessionCollection(cms_host=crush_host)
+        session=sc.get_one(uuid='cc5bc00c-df17-4f1c-a40e-496c9e09aa8d')
+        #print(session)
+        has_dependencies=w.has_unmet_pipeline_dependencies(ti,session)
+        print(has_dependencies)
+
+        exit(0)
+
     if (args.renderpipeline):
             logging.debug("render_pipeline")
             housekeeping.render_pipeline(args.renderpipeline)

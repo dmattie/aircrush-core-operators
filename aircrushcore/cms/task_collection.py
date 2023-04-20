@@ -52,6 +52,7 @@ class TaskCollection():
         if r.status_code==200:  #We can connect to CRUSH host           
               
             if len(r.json()['data'])!=0:
+                logging.debug(r.json)
                 not_done=True
                 while not_done:
 
@@ -63,6 +64,8 @@ class TaskCollection():
                         r = self.HOST.get(r.json()['links']['next']['href'])
                     else:
                         not_done=False  
+            else:
+                logging.debug("nothing found")
                               
             return tasks
         else:

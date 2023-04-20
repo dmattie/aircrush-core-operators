@@ -8,6 +8,7 @@ class Pipeline():
         self.body=""
         self.field_id=""
         self.field_plugin_warnings=""
+        self.field_pipeline_dependencies=""
         self.uuid=None
         self.HOST=None
 
@@ -24,7 +25,9 @@ class Pipeline():
         if 'field_id' in m:
             self.field_id=m['field_id']
         if 'field_plugin_warnings' in m:
-            self.field_plugin_warnings=m['field_plugin_warnings']            
+            self.field_plugin_warnings=m['field_plugin_warnings']   
+        if 'field_pipeline_dependencies' in m:
+                self.field_pipeline_dependencies=m['field_pipeline_dependencies']         
         if 'uuid' in m:
             if m['uuid'] != "":
                 self.uuid=m['uuid']
@@ -49,9 +52,20 @@ class Pipeline():
                             "value":self.body,
                         },
                         "field_plugin_warnings":self.field_plugin_warnings
-                    }                               
+                    },
+                    "relationships":{
+                        "field_pipeline_dependencies":{
+                            "data":[]          
+                        }                                
+                    }
                 }
             }
+            for prereq in self.field_pipeline_dependencies:                
+                prereq_obj = {
+                    "type":"node--pipeline",
+                    "id":self.prereq.uuid
+                    }
+                payload.data.relationships.field_pipeline_dependencies.append(prereq_obj)
             
             if self.uuid:   #Update existing                  
                 payload['data']['id']=self.uuid                                                                  
