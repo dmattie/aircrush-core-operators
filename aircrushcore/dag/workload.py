@@ -183,6 +183,11 @@ class Workload:
     def has_unmet_pipeline_dependencies(self,task,session):
         #Take a given task, get it's pipeline, and see if that pipeline has incomplete prerequisites
         #if it does, check for completion on the specified session
+        if task is None:
+            #This can occur if a task has been unpublished
+            logging.error("A task has been submitted to check for unmet pipeline dependencies, but task is none.  It may be unpublished.  Session {session}")
+            return False
+        
         pipeline=task.pipeline()
         logging.debug(f"Check for unmet pipeline dependencies for task {task} in session {session} belonging to pipeline {pipeline}")
         logging.debug(f"Dependencies: {pipeline.field_pipeline_dependencies}")
