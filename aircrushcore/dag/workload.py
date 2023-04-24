@@ -155,6 +155,8 @@ class Workload:
                             else:
                                 print()
                                 continue
+                    else:
+                        print("has unmet dependencies")
                 # else:
                 #     print(f"skipping {ti.title}...session allocated to another node")
     def duration_since_job_end(self,jobid):
