@@ -254,7 +254,7 @@ class Workload:
         ######
         if self.has_unmet_pipeline_dependencies(task,session):
             logging.info(f"Candidate TI ({candidate_ti.title}) Has unmet pipeline dependencies")
-            print(f"\t{WARNING} has unmet dependencies in other pipelines") 
+            print(f"\t{WARNING} has unmet dependencies in other pipelines{ENDC}") 
             return True
 
         ########
