@@ -155,8 +155,6 @@ class Workload:
                             else:
                                 print()
                                 continue
-                    else:
-                        print("has unmet dependencies")
                 # else:
                 #     print(f"skipping {ti.title}...session allocated to another node")
     def duration_since_job_end(self,jobid):
@@ -256,6 +254,7 @@ class Workload:
         ######
         if self.has_unmet_pipeline_dependencies(task,session):
             logging.info(f"Candidate TI ({candidate_ti.title}) Has unmet pipeline dependencies")
+            print(f"\t{WARNING} has unmet dependencies in other pipelines") 
             return True
 
         ########
