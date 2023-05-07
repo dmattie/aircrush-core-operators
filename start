@@ -313,7 +313,7 @@ def createJob(parms_to_add,**kwargs):
         session=session,
         pipeline=pipeline,
         task=task)  
-    print("Parameter expansion complete")
+    
     ########
     if 'hint-internet' in parms_to_add:
         conf = open(jobfile, "w") 
@@ -338,7 +338,7 @@ def createJob(parms_to_add,**kwargs):
         return toreturn
 
     else:
-        operator=task.field_operator if task.field_operator !="" else "" 
+        operator=task.field_operator if task.field_operator is not None else "" 
         conf = open(jobfile, "w") 
         L = [
             "#!/bin/bash",
