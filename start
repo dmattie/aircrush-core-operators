@@ -342,7 +342,7 @@ def createJob(parms_to_add,**kwargs):
         conf = open(jobfile, "w") 
         L = [
             "#!/bin/bash",
-            f"#SBATCH --job-name {subject.title}/{session.title}/{task.field_operator}",
+            f"#SBATCH --job-name {subject.title}/{session.title}/{operator}",
             f"#SBATCH -e {stderrfile}",
             f"#SBATCH -o {stdoutfile}",
             f"#SBATCH --time {sbatch_time}" if not sbatch_time=="" else "",
