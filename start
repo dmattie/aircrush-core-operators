@@ -286,14 +286,24 @@ def createJob(parms_to_add,**kwargs):
         hint_exec]         
 
     else:   
-        cmdArray=["singularity","run","--app",
-        task.field_operator,
-        overlay_command if overlay_command is not None else "",
-        overlay_file if overlay_file is not None else "",
-        workdir_command if workdir_command is not None else "",
-        workdir if workdir is not None else "",
-        bindings if bindings is not None else "",
-        container] 
+        hint_noapp = parms_to_add['hint-noapp'] if 'hint-noapp' in parms_to_add else ""
+        if hint_noapp != "" or task.field_operator == "":
+            cmdArray=["singularity","run",
+            overlay_command if overlay_command is not None else "",
+            overlay_file if overlay_file is not None else "",
+            workdir_command if workdir_command is not None else "",
+            workdir if workdir is not None else "",
+            bindings if bindings is not None else "",
+            container] 
+        else:
+            cmdArray=["singularity","run","--app",
+            task.field_operator,
+            overlay_command if overlay_command is not None else "",
+            overlay_file if overlay_file is not None else "",
+            workdir_command if workdir_command is not None else "",
+            workdir if workdir is not None else "",
+            bindings if bindings is not None else "",
+            container] 
     
     cmdArray = parameter_expansion(cmdArray,parms_to_add,
         datacommons=datacommons,
