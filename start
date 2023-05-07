@@ -357,9 +357,8 @@ def createJob(parms_to_add,**kwargs):
                 ""
             ]
                                 
-        except:
-            msg=f"Parameters for task are malformed."            
-            print(msg)
+        except:            
+            print("Parameters for task are malformed.")
             print(L)
             sys.exit(1) 
         for ll in L:
