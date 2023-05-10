@@ -267,9 +267,12 @@ def createJob(parms_to_add,**kwargs):
         workdir=f"{derivative}/temp"
         workdir_command="--workdir"
         os.makedirs(workdir,exist_ok=True)
+
+        overlay_delete_cmd=f"if [[ $? -eq 0 && -f {overlay_file} ]];then\n\trm {overlay_file}\nfi"
     else:
         overlay_file=None
         overlay_create_cmd=None
+        overlay_delete_cmd=None
         overlay_command=None
         workdir=None
         workdir_command=None
@@ -354,6 +357,7 @@ def createJob(parms_to_add,**kwargs):
                 "module load singularity/3.8",
                 overlay_create_cmd if not overlay_create_cmd is None else "",
                 ' '.join(cmdArray),
+                overlay_delete_cmd if not overlay_delete_cmd is None else "",
                 ""
             ]
                                 
