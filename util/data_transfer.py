@@ -29,7 +29,9 @@ def commit(project:str,subject:str,session:str=""):
             
             
             shutil.move(tarfile,f"{tarfile}.deleteme")
-            print(f"{ansi.OKGREEN}{tarfile}.deleteme can be deleted from working directory{ansi.ENDC}")
+            print(f"{ansi.OKGREEN}{tarfile}.deleteme has been deleted from working directory{ansi.ENDC}")
+            os.remove(f"{tarfile}.deleteme")
+
 
 def _verify_and_remove(tarfile:str,target:str):
     print("Verification in progress...",end='',flush=True)
