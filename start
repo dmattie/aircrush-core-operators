@@ -268,7 +268,7 @@ def createJob(parms_to_add,**kwargs):
         workdir_command="--workdir"
         os.makedirs(workdir,exist_ok=True)
 
-        overlay_delete_cmd=f"if [[ $? -eq 0 && -f {overlay_file} ]];then\n\trm {overlay_file}\nfi"
+        overlay_delete_cmd=f"if [[ $? -eq 0 && -f {overlay_file} && ! -z $AIRCRUSH_KEEP_OVERLAY  ]];then\n\trm {overlay_file}\nfi"
     else:
         overlay_file=None
         overlay_create_cmd=None
