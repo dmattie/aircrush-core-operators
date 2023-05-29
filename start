@@ -258,6 +258,7 @@ def createJob(parms_to_add,**kwargs):
     stderrfile=f"{basefile}.err"
 
     ########
+    hint_environ = parms_to_add['hint-environ'] if 'hint-environ' in parms_to_add else "" 
 
     hint_overlay = parms_to_add['hint-overlay'] if 'hint-overlay' in parms_to_add else ""  
     if hint_overlay != "":
@@ -355,6 +356,7 @@ def createJob(parms_to_add,**kwargs):
                 f"#SBATCH --cpus-per-task {sbatch_cpus_per_task}" if not sbatch_cpus_per_task=="" else "",
                 f"#SBATCH --mem-per-cpu {sbatch_mem_per_cpu}" if not sbatch_mem_per_cpu=="" else "",
                 "module load singularity/3.8",
+                hint_environ,
                 overlay_create_cmd if not overlay_create_cmd is None else "",
                 ' '.join(cmdArray),
                 overlay_delete_cmd if not overlay_delete_cmd is None else "",
