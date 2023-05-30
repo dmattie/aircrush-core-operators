@@ -135,6 +135,8 @@ def parameter_expansion(cmdArray,parms_to_add,**kwargs):
                 cmdArray.append(f"--{k}")
                 if parm is not None:
                     cmdArray.append(parm) 
+            if k=="hint-positional":
+                cmdArray.append(parm)
     except Exception as e:
         print(f"Parameter expansion failed. {e}")
         raise e
