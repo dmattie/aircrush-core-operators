@@ -121,7 +121,20 @@ def parameter_expansion(cmdArray,parms_to_add,**kwargs):
     try:
         for k in parms_to_add:   
             parm = parms_to_add[k]
-            if parm is not None:
+            if k=="hint-positional":
+                for positional_item in parm:
+                    positional_item = positional_item.replace("#workingdir",workingdir)
+                    positional_item = positional_item.replace("#datacommons",datacommons)
+                    positional_item = positional_item.replace("#pipeline",pipeline.field_id)
+                    positional_item = positional_item.replace("#subject",subject.title)
+                    positional_item = positional_item.replace("#session",session.title)
+                    positional_item = positional_item.replace('#project',project.field_path_to_exam_data)
+                    positional_item = positional_item.replace('#datasetdir',f"{workingdir}/projects/{project.field_path_to_exam_data}/datasets/")
+
+                    cmdArray.append(positional_item)
+              
+            else:                
+                if parm is not None:
                     parm = parm.replace("#workingdir",workingdir)
                     parm = parm.replace("#datacommons",datacommons)
                     parm = parm.replace("#pipeline",pipeline.field_id)
@@ -129,12 +142,6 @@ def parameter_expansion(cmdArray,parms_to_add,**kwargs):
                     parm = parm.replace("#session",session.title)
                     parm = parm.replace('#project',project.field_path_to_exam_data)
                     parm = parm.replace('#datasetdir',f"{workingdir}/projects/{project.field_path_to_exam_data}/datasets/")
-
-            if k=="hint-positional":
-                for positional_item in parm:
-                    cmdArray.append(positional_item)
-              
-            else:                
 
                 if not k[0:7]=="sbatch-" and not k[0:5]=="hint-":
                     cmdArray.append(f"--{k}")
