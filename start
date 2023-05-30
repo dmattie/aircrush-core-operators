@@ -120,23 +120,24 @@ def parameter_expansion(cmdArray,parms_to_add,**kwargs):
  
     try:
         for k in parms_to_add:   
-
-            parm= parms_to_add[k]
-            if parm is not None:
-                parm = parm.replace("#workingdir",workingdir)
-                parm = parm.replace("#datacommons",datacommons)
-                parm = parm.replace("#pipeline",pipeline.field_id)
-                parm = parm.replace("#subject",subject.title)
-                parm = parm.replace("#session",session.title)
-                parm = parm.replace('#project',project.field_path_to_exam_data)
-                parm = parm.replace('#datasetdir',f"{workingdir}/projects/{project.field_path_to_exam_data}/datasets/")
-
-            if not k[0:7]=="sbatch-" and not k[0:5]=="hint-":
-                cmdArray.append(f"--{k}")
-                if parm is not None:
-                    cmdArray.append(parm) 
+            parm = parms_to_add[k]
             if k=="hint-positional":
-                cmdArray.append(parm)
+                            cmdArray.append(parm)
+            else:                
+                if parm is not None:
+                    parm = parm.replace("#workingdir",workingdir)
+                    parm = parm.replace("#datacommons",datacommons)
+                    parm = parm.replace("#pipeline",pipeline.field_id)
+                    parm = parm.replace("#subject",subject.title)
+                    parm = parm.replace("#session",session.title)
+                    parm = parm.replace('#project',project.field_path_to_exam_data)
+                    parm = parm.replace('#datasetdir',f"{workingdir}/projects/{project.field_path_to_exam_data}/datasets/")
+
+                if not k[0:7]=="sbatch-" and not k[0:5]=="hint-":
+                    cmdArray.append(f"--{k}")
+                    if parm is not None:
+                        cmdArray.append(parm) 
+            
     except Exception as e:
         print(f"Parameter expansion failed. {e}")
         raise e
