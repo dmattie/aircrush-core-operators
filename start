@@ -121,10 +121,7 @@ def parameter_expansion(cmdArray,parms_to_add,**kwargs):
     try:
         for k in parms_to_add:   
             parm = parms_to_add[k]
-            if k=="hint-positional":
-                            cmdArray.append(parm)
-            else:                
-                if parm is not None:
+            if parm is not None:
                     parm = parm.replace("#workingdir",workingdir)
                     parm = parm.replace("#datacommons",datacommons)
                     parm = parm.replace("#pipeline",pipeline.field_id)
@@ -132,6 +129,12 @@ def parameter_expansion(cmdArray,parms_to_add,**kwargs):
                     parm = parm.replace("#session",session.title)
                     parm = parm.replace('#project',project.field_path_to_exam_data)
                     parm = parm.replace('#datasetdir',f"{workingdir}/projects/{project.field_path_to_exam_data}/datasets/")
+
+            if k=="hint-positional":
+                for positional_item in parm:
+                    cmdArray.append(positional_item)
+              
+            else:                
 
                 if not k[0:7]=="sbatch-" and not k[0:5]=="hint-":
                     cmdArray.append(f"--{k}")
